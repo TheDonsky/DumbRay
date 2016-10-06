@@ -1,5 +1,5 @@
 #include"Triangle.h"
-#include"MemManip.h"
+#include"MemManip.cuh"
 
 
 /** ########################################################################## **/

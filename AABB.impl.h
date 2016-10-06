@@ -1,5 +1,5 @@
 #include"AABB.h"
-#include"MemManip.h"
+#include"MemManip.cuh"
 
 
 /** ########################################################################## **/
