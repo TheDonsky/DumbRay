@@ -1,0 +1,13 @@
+*
+
+!*.cu
+
+!*.cuh
+
+!*.c
+!*.h
+!.gitignore
+
+!makefile
+
+!readme.txt
