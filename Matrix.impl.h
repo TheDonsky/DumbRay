@@ -1,4 +1,4 @@
-#include"Matrix.cuh"
+#include"Matrix.h"
 
 
 
