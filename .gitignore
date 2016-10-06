@@ -5,9 +5,10 @@
 !*.cuh
 
 !*.c
+!*.cpp
 !*.h
 !.gitignore
 
 !makefile
 
-!readme.txt
+!README.md
