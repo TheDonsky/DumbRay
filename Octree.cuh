@@ -46,8 +46,7 @@ public:
 	/** ========================================================== **/
 	struct TreeNode{
 		AABB bounds;
-		bool hasChildren;
-		TreeNode *children[8];
+		TreeNode *children;
 
 		__device__ __host__ inline TreeNode(AABB boundingBox = AABB());
 	};
@@ -132,7 +131,7 @@ private:
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
 	Stacktor<TreeNode> tree;
-	Stacktor<Stacktor<int, OCTREE_VOXEL_LOCAL_CAPACITY> > nodeData;
+	Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > nodeData;
 	Stacktor<ElemType> data;
 
 
@@ -144,7 +143,10 @@ private:
 	/** ########################################################################## **/
 
 	/** ========================================================== **/
+	__device__ __host__ inline void pushData(const ElemType &object);
 	__device__ __host__ inline void flushTree();
+
+	/** ========================================================== **/
 	__device__ __host__ __noinline__ void split(int index, int depth);
 	__device__ __host__ inline bool splittingMakesSence(int index);
 	__device__ __host__ inline void splitNode(int index, Vertex center);
@@ -152,7 +154,7 @@ private:
 	__device__ __host__ inline void reduceNode(int index);
 
 	/** ========================================================== **/
-	__device__ __host__ __noinline__ void put(const ElemType &elem, int nodeIndex, int dataIndex, int depth);
+	__device__ __host__ __noinline__ void put(const ElemType *elem, int nodeIndex, int depth);
 
 	/** ========================================================== **/
 	struct CastFrame{
