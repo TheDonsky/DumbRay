@@ -521,41 +521,43 @@ __dumb__ void Vector3::rotateTwoAxisAgainstThis(Vector3 &v1, Vector3 &v2, float 
 /*| Variables |*/
 
 /** ------------------------------------ **/
-#define VECTOR3_ZERO Vector3(0, 0, 0)
+#define VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE ((sizeof(Vector3) + sizeof(float) - 1) / sizeof(float))
+#define VECTOR3_ZERO { 0, 0, 0 }
 const Vector3 VECTOR3_ZERO_H = VECTOR3_ZERO;
-__constant__ const Vector3 VECTOR3_ZERO_D[1];
-#define VECTOR3_ONE Vector3(1, 1, 1)
+__device__ __constant__ const float VECTOR3_ZERO_D[VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE] = VECTOR3_ZERO;
+#define VECTOR3_ONE { 1, 1, 1 }
 const Vector3 VECTOR3_ONE_H = VECTOR3_ONE;
-__constant__ const Vector3 VECTOR3_ONE_D[1];
-#define VECTOR3_UP Vector3(0, 1, 0)
+__device__ __constant__ const float VECTOR3_ONE_D[VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE] = VECTOR3_ONE;
+#define VECTOR3_UP { 0, 1, 0 }
 const Vector3 VECTOR3_UP_H = VECTOR3_UP;
-__constant__ const Vector3 VECTOR3_UP_D[1];
-#define VECTOR3_DOWN Vector3(0, -1, 0)
+__device__ __constant__ const float VECTOR3_UP_D[VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE] = VECTOR3_UP;
+#define VECTOR3_DOWN { 0, -1, 0 }
 const Vector3 VECTOR3_DOWN_H = VECTOR3_DOWN;
-__constant__ const Vector3 VECTOR3_DOWN_D[1];
-#define VECTOR3_FRONT Vector3(0, 0, 1)
+__device__ __constant__ const float VECTOR3_DOWN_D[VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE] = VECTOR3_DOWN;
+#define VECTOR3_FRONT { 0, 0, 1 }
 const Vector3 VECTOR3_FRONT_H = VECTOR3_FRONT;
-__constant__ const Vector3 VECTOR3_FRONT_D[1];
-#define VECTOR3_BACK Vector3(0, 0, -1)
+__device__ __constant__ const float VECTOR3_FRONT_D[VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE] = VECTOR3_FRONT;
+#define VECTOR3_BACK { 0, 0, -1 }
 const Vector3 VECTOR3_BACK_H = VECTOR3_BACK;
-__constant__ const Vector3 VECTOR3_BACK_D[1];
-#define VECTOR3_RIGHT Vector3(1, 0, 0)
+__device__ __constant__ const float VECTOR3_BACK_D[VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE] = VECTOR3_BACK;
+#define VECTOR3_RIGHT { 1, 0, 0 }
 const Vector3 VECTOR3_RIGHT_H = VECTOR3_RIGHT;
-__constant__ const Vector3 VECTOR3_RIGHT_D[1];
-#define VECTOR3_LEFT Vector3(-1, 0, 0)
+__device__ __constant__ const float VECTOR3_RIGHT_D[VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE] = VECTOR3_RIGHT;
+#define VECTOR3_LEFT { -1, 0, 0 }
 const Vector3 VECTOR3_LEFT_H = VECTOR3_LEFT;
-__constant__ const Vector3 VECTOR3_LEFT_D[1];
+__device__ __constant__ const float VECTOR3_LEFT_D[VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE] = VECTOR3_LEFT;
 
 /** ------------------------------------ **/
-#define VECTOR3_X_AXIS Vector3(1, 0, 0)
+#define VECTOR3_X_AXIS { 1, 0, 0 }
 const Vector3 VECTOR3_X_AXIS_H = VECTOR3_X_AXIS;
-__constant__ const Vector3 VECTOR3_X_AXIS_D[1];
-#define VECTOR3_Y_AXIS Vector3(0, 1, 0)
+__device__ __constant__ const float VECTOR3_X_AXIS_D[VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE] = VECTOR3_X_AXIS;
+#define VECTOR3_Y_AXIS { 0, 1, 0 }
 const Vector3 VECTOR3_Y_AXIS_H = VECTOR3_Y_AXIS;
-__constant__ const Vector3 VECTOR3_Y_AXIS_D[1];
-#define VECTOR3_Z_AXIS Vector3(0, 0, 1)
+__device__ __constant__ const float VECTOR3_Y_AXIS_D[VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE] = VECTOR3_Y_AXIS;
+#define VECTOR3_Z_AXIS { 0, 0, 1 }
 const Vector3 VECTOR3_Z_AXIS_H = VECTOR3_Z_AXIS;
-__constant__ const Vector3 VECTOR3_Z_AXIS_D[1];
+__device__ __constant__ const float VECTOR3_Z_AXIS_D[VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE] = VECTOR3_Z_AXIS;
+#undef VECTOR3_EQIVALENT_FLOAT_ARRAY_SIZE
 
 /** ========================================================== **/
 /*| GPU initialisation |*/
@@ -573,7 +575,7 @@ inline bool Vector3::initConstants(){
 	if (cudaMemcpyToSymbol(VECTOR3_X_AXIS_D, &VECTOR3_X_AXIS_H, sizeof(Vector3), 0, cudaMemcpyHostToDevice) != cudaSuccess) return(false);
 	if (cudaMemcpyToSymbol(VECTOR3_Y_AXIS_D, &VECTOR3_Y_AXIS_H, sizeof(Vector3), 0, cudaMemcpyHostToDevice) != cudaSuccess) return(false);
 	if (cudaMemcpyToSymbol(VECTOR3_Z_AXIS_D, &VECTOR3_Z_AXIS_H, sizeof(Vector3), 0, cudaMemcpyHostToDevice) != cudaSuccess) return(false);
-	
+
 	return(true);
 }
 
@@ -584,7 +586,7 @@ inline bool Vector3::initConstants(){
 // Vector3(0, 0, 0); Has visible constants VECTOR3_ZERO_H and *VECTOR3_ZERO_D for the host and the device, respectively, as well as macro VECTOR3_ZERO.
 __dumb__ const Vector3& Vector3::zero(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_ZERO_D;
+	return (*((Vector3*)VECTOR3_ZERO_D));
 #else
 	return VECTOR3_ZERO_H;
 #endif
@@ -592,7 +594,7 @@ __dumb__ const Vector3& Vector3::zero(){
 // Vector3(1, 1, 1); Has visible constants VECTOR3_ONE_H and *VECTOR3_ONE_D for the host and the device, respectively, as well as macro VECTOR3_ONE.
 __dumb__ const Vector3& Vector3::one(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_ONE_D;
+	return (*((Vector3*)VECTOR3_ONE_D));
 #else
 	return VECTOR3_ONE_H;
 #endif
@@ -600,7 +602,7 @@ __dumb__ const Vector3& Vector3::one(){
 // Vector3(0, 1, 0); Has visible constants VECTOR3_UP_H and *VECTOR3_UP_D for the host and the device, respectively, as well as macro VECTOR3_UP.
 __dumb__ const Vector3& Vector3::up(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_UP_D;
+	return (*((Vector3*)VECTOR3_UP_D));
 #else
 	return VECTOR3_UP_H;
 #endif
@@ -608,7 +610,7 @@ __dumb__ const Vector3& Vector3::up(){
 // Vector3(0, -1, 0); Has visible constants VECTOR3_DOWN_H and *VECTOR3_DOWN_D for the host and the device, respectively, as well as macro VECTOR3_DOWN.
 __dumb__ const Vector3& Vector3::down(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_DOWN_D;
+	return (*((Vector3*)VECTOR3_DOWN_D));
 #else
 	return VECTOR3_DOWN_H;
 #endif
@@ -616,7 +618,7 @@ __dumb__ const Vector3& Vector3::down(){
 // Vector3(0, 0, 1); Has visible constants VECTOR3_FRONT_H and *VECTOR3_FRONT_D for the host and the device, respectively, as well as macro VECTOR3_FRONT.
 __dumb__ const Vector3& Vector3::front(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_FRONT_D;
+	return (*((Vector3*)VECTOR3_FRONT_D));
 #else
 	return VECTOR3_FRONT_H;
 #endif
@@ -624,7 +626,7 @@ __dumb__ const Vector3& Vector3::front(){
 // Vector3(0, 0, -1); Has visible constants VECTOR3_BACK_H and *VECTOR3_BACK_D for the host and the device, respectively, as well as macro VECTOR3_BACK.
 __dumb__ const Vector3& Vector3::back(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_BACK_D;
+	return (*((Vector3*)VECTOR3_BACK_D));
 #else
 	return VECTOR3_BACK_H;
 #endif
@@ -632,7 +634,7 @@ __dumb__ const Vector3& Vector3::back(){
 // Vector3(1, 0, 0); Has visible constants VECTOR3_RIGHT_H and *VECTOR3_RIGHT_D for the host and the device, respectively, as well as macro VECTOR3_RIGHT.
 __dumb__ const Vector3& Vector3::right(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_RIGHT_D;
+	return (*((Vector3*)VECTOR3_RIGHT_D));
 #else
 	return VECTOR3_RIGHT_H;
 #endif
@@ -640,7 +642,7 @@ __dumb__ const Vector3& Vector3::right(){
 // Vector3(-1, 0, 0); Has visible constants VECTOR3_LEFT_H and *VECTOR3_LEFT_D for the host and the device, respectively, as well as macro VECTOR3_LEFT.
 __dumb__ const Vector3& Vector3::left(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_LEFT_D;
+	return (*((Vector3*)VECTOR3_LEFT_D));
 #else
 	return VECTOR3_LEFT_H;
 #endif
@@ -650,7 +652,7 @@ __dumb__ const Vector3& Vector3::left(){
 // Vector3(1, 0, 0); Has visible constants VECTOR3_X_AXIS_H and *VECTOR3_X_AXIS_D for the host and the device, respectively, as well as macro VECTOR3_X_AXIS.
 __dumb__ const Vector3& Vector3::Xaxis(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_X_AXIS_D;
+	return (*((Vector3*)VECTOR3_X_AXIS_D));
 #else
 	return VECTOR3_X_AXIS_H;
 #endif
@@ -658,7 +660,7 @@ __dumb__ const Vector3& Vector3::Xaxis(){
 // Vector3(0, 1, 0); Has visible constants VECTOR3_Y_AXIS_H and *VECTOR3_Y_AXIS_D for the host and the device, respectively, as well as macro VECTOR3_Y_AXIS.
 __dumb__ const Vector3& Vector3::Yaxis(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_Y_AXIS_D;
+	return (*((Vector3*)VECTOR3_Y_AXIS_D));
 #else
 	return VECTOR3_Y_AXIS_H;
 #endif
@@ -666,7 +668,7 @@ __dumb__ const Vector3& Vector3::Yaxis(){
 // Vector3(0, 0, 1); Has visible constants VECTOR3_Z_AXIS_H and *VECTOR3_Z_AXIS_D for the host and the device, respectively, as well as macro VECTOR3_Z_AXIS.
 __dumb__ const Vector3& Vector3::Zaxis(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_Z_AXIS_D;
+	return (*((Vector3*)VECTOR3_Z_AXIS_D));
 #else
 	return VECTOR3_Z_AXIS_H;
 #endif
@@ -674,7 +676,7 @@ __dumb__ const Vector3& Vector3::Zaxis(){
 // Vector3(1, 0, 0); Has visible constants VECTOR3_X_AXIS_H and *VECTOR3_X_AXIS_D for the host and the device, respectively, as well as macro VECTOR3_X_AXIS.
 __dumb__ const Vector3& Vector3::i(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_X_AXIS_D;
+	return (*((Vector3*)VECTOR3_X_AXIS_D));
 #else
 	return VECTOR3_X_AXIS_H;
 #endif
@@ -682,7 +684,7 @@ __dumb__ const Vector3& Vector3::i(){
 // Vector3(0, 1, 0); Has visible constants VECTOR3_Y_AXIS_H and *VECTOR3_Y_AXIS_D for the host and the device, respectively, as well as macro VECTOR3_Y_AXIS.
 __dumb__ const Vector3& Vector3::j(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_Y_AXIS_D;
+	return (*((Vector3*)VECTOR3_Y_AXIS_D));
 #else
 	return VECTOR3_Y_AXIS_H;
 #endif
@@ -690,7 +692,7 @@ __dumb__ const Vector3& Vector3::j(){
 // Vector3(0, 0, 1); Has visible constants VECTOR3_Z_AXIS_H and *VECTOR3_Z_AXIS_D for the host and the device, respectively, as well as macro VECTOR3_Z_AXIS.
 __dumb__ const Vector3& Vector3::k(){
 #ifdef __CUDA_ARCH__
-	return *VECTOR3_Z_AXIS_D;
+	return (*((Vector3*)VECTOR3_Z_AXIS_D));
 #else
 	return VECTOR3_Z_AXIS_H;
 #endif
