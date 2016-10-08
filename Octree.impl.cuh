@@ -125,7 +125,7 @@ __device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit 
 				}
 			}
 			else{
-				if (castInLeaf(r, hit, (frame.node -  (tree + 0)), clipBackfaces)) return true;
+				if (castInLeaf(r, hit, (int)(frame.node -  (tree + 0)), clipBackfaces)) return true;
 				else i--;
 			}
 		}
@@ -298,14 +298,14 @@ __device__ __host__ __noinline__ void Octree<ElemType>::split(int index, int dep
 	for (int i = 0; i < nodeData[index].size(); i++){
 		const ElemType* dataPtr = nodeData[index][i];
 		for (int j = 0; j < 8; j++){
-			int childIndex = (tree[index].children + j - (tree + 0));
+			int childIndex = (int)(tree[index].children + j - (tree + 0));
 			if (Shapes::intersect<AABB, ElemType>(tree[childIndex].bounds, *dataPtr))
 				nodeData[childIndex].push(dataPtr);
 		}
 	}
 	nodeData[index].clear();
 	for (int i = 0; i < 8; i++)
-		split((tree[index].children + i - (tree + 0)), depth + 1);
+		split((int)(tree[index].children + i - (tree + 0)), depth + 1);
 }
 template<typename ElemType>
 __device__ __host__ inline bool Octree<ElemType>::splittingMakesSence(int index){
@@ -378,14 +378,14 @@ __device__ __host__ __noinline__ void Octree<ElemType>::put(const ElemType *elem
 			if (splittingMakesSence(nodeIndex)){
 				splitNode(nodeIndex, tree[nodeIndex].bounds.getCenter());
 				for (int i = 0; i < nodeData[nodeIndex].size(); i++){
-					for (int j = 0; j < 8; j++) put(nodeData[nodeIndex][i], (tree[nodeIndex].children + j - (tree + 0)), depth + 1);
+					for (int j = 0; j < 8; j++) put(nodeData[nodeIndex][i], (int)(tree[nodeIndex].children + j - (tree + 0)), depth + 1);
 				}
 				nodeData[nodeIndex].clear();
 			}
 		}
 		else{
 			for (int i = 0; i < 8; i++){
-				int child = (tree[nodeIndex].children + i - (tree + 0));
+				int child = (int)(tree[nodeIndex].children + i - (tree + 0));
 				put(elem, child, depth + 1);
 			}
 		}
