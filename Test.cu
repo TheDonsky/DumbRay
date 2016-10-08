@@ -5,6 +5,8 @@
 #include"Windows.h"
 #include"Cutex.test.cuh"
 #include"Octree.test.cuh"
+#include"ColorRGB.cuh"
+#include"DummyShader.cuh"
 
 
 
@@ -149,7 +151,53 @@ static void windowTrap(){
 	trap2.join();
 }
 
+__dumb__ void printVector(const char *label, const Vector3 &v){
+	printf("%s: (%f, %f, %f)\n", label, v.x, v.y, v.z);
+}
+
+__global__ void testConstants(){
+	if (blockIdx.x == 0 && threadIdx.x == 0){
+		printVector(" zero", Vector3::zero());
+		printVector("  one", Vector3::one());
+		printVector("   up", Vector3::up());
+		printVector(" down", Vector3::down());
+		printVector("front", Vector3::front());
+		printVector(" back", Vector3::back());
+		printVector("right", Vector3::right());
+		printVector(" left", Vector3::left());
+		printVector("Xaxis", Vector3::Xaxis());
+		printVector("Yaxis", Vector3::Yaxis());
+		printVector("Zaxis", Vector3::Zaxis());
+		printVector("    i", Vector3::i());
+		printVector("    j", Vector3::j());
+		printVector("    k", Vector3::k());
+		printf("\n");
+	}
+}
+
+__dumb__ void makeMaterialShout(const Material &material) {
+	material.cast(Material::HitInput());
+}
+
+__global__ void materialShoutFromKernel(const Material material) {
+	makeMaterialShout(material);
+}
+
+static void testMaterial() {
+	Material material;
+	material.init<DummyShader, BakedTriFace>();
+	materialShoutFromKernel << <1, 1 >> >(material);
+	cudaDeviceSynchronize();
+	makeMaterialShout(material);
+	material.dispose();
+}
+
 int main(){
+	ColorRGB c = Vector3(0, 0, 0);
+	testConstants<<<1, 1>>>();
+	cudaDeviceSynchronize();
+
+	testMaterial();
 
 	while (true){
 		std::string s;
