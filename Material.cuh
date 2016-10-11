@@ -6,6 +6,7 @@
 
 
 
+template<typename HitType>
 class Material{
 public:
 	struct HitInfo {
@@ -14,20 +15,11 @@ public:
 		float distance;
 		Vector3 cameraPosition;
 	};
-	struct HitInput {
-		void *object;
-		HitInfo input;
-	};
 
 
 
 
 
-	template<typename HitType>
-	struct ShaderInput {
-		HitType object;
-		HitInfo info;
-	};
 	struct ShaderReport {
 		Photon reflectPhoton;
 		Photon cameraPhoton;
@@ -39,25 +31,25 @@ public:
 
 public:
 	__host__ inline void init();
-	template<typename Shader, typename HitType, typename... Args>
+	template<typename Shader, typename... Args>
 	__host__ inline bool init(const Args&... args);
-	template<typename Shader, typename HitType>
+	template<typename Shader>
 	__host__ inline bool init(Shader *shader);
 	__host__ inline bool dispose();
 
 	
 	
 	
-	__dumb__ ShaderReport cast(const HitInput &hit)const;
+	__dumb__ ShaderReport cast(const HitType &object, const HitInfo &info)const;
 
 
 
 
 
 public:
-	typedef ShaderReport(*CastFunction)(void *shader, const HitInput &hit);
-	template<typename Shader, typename HitType>
-	__dumb__ static ShaderReport cast(void *shader, const HitInput &hit);
+	typedef ShaderReport(*CastFunction)(void *shader, const HitType &object, const HitInfo &info);
+	template<typename Shader>
+	__dumb__ static ShaderReport castOnShader(void *shader, const HitType &object, const HitInfo &info);
 
 
 
