@@ -119,7 +119,14 @@ __dumb__ Vector3 Triangle::getMasesArbitrary(const Vertex &center)const{
 }
 // Tells, if the point is inside the triangle, or not (assuming, it's on the same plane with the triangle)
 __dumb__ bool Triangle::containsVertex(const Vertex &point)const{
-	//*
+	/*
+	// This is fast, but produces some artifacts under some sircumstances..
+	register Vector3 xa = (a - point);
+	register Vector3 xb = (b - point);
+	register Vector3 xc = (c - point);
+	return ((xa & xb).magnitude() + (xb & xc).magnitude() + (xc & xa).magnitude() <= ((b - a) & (c - a)).magnitude() + 192 * VECTOR_EPSILON);
+	/*/
+	// This is reliable, but rather slow
 	if (a == b || b == c || c == a) return false;
 	if (point == a || point == b || point == c) return true;
 	register Vector3 ab = (b - a);
@@ -132,6 +139,7 @@ __dumb__ bool Triangle::containsVertex(const Vertex &point)const{
 		&& (bc * bx) / bx.magnitude() + 32 * VECTOR_EPSILON >= -(bc * ab) / ab.magnitude()
 		&& (ca * cx) / cx.magnitude() + 32 * VECTOR_EPSILON >= -(ca * bc) / bc.magnitude());
 	/*/
+	/*
 	register Vector3 center = massCenter();
 	if (point == center) return true;
 	register Vector3 p = point + (center - point).normalize() * (64 * VECTOR_EPSILON);
