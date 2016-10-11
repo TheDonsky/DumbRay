@@ -94,39 +94,40 @@ __device__ __host__ inline Octree<ElemType>::RaycastHit Octree<ElemType>::cast(c
 template<typename ElemType>
 __device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit &hit, bool clipBackfaces)const{
 	const Ray inversedRay(r.origin, 1.0f / r.direction);
+	const register TreeNode *root = (tree + 0);
+	if (root->children == NULL) return castInLeaf(r, hit, 0, clipBackfaces);
 	if (!Shapes::castPreInversed<AABB>(inversedRay, (tree + 0)->bounds, false)) return false;
 	CastFrame stack[OCTREE_MAX_DEPTH + 1];
 	int i = 0;
-	stack[0].node = (tree + 0);
+	stack[0].node = root->children;
 	stack[0].curChild = -1;
 	while (true){
 		if (i < 0) return false;
 		else{
 			CastFrame &frame = stack[i];
-			const TreeNode &node = (*frame.node);
-			if (node.children != NULL){
-				if (frame.curChild < 0){
-					if (r.direction.z < 0) frame.priorityChild = 1;
-					else frame.priorityChild = 0;
-					if (r.direction.y < 0) frame.priorityChild += 2;
-					if (r.direction.x < 0) frame.priorityChild += 4;
-					frame.curChild = 0;
-				}
-				if (frame.curChild >= 8) i--;
-				else{
-					const TreeNode *child = node.children + (frame.priorityChild ^ frame.curChild);
-					if (Shapes::castPreInversed<AABB>(inversedRay, child->bounds, false)) {
+			if (frame.curChild < 0) {
+				if (r.direction.z < 0) frame.priorityChild = 1;
+				else frame.priorityChild = 0;
+				if (r.direction.y < 0) frame.priorityChild += 2;
+				if (r.direction.x < 0) frame.priorityChild += 4;
+				frame.curChild = 0;
+			}
+			if (frame.curChild >= 8) i--;
+			else {
+				const register TreeNode *child = frame.node + (frame.priorityChild ^ frame.curChild);
+				if (Shapes::castPreInversed<AABB>(inversedRay, child->bounds, false)) {
+					const register TreeNode *children = child->children;
+					if (children == NULL) {
+						if (castInLeaf(r, hit, (int)(child - root), clipBackfaces)) return true;
+					}
+					else {
 						i++;
 						CastFrame &newFrame = stack[i];
-						newFrame.node = child;
+						newFrame.node = children;
 						newFrame.curChild = -1;
 					}
-					frame.curChild++;
 				}
-			}
-			else{
-				if (castInLeaf(r, hit, (int)(frame.node -  (tree + 0)), clipBackfaces)) return true;
-				else i--;
+				frame.curChild++;
 			}
 		}
 	}
