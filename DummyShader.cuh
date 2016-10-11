@@ -10,7 +10,7 @@ public:
 	inline bool uploadAt(DummyShader *dst);
 	inline static bool disposeOnDevice(DummyShader *ptr);
 
-	__dumb__ Material::ShaderReport cast(const Material::ShaderInput<BakedTriFace> &input);
+	__dumb__ Material<BakedTriFace>::ShaderReport cast(const BakedTriFace &face, const Material<BakedTriFace>::HitInfo &input);
 
 private:
 	int garbage;

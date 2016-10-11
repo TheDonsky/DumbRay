@@ -9,12 +9,12 @@ inline bool DummyShader::disposeOnDevice(DummyShader *ptr) {
 	return true;
 }
 
-__dumb__ Material::ShaderReport DummyShader::cast(const Material::ShaderInput<BakedTriFace> &input) {
+__dumb__ Material<BakedTriFace>::ShaderReport DummyShader::cast(const BakedTriFace &face, const Material<BakedTriFace>::HitInfo &input) {
 #ifdef __CUDA_ARCH__
 	if (threadIdx.x == 0 && blockIdx.x == 0)
 		printf("From DEVICE, I inform you that I'm a duumy shader and won't do any good to you.\n");
 #else
 	printf("From HOST, I inform you that I'm a duumy shader and won't do any good to you.\n");
 #endif
-	return Material::ShaderReport();
+	return Material<BakedTriFace>::ShaderReport();
 }

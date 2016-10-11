@@ -175,18 +175,18 @@ __global__ void testConstants(){
 	}
 }
 
-__dumb__ void makeMaterialShout(const Material &material) {
-	material.cast(Material::HitInput());
+__dumb__ void makeMaterialShout(const Material<BakedTriFace> &material) {
+	material.cast(BakedTriFace(), Material<BakedTriFace>::HitInfo());
 }
 
-__global__ void materialShoutFromKernel(const Material material) {
+__global__ void materialShoutFromKernel(const Material<BakedTriFace> material) {
 	makeMaterialShout(material);
 }
 
 static void testMaterial() {
-	Material material;
-	material.init<DummyShader, BakedTriFace>();
-	materialShoutFromKernel << <1, 1 >> >(material);
+	Material<BakedTriFace> material;
+	material.init<DummyShader>();
+	materialShoutFromKernel<<<1, 1>>>(material);
 	cudaDeviceSynchronize();
 	makeMaterialShout(material);
 	material.dispose();
