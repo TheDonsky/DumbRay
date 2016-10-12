@@ -190,7 +190,7 @@ __dumb__ Vector3& Vector3::operator/=(const float f){
 }
 
 /** ------------------------------------ **/
-// Downscaled (x/v.x, y/v.y, z/vy)
+// Downscaled (x/v.x, y/v.y, z/v.y)
 __dumb__ Vector3 Vector3::operator/(const Vector3 &v)const{
 	return(Vector3(x / v.x, y / v.y, z / v.z));
 }
