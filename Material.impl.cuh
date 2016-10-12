@@ -51,13 +51,13 @@ template<typename Shader, typename... Args>
 __host__ inline bool Material<HitType>::init(const Args&... args) {
 	Shader *shaderHos = new Shader(args...);
 	if (shaderHos == NULL) return false;
-	if (!init<Shader>(shaderHos)) delete shaderHos;
+	if (!useShader<Shader>(shaderHos)) delete shaderHos;
 	else ownsOnHost = true;
 	return ownsOnHost;
 }
 template<typename HitType>
 template<typename Shader>
-__host__ inline bool Material<HitType>::init(Shader *shader) {
+__host__ inline bool Material<HitType>::useShader(Shader *shader) {
 	init();
 	if (shader == NULL) return false;
 	Shader *shaderDev; if (cudaMalloc(&shaderDev, sizeof(Shader)) != cudaSuccess) return false;

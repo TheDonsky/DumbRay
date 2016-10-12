@@ -34,7 +34,7 @@ public:
 	template<typename Shader, typename... Args>
 	__host__ inline bool init(const Args&... args);
 	template<typename Shader>
-	__host__ inline bool init(Shader *shader);
+	__host__ inline bool useShader(Shader *shader);
 	__host__ inline bool dispose();
 
 	
