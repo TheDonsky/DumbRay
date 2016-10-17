@@ -9,16 +9,44 @@
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<typename ElemType>
-__device__ __host__ inline Octree<ElemType>::Octree(AABB bounds){
+__host__ inline Octree<ElemType>::Octree(AABB bounds){
 	reinit(bounds);
 }
 template<typename ElemType>
-__device__ __host__ inline void Octree<ElemType>::reinit(AABB bounds){
+__host__ inline void Octree<ElemType>::reinit(AABB bounds){
 	tree.clear();
 	nodeData.clear();
 	data.clear();
 	tree.push(TreeNode(AABB(bounds.getMin() - OCTREE_AABB_EPSILON_VECTOR, bounds.getMax() + OCTREE_AABB_EPSILON_VECTOR)));
 	nodeData.flush(1);
+}
+template<typename ElemType>
+__host__ inline Octree<ElemType>::Octree(const Octree &octree) {
+	(*this) = octree;
+}
+template<typename ElemType>
+__host__ inline Octree<ElemType>& Octree<ElemType>::operator=(const Octree &octree) {
+	tree = octree.tree;
+	fixTreeNodePointers(octree.tree + 0);
+	nodeData = octree.nodeData;
+	data = octree.data;
+	fixNodeDataPointers(octree.data + 0);
+	return (*this);
+}
+template<typename ElemType>
+__host__ inline Octree<ElemType>::Octree(Octree &&octree) {
+	(*this) = octree;
+}
+template<typename ElemType>
+__host__ inline Octree<ElemType>& Octree<ElemType>::operator=(Octree &&octree) {
+	const TreeNode *oldTreeRoot = (octree.tree + 0);
+	tree.swapWith(octree.tree);
+	fixTreeNodePointers(oldTreeRoot);
+	const ElemType *oldDataRoot = (octree.data + 0);
+	nodeData.swapWith(octree.nodeData);
+	data.swapWith(octree.data);
+	fixNodeDataPointers(oldDataRoot);
+	return (*this);
 }
 
 
@@ -33,7 +61,7 @@ __device__ __host__ inline void Octree<ElemType>::reinit(AABB bounds){
 /** ========================================================== **/
 /*| push & build |*/
 template<typename ElemType>
-__device__ __host__ inline void Octree<ElemType>::reset(){
+__host__ inline void Octree<ElemType>::reset(){
 	tree.clear();
 	nodeData.clear();
 	data.clear();
@@ -41,12 +69,12 @@ __device__ __host__ inline void Octree<ElemType>::reset(){
 	nodeData.flush(1);
 }
 template<typename ElemType>
-__device__ __host__ inline void Octree<ElemType>::push(const Stacktor<ElemType> &objcets){
+__host__ inline void Octree<ElemType>::push(const Stacktor<ElemType> &objcets){
 	for (int i = 0; i < objcets.size(); i++)
 		push(objcets[i]);
 }
 template<typename ElemType>
-__device__ __host__ inline void Octree<ElemType>::push(const ElemType &object){
+__host__ inline void Octree<ElemType>::push(const ElemType &object){
 	AABB box = Shapes::boundingBox<ElemType>(object);
 	if (data.empty()) tree[0].bounds = box;
 	else{
@@ -62,21 +90,26 @@ __device__ __host__ inline void Octree<ElemType>::push(const ElemType &object){
 	nodeData[0].push(data + data.size() - 1);
 }
 template<typename ElemType>
-__device__ __host__ inline void Octree<ElemType>::build(){
+__host__ inline void Octree<ElemType>::build(){
 	split(0, 0);
 	reduceNodes();
+}
+template<typename ElemType>
+__host__ inline void Octree<ElemType>::reduceNodes() {
+	for (int i = 0; i < tree.size(); i++)
+		reduceNode(i);
 }
 
 
 /** ========================================================== **/
 /*| put |*/
 template<typename ElemType>
-__device__ __host__ inline void Octree<ElemType>::put(const Stacktor<ElemType> &objcets){
+__host__ inline void Octree<ElemType>::put(const Stacktor<ElemType> &objcets){
 	for (int i = 0; i < objcets.size(); i++)
 		put(objcets[i]);
 }
 template<typename ElemType>
-__device__ __host__ inline void Octree<ElemType>::put(const ElemType &object){
+__host__ inline void Octree<ElemType>::put(const ElemType &object){
 	int dataIndex = data.size();
 	pushData(object);
 	put(data + dataIndex, 0, 0);
@@ -253,30 +286,39 @@ __device__ __host__ inline void Octree<ElemType>::RaycastHit::set(const ElemType
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 
+/** ========================================================== **/
+template<typename ElemType>
+__device__ __host__ inline void Octree<ElemType>::fixTreeNodePointers(const TreeNode *falseRoot) {
+	TreeNode *newRoot = (tree + 0);
+	if (falseRoot != newRoot) {
+		for (int i = 0; i < tree.size(); i++)
+			if (tree[i].children != NULL)
+				tree[i].children = (newRoot + (tree[i].children - falseRoot));
+	}
+}
+template<typename ElemType>
+__device__ __host__ inline void Octree<ElemType>::fixNodeDataPointers(const ElemType *falseRoot) {
+	ElemType *newRoot = (data + 0);
+	if (falseRoot != newRoot) {
+		for (int i = 0; i < nodeData.size(); i++)
+			for (int j = 0; j < nodeData[i].size(); j++)
+				if (nodeData[i][j] != NULL) nodeData[i][j] = (newRoot + (nodeData[i][j] - falseRoot));
+	}
+}
 
 /** ========================================================== **/
 template<typename ElemType>
 __device__ __host__ inline void Octree<ElemType>::pushData(const ElemType &object) {
 	ElemType *oldRoot = (data + 0);
 	data.push(object);
-	ElemType *newRoot = (data + 0);
-	if (oldRoot != newRoot) {
-		for (int i = 0; i < nodeData.size(); i++)
-			for (int j = 0; j < nodeData[i].size(); j++)
-				if (nodeData[i][j] != NULL) nodeData[i][j] = (newRoot + (nodeData[i][j] - oldRoot));
-	}
+	fixNodeDataPointers(oldRoot);
 }
 template<typename ElemType>
 __device__ __host__ inline void Octree<ElemType>::flushTree(){
 	TreeNode *oldRoot = (tree + 0);
 	tree.flush(8);
 	nodeData.flush(8);
-	TreeNode *newRoot = (tree + 0);
-	if (oldRoot != newRoot){
-		for (int i = 0; i < tree.size(); i++)
-			if (tree[i].children != NULL)
-				tree[i].children = (newRoot + (tree[i].children - oldRoot));
-	}
+	fixTreeNodePointers(oldRoot);
 }
 
 /** ========================================================== **/
@@ -337,11 +379,6 @@ __device__ __host__ inline void Octree<ElemType>::splitNode(int index, Vertex ce
 	for (int i = 0; i < 8; i++){
 		nodeData[(startChild + i) - (tree + 0)].clear();
 	}
-}
-template<typename ElemType>
-__device__ __host__ inline void Octree<ElemType>::reduceNodes(){
-	for (int i = 0; i < tree.size(); i++)
-		reduceNode(i);
 }
 template<typename ElemType>
 __device__ __host__ inline void Octree<ElemType>::reduceNode(int index){

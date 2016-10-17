@@ -72,8 +72,12 @@ public:
 	/** ########################################################################## **/
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
-	__device__ __host__ inline Octree(AABB bounds = AABB(-OCTREE_DEFAULT_SIZE, OCTREE_DEFAULT_SIZE));
-	__device__ __host__ inline void reinit(AABB bounds = AABB(-OCTREE_DEFAULT_SIZE, OCTREE_DEFAULT_SIZE));
+	__host__ inline Octree(AABB bounds = AABB(-OCTREE_DEFAULT_SIZE, OCTREE_DEFAULT_SIZE));
+	__host__ inline void reinit(AABB bounds = AABB(-OCTREE_DEFAULT_SIZE, OCTREE_DEFAULT_SIZE));
+	__host__ inline Octree(const Octree &octree);
+	__host__ inline Octree& operator=(const Octree &octree);
+	__host__ inline Octree(Octree &&octree);
+	__host__ inline Octree& operator=(Octree &&octree);
 
 
 
@@ -86,16 +90,17 @@ public:
 
 	/** ========================================================== **/
 	/*| push & build |*/
-	__device__ __host__ inline void reset();
-	__device__ __host__ inline void push(const Stacktor<ElemType> &objcets);
-	__device__ __host__ inline void push(const ElemType &object);
-	__device__ __host__ inline void build();
+	__host__ inline void reset();
+	__host__ inline void push(const Stacktor<ElemType> &objcets);
+	__host__ inline void push(const ElemType &object);
+	__host__ inline void build();
+	__host__ inline void reduceNodes();
 
 	
 	/** ========================================================== **/
 	/*| put |*/
-	__device__ __host__ inline void put(const Stacktor<ElemType> &objcets);
-	__device__ __host__ inline void put(const ElemType &elem);
+	__host__ inline void put(const Stacktor<ElemType> &objcets);
+	__host__ inline void put(const ElemType &elem);
 
 
 	/** ========================================================== **/
@@ -143,6 +148,10 @@ private:
 	/** ########################################################################## **/
 
 	/** ========================================================== **/
+	__device__ __host__ inline void fixTreeNodePointers(const TreeNode *falseRoot);
+	__device__ __host__ inline void fixNodeDataPointers(const ElemType *falseRoot);
+
+	/** ========================================================== **/
 	__device__ __host__ inline void pushData(const ElemType &object);
 	__device__ __host__ inline void flushTree();
 
@@ -150,7 +159,6 @@ private:
 	__device__ __host__ __noinline__ void split(int index, int depth);
 	__device__ __host__ inline bool splittingMakesSence(int index);
 	__device__ __host__ inline void splitNode(int index, Vertex center);
-	__device__ __host__ inline void reduceNodes();
 	__device__ __host__ inline void reduceNode(int index);
 
 	/** ========================================================== **/

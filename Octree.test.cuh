@@ -55,6 +55,13 @@ namespace OctreeTest{
 		// ######### DEVICE RENDER KERNEL: ########
 		// ########################################
 		__global__ static void color(const Octree<> *octree, Color *image, const Transform trans, int width, int height, int frame){
+			/*
+			// This should not compile:
+			Octree<> oct = Octree<>();
+			Octree<> oct1 = oct;
+			Octree<> oct2(oct1);
+			//*/
+
 			register int blocksWidth = numBlocksWidth(width);
 			register int lineId = (blockIdx.x / blocksWidth);
 			register int columnId = (blockIdx.x - (lineId * blocksWidth));
@@ -145,7 +152,8 @@ namespace OctreeTest{
 		// ########################################
 		// ######## OCTREE CONSTRUCTION: ##########
 		// ########################################
-		inline static void constructOctree(const Stacktor<PolyMesh> &meshes, Octree<> &octree, Octree<> *&devOctree){
+		inline static Octree<> constructOctree(const Stacktor<PolyMesh> &meshes, Octree<> *&devOctree){
+			Octree<> octree;
 			Vertex minVert = meshes[0].vertex(0);
 			Vertex maxVert = meshes[0].vertex(0);
 			for (int i = 0; i < meshes.size(); i++)
@@ -171,10 +179,16 @@ namespace OctreeTest{
 				//*/
 				std::cout << "PUSHED " << i << std::endl;
 			}
+			/*
 			octree.build();
+			/*/
+			octree.reduceNodes();
+			//*/
 			devOctree = octree.upload();
 			if (devOctree != NULL) std::cout << "OCTREE UPLOADED" << std::endl;
 			else std::cout << "OCTREE UPLOAD FAILED" << std::endl;
+			Octree<> tmpClone = octree;
+			return octree;
 		}
 
 
@@ -318,7 +332,7 @@ namespace OctreeTest{
 				// ################################
 				// ############# DATA: ############
 				Stacktor<PolyMesh> meshes; readMeshes(meshes);
-				constructOctree(meshes, octree, devOctree);
+				octree = constructOctree(meshes, devOctree);
 				// ############ WINDOW: ###########
 				devColor = NULL;
 				devColWidth = 0;
