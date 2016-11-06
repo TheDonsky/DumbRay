@@ -1,6 +1,7 @@
 #pragma once
 #include<math.h>
 #include"Vector3.h"
+#include"Transform.h"
 #include"Ray.h"
 
 
@@ -34,6 +35,79 @@ struct Triangle{
 	/** ########################################################################## **/
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
+	/** Operators: **/
+
+
+	/** ========================================================== **/
+	/*| + |*/
+	// Same as t
+	__dumb__ Triangle operator+()const;
+	// Sum (Triangle(a + t.a, b + t.b, c +_ t.c))
+	__dumb__ Triangle operator+(const Triangle &t)const;
+	// Shifts triangle node by node
+	__dumb__ Triangle& operator+=(const Triangle &t);
+	// Same Triangle, shifted by v
+	__dumb__ Triangle operator+(const Vector3 &v)const;
+	// Shifts Triangle by v
+	__dumb__ Triangle& operator+=(const Vector3 &v);
+	
+	/** ========================================================== **/
+	/*| - |*/
+	// Inverses each node(Triangle(-a, -b, -c))
+	__dumb__ Triangle operator-()const;
+	// Subtraction (Triangle(a - t.a, b - t.b, c - t.c))
+	__dumb__ Triangle operator-(const Triangle &t)const;
+	// Shifts triangle node by node
+	__dumb__ Triangle& operator-=(const Triangle &t);
+	// Same triangle, shifted by v
+	__dumb__ Triangle operator-(const Vector3 &v)const;
+	// Shifts triangle by v
+	__dumb__ Triangle& operator-=(const Vector3 &v);
+
+	/** ========================================================== **/
+	/*| * |*/
+	// Same triangle scaled by factor of f
+	__dumb__ Triangle operator*(const float f)const;
+	// t scaled by factor of f
+	__dumb__ friend Triangle operator*(const float f, const Triangle &t);
+	// Scales by factor of f
+	__dumb__ Triangle& operator*=(const float f);
+	// Same triangle, scaled by v (Triangle(a^v, b^v, c^v))
+	__dumb__ Triangle operator*(const Vector3 &v)const;
+	// Scales triangle by v
+	__dumb__ Triangle& operator*=(const Vector3 &v);
+
+	/** ========================================================== **/
+	/*| / |*/
+	// Same triangle, downscaled by a factor of f
+	__dumb__ Triangle operator/(const float f)const;
+	// Triangle, produced by inversing each node of t and multiplying by f
+	__dumb__ friend Triangle operator/(const float f, const Triangle &t);
+	// Downscales by a factor of f
+	__dumb__ Triangle& operator/=(const float f);
+	// Same triangle, downscaled by v (Triangle(a/v, b/v, c/v))
+	__dumb__ Triangle operator/(const Vector3 &v)const;
+	// Scales triangle by v
+	__dumb__ Triangle& operator/=(const Vector3 &v);
+
+	/** ========================================================== **/
+	/*| <<=>> |*/
+	// Transformed triangle
+	__dumb__ Triangle operator>>(const Transform &t)const;
+	// Transform a triangle
+	__dumb__ Triangle& operator>>=(const Transform &t);
+	// Detransformed triangle
+	__dumb__ Triangle operator<<(const Transform &t)const;
+	// Detransform a triangle
+	__dumb__ Triangle& operator<<=(const Transform &t);
+
+
+
+
+
+	/** ########################################################################## **/
+	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+	/** ########################################################################## **/
 	/** Functions: **/
 
 
@@ -58,7 +132,14 @@ struct Triangle{
 	/*| Surface |*/
 
 	// Calculates the surface of the triangle
-	__dumb__ float Surface()const;
+	__dumb__ float surface()const;
+
+
+	/** ========================================================== **/
+	/*| Normals |*/
+
+	// Calculates the surface normal
+	__dumb__ Vector3 normal()const;
 
 
 	/** ========================================================== **/

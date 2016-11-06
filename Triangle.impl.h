@@ -22,6 +22,159 @@ __dumb__ Triangle::Triangle(const Vertex &A, const Vertex &B, const Vertex &C){
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
+/** Operators: **/
+
+
+/** ========================================================== **/
+/*| + |*/
+// Same as t
+__dumb__ Triangle Triangle::operator+()const {
+	return (*this);
+}
+// Sum (Triangle(a + t.a, b + t.b, c +_ t.c))
+__dumb__ Triangle Triangle::operator+(const Triangle &t)const {
+	return Triangle(a + t.a, b + t.b, c + t.c);
+}
+// Shifts triangle node by node
+__dumb__ Triangle& Triangle::operator+=(const Triangle &t) {
+	a += t.a;
+	b += t.b;
+	c += t.c;
+	return(*this);
+}
+// Same Triangle, shifted by v
+__dumb__ Triangle Triangle::operator+(const Vector3 &v)const {
+	return Triangle(a + v, b + v, c + v);
+}
+// Shifts Triangle by v
+__dumb__ Triangle& Triangle::operator+=(const Vector3 &v) {
+	a += v;
+	b += v;
+	c += v;
+	return (*this);
+}
+
+/** ========================================================== **/
+/*| - |*/
+// Inverses each node(Triangle(-a, -b, -c))
+__dumb__ Triangle Triangle::operator-()const {
+	return Triangle(-a, -b, -c);
+}
+// Subtraction (Triangle(a - t.a, b - t.b, c - t.c))
+__dumb__ Triangle Triangle::operator-(const Triangle &t)const {
+	return Triangle(a - t.a, b - t.b, c - t.c);
+}
+// Shifts triangle node by node
+__dumb__ Triangle& Triangle::operator-=(const Triangle &t) {
+	a -= t.a;
+	b -= t.b;
+	c -= t.c;
+	return (*this);
+}
+// Same triangle, shifted by v
+__dumb__ Triangle Triangle::operator-(const Vector3 &v)const {
+	return Triangle(a - v, b - v, c - v);
+}
+// Shifts triangle by v
+__dumb__ Triangle& Triangle::operator-=(const Vector3 &v) {
+	a -= v;
+	b -= v;
+	c -= v;
+	return (*this);
+}
+
+/** ========================================================== **/
+/*| * |*/
+// Same triangle scaled by factor of f
+__dumb__ Triangle Triangle::operator*(const float f)const {
+	return Triangle(a * f, b * f, c * f);
+}
+// t scaled by factor of f
+__dumb__ Triangle operator*(const float f, const Triangle &t) {
+	return (t * f);
+}
+// Scales by factor of f
+__dumb__ Triangle& Triangle::operator*=(const float f) {
+	a *= f;
+	b *= f;
+	c *= f;
+	return (*this);
+}
+// Same triangle, scaled by v (Triangle(a^v, b^v, c^v))
+__dumb__ Triangle Triangle::operator*(const Vector3 &v)const {
+	return Triangle(a^v, b^v, c^v);
+}
+// Scales triangle by v
+__dumb__ Triangle& Triangle::operator*=(const Vector3 &v) {
+	a ^= v;
+	b ^= v;
+	c ^= v;
+	return (*this);
+}
+
+/** ========================================================== **/
+/*| / |*/
+// Same triangle, downscaled by a factor of f
+__dumb__ Triangle Triangle::operator/(const float f)const {
+	register float fInv = 1.0f / f;
+	return Triangle(a * fInv, b * fInv, c * fInv);
+}
+// Triangle, produced by inversing each node of t and multiplying by f
+__dumb__ Triangle operator/(const float f, const Triangle &t) {
+	return Triangle(f / t.a, f / t.b, f / t.c);
+}
+// Downscales by a factor of f
+__dumb__ Triangle& Triangle::operator/=(const float f) {
+	register float fInv = 1.0f / f;
+	a *= fInv;
+	b *= fInv;
+	c *= fInv;
+	return (*this);
+}
+// Same triangle, downscaled by v (Triangle(a/v, b/v, c/v))
+__dumb__ Triangle Triangle::operator/(const Vector3 &v)const {
+	return Triangle(a / v, b / v, c / v);
+}
+// Scales triangle by v
+__dumb__ Triangle& Triangle::operator/=(const Vector3 &v) {
+	a /= v;
+	b /= v;
+	c /= v;
+	return (*this);
+}
+
+/** ========================================================== **/
+/*| <<=>> |*/
+// Transformed triangle
+__dumb__ Triangle Triangle::operator>>(const Transform &t)const{
+	return Triangle(a >> t, b >> t, c >> t);
+}
+// Transform a triangle
+__dumb__ Triangle& Triangle::operator>>=(const Transform &t) {
+	a >>= t;
+	b >>= t;
+	c >>= t;
+	return (*this);
+}
+// Detransformed triangle
+__dumb__ Triangle Triangle::operator<<(const Transform &t)const {
+	return Triangle(a << t, b << t, c << t);
+}
+// Detransform a triangle
+__dumb__ Triangle& Triangle::operator<<=(const Transform &t) {
+	a <<= t;
+	b <<= t;
+	c <<= t;
+	return (*this);
+}
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
 /** Functions: **/
 
 
@@ -68,8 +221,17 @@ __dumb__ void Triangle::sortOnZaxis(){
 /*| Surface |*/
 
 // Calculates the surface of the triangle
-__dumb__ float Triangle::Surface()const{
+__dumb__ float Triangle::surface()const{
 	return(((b - a) & (c - a)).magnitude() * 0.5f);
+}
+
+
+/** ========================================================== **/
+/*| Normals |*/
+
+// Calculates the surface normal
+__dumb__ Vector3 Triangle::normal()const {
+	return ((c - a) & (b - a));
 }
 
 
