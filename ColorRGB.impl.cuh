@@ -46,6 +46,79 @@ __dumb__ ColorRGB::ColorRGB(const Vector3 &v) {
 
 
 /** -------------------------------------------------------------------------- **/
+/** Operators: **/
+
+__dumb__ ColorRGB ColorRGB::operator+()const {
+	return (*this);
+}
+__dumb__ ColorRGB ColorRGB::operator+(const ColorRGB &c)const {
+	return ColorRGB(r + c.r, g + c.g, b + c.b);
+}
+__dumb__ ColorRGB& ColorRGB::operator+=(const ColorRGB &c) {
+	r += c.r;
+	g += c.g;
+	b += c.b;
+	return (*this);
+}
+
+__dumb__ ColorRGB ColorRGB::operator-()const {
+	return ColorRGB(-r, -g, -b);
+}
+__dumb__ ColorRGB ColorRGB::operator-(const ColorRGB &c)const {
+	return ColorRGB(r - c.r, g - c.g, b - c.b);
+}
+__dumb__ ColorRGB& ColorRGB::operator-=(const ColorRGB &c) {
+	r -= c.r;
+	g -= c.g;
+	b -= c.b;
+	return (*this);
+}
+
+__dumb__ ColorRGB ColorRGB::operator*(const ColorRGB &c)const {
+	return ColorRGB(r * c.r, g * c.g, b * c.b);
+}
+__dumb__ ColorRGB ColorRGB::operator*(float f)const {
+	return ColorRGB(r * f, g * f, b * f);
+}
+__dumb__ ColorRGB& ColorRGB::operator*=(const ColorRGB &c) {
+	r *= c.r;
+	g *= c.g;
+	b *= c.b;
+	return (*this);
+}
+__dumb__ ColorRGB& ColorRGB::operator*=(float f) {
+	r *= f;
+	g *= f;
+	b *= f;
+	return (*this);
+}
+
+__dumb__ ColorRGB ColorRGB::operator/(const ColorRGB &c)const {
+	return ColorRGB(r * c.r, g * c.g, b * c.b);
+}
+__dumb__ ColorRGB ColorRGB::operator/(float f)const {
+	register float fInv = 1.0f / f;
+	return ColorRGB(r * fInv, g * fInv, b * fInv);
+}
+__dumb__ ColorRGB& ColorRGB::operator/=(const ColorRGB &c) {
+	r /= c.r;
+	g /= c.g;
+	b /= c.b;
+	return (*this);
+}
+__dumb__ ColorRGB& ColorRGB::operator/=(float f) {
+	register float fInv = 1.0f / f;
+	r *= fInv;
+	g *= fInv;
+	b *= fInv;
+	return (*this);
+}
+
+
+
+
+
+/** -------------------------------------------------------------------------- **/
 /** Stream operators: **/
 std::istream& operator >> (std::istream &stream, ColorRGB &c) {
 	return(stream >> c.r >> c.g >> c.b);

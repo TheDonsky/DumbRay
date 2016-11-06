@@ -30,6 +30,31 @@ struct ColorRGB {
 	__dumb__ operator Vector3()const;
 	__dumb__ ColorRGB(const Color &c);
 	__dumb__ ColorRGB(const Vector3 &v);
+
+
+
+
+
+	/** -------------------------------------------------------------------------- **/
+	/** Operators: **/
+
+	__dumb__ ColorRGB operator+()const;
+	__dumb__ ColorRGB operator+(const ColorRGB &c)const;
+	__dumb__ ColorRGB& operator+=(const ColorRGB &c);
+
+	__dumb__ ColorRGB operator-()const;
+	__dumb__ ColorRGB operator-(const ColorRGB &c)const;
+	__dumb__ ColorRGB& operator-=(const ColorRGB &c);
+
+	__dumb__ ColorRGB operator*(const ColorRGB &c)const;
+	__dumb__ ColorRGB operator*(float f)const;
+	__dumb__ ColorRGB& operator*=(const ColorRGB &c);
+	__dumb__ ColorRGB& operator*=(float f);
+
+	__dumb__ ColorRGB operator/(const ColorRGB &c)const;
+	__dumb__ ColorRGB operator/(float f)const;
+	__dumb__ ColorRGB& operator/=(const ColorRGB &c);
+	__dumb__ ColorRGB& operator/=(float f);
 };
 
 
