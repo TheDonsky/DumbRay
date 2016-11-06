@@ -6,7 +6,7 @@
 
 
 class PolyMesh;
-SPECIALISE_STACKTOR_TYPE_TOOLS__FOR(PolyMesh);
+SPECIALISE_TYPE_TOOLS__FOR(PolyMesh);
 
 
 
@@ -88,6 +88,7 @@ public:
 	/** ########################################################################## **/
 	__device__ __host__ inline void bake(BakedTriMesh &mesh)const;
 	__device__ __host__ inline BakedTriMesh bake()const;
+	__device__ __host__ inline operator BakedTriMesh()const;
 
 
 
@@ -119,7 +120,7 @@ private:
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
 	/** Friends: **/
-	DEFINE_STACKTOR_TYPE_TOOLS_FRIENDSHIP_FOR(PolyMesh);
+	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(PolyMesh);
 
 
 

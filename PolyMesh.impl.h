@@ -155,6 +155,9 @@ __device__ __host__ inline BakedTriMesh PolyMesh::bake()const{
 	bake(mesh);
 	return(mesh);
 }
+__device__ __host__ inline PolyMesh::operator BakedTriMesh()const {
+	return bake();
+}
 
 
 
@@ -225,44 +228,44 @@ IMPLEMENT_CUDA_LOAD_INTERFACE_FOR(PolyMesh);
 /** ########################################################################## **/
 /** Friends: **/
 template<>
-__device__ __host__ inline void StacktorTypeTools<PolyMesh>::init(PolyMesh &m){
-	StacktorTypeTools<PolyMesh::VertexList>::init(m.data.verts);
-	StacktorTypeTools<PolyMesh::VertexList>::init(m.data.norms);
-	StacktorTypeTools<PolyMesh::VertexList>::init(m.data.texs);
-	StacktorTypeTools<PolyMesh::FaceList>::init(m.faces);
+__device__ __host__ inline void TypeTools<PolyMesh>::init(PolyMesh &m){
+	TypeTools<PolyMesh::VertexList>::init(m.data.verts);
+	TypeTools<PolyMesh::VertexList>::init(m.data.norms);
+	TypeTools<PolyMesh::VertexList>::init(m.data.texs);
+	TypeTools<PolyMesh::FaceList>::init(m.faces);
 }
 template<>
-__device__ __host__ inline void StacktorTypeTools<PolyMesh>::dispose(PolyMesh &m){
-	StacktorTypeTools<PolyMesh::VertexList>::dispose(m.data.verts);
-	StacktorTypeTools<PolyMesh::VertexList>::dispose(m.data.norms);
-	StacktorTypeTools<PolyMesh::VertexList>::dispose(m.data.texs);
-	StacktorTypeTools<PolyMesh::FaceList>::dispose(m.faces);
+__device__ __host__ inline void TypeTools<PolyMesh>::dispose(PolyMesh &m){
+	TypeTools<PolyMesh::VertexList>::dispose(m.data.verts);
+	TypeTools<PolyMesh::VertexList>::dispose(m.data.norms);
+	TypeTools<PolyMesh::VertexList>::dispose(m.data.texs);
+	TypeTools<PolyMesh::FaceList>::dispose(m.faces);
 }
 template<>
-__device__ __host__ inline void StacktorTypeTools<PolyMesh>::swap(PolyMesh &a, PolyMesh &b){
-	StacktorTypeTools<PolyMesh::VertexList>::swap(a.data.verts, b.data.verts);
-	StacktorTypeTools<PolyMesh::VertexList>::swap(a.data.norms, b.data.norms);
-	StacktorTypeTools<PolyMesh::VertexList>::swap(a.data.texs, b.data.texs);
-	StacktorTypeTools<PolyMesh::FaceList>::swap(a.faces, b.faces);
+__device__ __host__ inline void TypeTools<PolyMesh>::swap(PolyMesh &a, PolyMesh &b){
+	TypeTools<PolyMesh::VertexList>::swap(a.data.verts, b.data.verts);
+	TypeTools<PolyMesh::VertexList>::swap(a.data.norms, b.data.norms);
+	TypeTools<PolyMesh::VertexList>::swap(a.data.texs, b.data.texs);
+	TypeTools<PolyMesh::FaceList>::swap(a.faces, b.faces);
 }
 template<>
-__device__ __host__ inline void StacktorTypeTools<PolyMesh>::transfer(PolyMesh &src, PolyMesh &dst){
-	StacktorTypeTools<PolyMesh::VertexList>::transfer(src.data.verts, dst.data.verts);
-	StacktorTypeTools<PolyMesh::VertexList>::transfer(src.data.norms, dst.data.norms);
-	StacktorTypeTools<PolyMesh::VertexList>::transfer(src.data.texs, dst.data.texs);
-	StacktorTypeTools<PolyMesh::FaceList>::transfer(src.faces, dst.faces);
+__device__ __host__ inline void TypeTools<PolyMesh>::transfer(PolyMesh &src, PolyMesh &dst){
+	TypeTools<PolyMesh::VertexList>::transfer(src.data.verts, dst.data.verts);
+	TypeTools<PolyMesh::VertexList>::transfer(src.data.norms, dst.data.norms);
+	TypeTools<PolyMesh::VertexList>::transfer(src.data.texs, dst.data.texs);
+	TypeTools<PolyMesh::FaceList>::transfer(src.faces, dst.faces);
 }
 
 template<>
-inline bool StacktorTypeTools<PolyMesh>::prepareForCpyLoad(const PolyMesh *source, PolyMesh *hosClone, PolyMesh *devTarget, int count){
+inline bool TypeTools<PolyMesh>::prepareForCpyLoad(const PolyMesh *source, PolyMesh *hosClone, PolyMesh *devTarget, int count){
 	int i = 0;
 	for (i = 0; i < count; i++){
 		PolyMesh::VertexList *srcData = (PolyMesh::VertexList*)(&(source[i].data));
 		PolyMesh::VertexList *hosData = (PolyMesh::VertexList*)(&(hosClone[i].data));
 		PolyMesh::VertexList *devData = (PolyMesh::VertexList*)(&((devTarget + i)->data));
-		if (!StacktorTypeTools<PolyMesh::VertexList>::prepareForCpyLoad(srcData, hosData, devData, 3)) break;
-		if (!StacktorTypeTools<PolyMesh::FaceList>::prepareForCpyLoad(&(source[i].faces), &(hosClone[i].faces), &((devTarget + i)->faces), 1)){
-			StacktorTypeTools<PolyMesh::VertexList>::undoCpyLoadPreparations(srcData, hosData, devData, 3);
+		if (!TypeTools<PolyMesh::VertexList>::prepareForCpyLoad(srcData, hosData, devData, 3)) break;
+		if (!TypeTools<PolyMesh::FaceList>::prepareForCpyLoad(&(source[i].faces), &(hosClone[i].faces), &((devTarget + i)->faces), 1)){
+			TypeTools<PolyMesh::VertexList>::undoCpyLoadPreparations(srcData, hosData, devData, 3);
 			break;
 		}
 	}
@@ -273,24 +276,24 @@ inline bool StacktorTypeTools<PolyMesh>::prepareForCpyLoad(const PolyMesh *sourc
 	return(true);
 }
 template<>
-inline void StacktorTypeTools<PolyMesh>::undoCpyLoadPreparations(const PolyMesh *source, PolyMesh *hosClone, PolyMesh *devTarget, int count){
+inline void TypeTools<PolyMesh>::undoCpyLoadPreparations(const PolyMesh *source, PolyMesh *hosClone, PolyMesh *devTarget, int count){
 	for (int i = 0; i < count; i++){
 		PolyMesh::VertexList *srcData = (PolyMesh::VertexList*)(&(source[i].data));
 		PolyMesh::VertexList *hosData = (PolyMesh::VertexList*)(&(hosClone[i].data));
 		PolyMesh::VertexList *devData = (PolyMesh::VertexList*)(&((devTarget + i)->data));
-		StacktorTypeTools<PolyMesh::VertexList>::undoCpyLoadPreparations(srcData, hosData, devData, 3);
-		StacktorTypeTools<PolyMesh::FaceList>::undoCpyLoadPreparations(&(source[i].faces), &(hosClone[i].faces), &((devTarget + i)->faces), 1);
+		TypeTools<PolyMesh::VertexList>::undoCpyLoadPreparations(srcData, hosData, devData, 3);
+		TypeTools<PolyMesh::FaceList>::undoCpyLoadPreparations(&(source[i].faces), &(hosClone[i].faces), &((devTarget + i)->faces), 1);
 	}
 }
 template<>
-inline bool StacktorTypeTools<PolyMesh>::devArrayNeedsToBeDisoposed(){
-	return(StacktorTypeTools<PolyMesh::VertexList>::devArrayNeedsToBeDisoposed() || StacktorTypeTools<PolyMesh::FaceList>::devArrayNeedsToBeDisoposed());
+inline bool TypeTools<PolyMesh>::devArrayNeedsToBeDisoposed(){
+	return(TypeTools<PolyMesh::VertexList>::devArrayNeedsToBeDisoposed() || TypeTools<PolyMesh::FaceList>::devArrayNeedsToBeDisoposed());
 }
 template<>
-inline bool StacktorTypeTools<PolyMesh>::disposeDevArray(PolyMesh *arr, int count){
+inline bool TypeTools<PolyMesh>::disposeDevArray(PolyMesh *arr, int count){
 	for (int i = 0; i < count; i++){
-		if (!StacktorTypeTools<PolyMesh::VertexList>::disposeDevArray((PolyMesh::VertexList*)(&((arr + i)->data)), 3)) return(false);
-		if (!StacktorTypeTools<PolyMesh::FaceList>::disposeDevArray(&((arr + i)->faces), 1)) return(false);
+		if (!TypeTools<PolyMesh::VertexList>::disposeDevArray((PolyMesh::VertexList*)(&((arr + i)->data)), 3)) return(false);
+		if (!TypeTools<PolyMesh::FaceList>::disposeDevArray(&((arr + i)->faces), 1)) return(false);
 	}
 	return(true);
 }
