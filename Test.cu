@@ -1,3 +1,4 @@
+//*
 #include"Stacktor.test.cuh"
 #include"PolyMesh.h"
 #include"MeshReader.h"
@@ -7,6 +8,13 @@
 #include"Octree.test.cuh"
 #include"ColorRGB.cuh"
 #include"DummyShader.cuh"
+#include"Vector2.h"
+#include"DumbScript.h"
+#include"World.cuh"
+#include"curand.h"
+#include"BackwardTracer.cuh"
+#include"Generic.test.cuh"
+#include"Lense.test.cuh"
 
 
 
@@ -176,7 +184,7 @@ __global__ void testConstants(){
 }
 
 __dumb__ void makeMaterialShout(const Material<BakedTriFace> &material) {
-	material.cast(BakedTriFace(), Material<BakedTriFace>::HitInfo());
+	material.cast(Material<BakedTriFace>::HitInfo());
 }
 
 __global__ void materialShoutFromKernel(const Material<BakedTriFace> material) {
@@ -192,7 +200,63 @@ static void testMaterial() {
 	material.dispose();
 }
 
+__global__ void testPowKernel() {
+	printf("Pow(4, 1.5)=%f (DEVICE)\n", pow(4.0f, 1.5f));
+}
+
+static void testPow() {
+	printf("Pow(4, 1.5)=%f (HOST)\n", pow(4.0f, 1.5f));
+	testPowKernel<<<1, 1>>>();
+	cudaDeviceSynchronize();
+}
+
+static void testDumbBackTracer() {
+	World<BakedTriFace> world;
+	Camera camera;
+	Matrix<ColorRGB> matrix;
+	DumbBackTracer tracer(&world, &camera, &matrix, true);
+	tracer.set(&world, &camera, &matrix, true);
+	tracer.reset();
+	tracer.canIterate();
+	tracer.iterate();
+	tracer.world();
+	tracer.camera();
+	tracer.matrix();
+	tracer.lastIteration();
+	tracer.iteration();
+	tracer.onHost();
+	tracer.dispose();
+}
+
+static void testWorld() {
+	World<> world;
+	Octree<World<>::HitNode>::RaycastHit hit;
+	Material<BakedTriFace>::ShaderReport report;
+	Photon photon(Ray(Vector3::zero(), Vector3::front()), ColorRGB(0, 0, 0));
+	world.cast(photon, hit);
+	world.cast(photon, report, Vector3::zero());
+	world.cast(photon, hit, report, Vector3::zero());
+}
+
+__global__ static void kernel() {
+}
+
 int main(){
+	kernel<<<1, 1>>>();
+	cudaDeviceSynchronize();
+
+	GenericTest::test();
+	LenseTest::testMemory();
+
+	testDumbBackTracer();
+	testPow();
+	testWorld();
+
+	DumbScript::Tree tree;
+
+	Vector2 vec = Vector3(0, 0, 0);
+	std::cout << vec << std::endl;
+
 	ColorRGB c = Vector3(0, 0, 0);
 	testConstants<<<1, 1>>>();
 	cudaDeviceSynchronize();
@@ -248,3 +312,4 @@ int main(){
 	}
 	windowTrapThread.join();
 }
+//*/
