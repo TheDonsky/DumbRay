@@ -45,6 +45,7 @@ public:
 	__dumb__ Photon toScreenSpace(const Photon &photon)const;
 
 	inline Lense *upload()const;
+	inline static Lense* upload(const Lense *source, int count = 1);
 };
 
 

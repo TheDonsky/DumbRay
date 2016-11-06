@@ -56,6 +56,9 @@ __dumb__ Photon Lense::toScreenSpace(const Photon &photon)const {
 inline Lense* Lense::upload()const {
 	return ((Lense*)Generic<LenseFunctionPack>::upload());
 }
+inline Lense* Lense::upload(const Lense *source, int count) {
+	return ((Lense*)Generic<LenseFunctionPack>::upload(source, count));
+}
 
 
 
