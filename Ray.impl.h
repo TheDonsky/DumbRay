@@ -11,16 +11,35 @@
 /** -------------------------------------------------------------------------- **/
 /** Construction: **/
 __device__ __host__ inline Ray::Ray(){}
-__device__ __host__ inline Ray::Ray(const Vector3 &or, const Vector3 &dir){
-	origin = or;
+__device__ __host__ inline Ray::Ray(const Vector3 &org, const Vector3 &dir){
+	origin = org;
 	direction = dir;
 }
 __device__ __host__ inline Ray::Ray(const Ray &r){
 	origin = r.origin;
 	direction = r.direction;
 }
-__device__ __host__ inline Ray& Ray::operator()(const Vector3 &or, const Vector3 &dir){
-	SetAndReturnThis(or, dir);
+__device__ __host__ inline Ray& Ray::operator()(const Vector3 &org, const Vector3 &dir){
+	SetAndReturnThis(org, dir);
+}
+
+
+
+
+
+/** -------------------------------------------------------------------------- **/
+/** Operators: **/
+__device__ __host__ inline Ray Ray::operator>>(const Transform &trans)const {
+	return Ray(origin >> trans, (direction - trans.getPosition()) >> trans);
+}
+__device__ __host__ inline Ray& Ray::operator>>=(const Transform &trans) {
+	return ((*this) = ((*this) >> trans));
+}
+__device__ __host__ inline Ray Ray::operator<<(const Transform &trans)const {
+	return Ray(origin << trans, (direction + trans.getPosition()) << trans);
+}
+__device__ __host__ inline Ray& Ray::operator<<=(const Transform &trans) {
+	return ((*this) = ((*this) << trans));
 }
 
 
