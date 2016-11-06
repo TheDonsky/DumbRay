@@ -10,10 +10,15 @@ template<typename HitType>
 class Material{
 public:
 	struct HitInfo {
+		HitType object;
 		Photon photon;
 		Vector3 hitPoint;
 		float distance;
-		Vector3 cameraPosition;
+		Vector3 observer;
+
+		__dumb__ HitInfo();
+		__dumb__ HitInfo(const HitType &obj, const Photon &p, const Vector3 &obsPos);
+		__dumb__ HitInfo(const HitType &obj, const Photon &p, const Vector3 &hPoint, float dist, const Vector3 &obsPos);
 	};
 
 
@@ -40,16 +45,16 @@ public:
 	
 	
 	
-	__dumb__ ShaderReport cast(const HitType &object, const HitInfo &info)const;
+	__dumb__ ShaderReport cast(const HitInfo &info)const;
 
 
 
 
 
 public:
-	typedef ShaderReport(*CastFunction)(void *shader, const HitType &object, const HitInfo &info);
+	typedef ShaderReport(*CastFunction)(void *shader, const HitInfo &info);
 	template<typename Shader>
-	__dumb__ static ShaderReport castOnShader(void *shader, const HitType &object, const HitInfo &info);
+	__dumb__ static ShaderReport castOnShader(void *shader, const HitInfo &info);
 
 
 

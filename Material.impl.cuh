@@ -1,4 +1,5 @@
 #include"Material.cuh"
+#include"Shapes.cuh"
 
 
 
@@ -30,6 +31,25 @@ namespace MaterialPrivateKernels {
 	}
 }
 
+
+
+template<typename HitType>
+__dumb__ Material<HitType>::HitInfo::HitInfo(){}
+template<typename HitType>
+__dumb__ Material<HitType>::HitInfo::HitInfo(const HitType &obj, const Photon &p, const Vector3 &obsPos) {
+	object = obj;
+	observer = obsPos;
+	photon = p;
+	Shapes::cast<HitType>(p.ray, obj, distance, hitPoint, false);
+}
+template<typename HitType>
+__dumb__ Material<HitType>::HitInfo::HitInfo(const HitType &obj, const Photon &p, const Vector3 &hPoint, float dist, const Vector3 &obsPos) {
+	object = obj;
+	observer = obsPos;
+	photon = p;
+	hitPoint = hPoint;
+	distance = dist;
+}
 
 
 
@@ -88,11 +108,11 @@ __host__ inline bool Material<HitType>::dispose(){
 }
 
 template<typename HitType>
-__dumb__ Material<HitType>::ShaderReport Material<HitType>::cast(const HitType &object, const HitInfo &info) const {
+__dumb__ Material<HitType>::ShaderReport Material<HitType>::cast(const HitInfo &info) const {
 #ifdef __CUDA_ARCH__
-	return devCast(devShader, object, info);
+	return devCast(devShader, info);
 #else
-	return hostCast(hostShader, object, info);
+	return hostCast(hostShader, info);
 #endif
 }
 
@@ -102,8 +122,8 @@ __dumb__ Material<HitType>::ShaderReport Material<HitType>::cast(const HitType &
 
 template<typename HitType>
 template<typename Shader>
-__dumb__ Material<HitType>::ShaderReport Material<HitType>::castOnShader(void *shader, const HitType &object, const HitInfo &info) {
-	return ((Shader*)shader)->cast(object, info);
+__dumb__ Material<HitType>::ShaderReport Material<HitType>::castOnShader(void *shader, const HitInfo &info) {
+	return ((Shader*)shader)->cast(info);
 }
 
 
