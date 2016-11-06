@@ -69,14 +69,14 @@ __device__ __host__ inline Transform& Transform::upscale(const Vector3 &sclDelta
 
 /** -------------------------------------------------------------------------- **/
 /** Transform & detransform: **/
-__device__ __host__ inline const Vector3& operator>>=(Vector3 &v, const Transform &t){
+__device__ __host__ inline Vector3& operator>>=(Vector3 &v, const Transform &t){
 	return(v(v*t.trans.x + t.position.x, v*t.trans.y + t.position.y, v*t.trans.z + t.position.z));
 }
 __device__ __host__ inline Vector3 operator>>(const Vector3 &v, const Transform &t){
 	return(Vector3(v*t.trans.x + t.position.x, v*t.trans.y + t.position.y, v*t.trans.z + t.position.z));
 }
 
-__device__ __host__ inline const Vector3& operator<<=(Vector3 &v, const Transform &t){
+__device__ __host__ inline Vector3& operator<<=(Vector3 &v, const Transform &t){
 	Vector3 delta = v - t.position;
 	return(v(delta*t.detrans.x, delta*t.detrans.y, delta*t.detrans.z));
 }

@@ -47,9 +47,9 @@ public:
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
 	/** Transform & detransform: **/
-	__device__ __host__ inline friend const Vector3& operator>>=(Vector3 &v, const Transform &t);
+	__device__ __host__ inline friend Vector3& operator>>=(Vector3 &v, const Transform &t);
 	__device__ __host__ inline friend Vector3 operator>>(const Vector3 &v, const Transform &t);
-	__device__ __host__ inline friend const Vector3& operator<<=(Vector3 &v, const Transform &t);
+	__device__ __host__ inline friend Vector3& operator<<=(Vector3 &v, const Transform &t);
 	__device__ __host__ inline friend Vector3 operator<<(const Vector3 &v, const Transform &t);
 
 
