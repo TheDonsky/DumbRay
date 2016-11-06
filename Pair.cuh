@@ -1,6 +1,6 @@
 #pragma once
 
-#include"StacktorTypeTools.cuh"
+#include"TypeTools.cuh"
 
 template<typename Type1, typename Type2>
 struct Pair;
