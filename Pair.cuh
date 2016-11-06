@@ -5,10 +5,10 @@
 template<typename Type1, typename Type2>
 struct Pair;
 template<typename Type1, typename Type2>
-class StacktorTypeTools<Pair<Type1, Type2> >{
+class TypeTools<Pair<Type1, Type2> >{
 public:
 	typedef Pair<Type1, Type2> ElementType;
-	DEFINE_STACKTOR_TYPE_TOOLS_CONTENT_FOR(ElementType);
+	DEFINE_TYPE_TOOLS_CONTENT_FOR(ElementType);
 };
 
 
