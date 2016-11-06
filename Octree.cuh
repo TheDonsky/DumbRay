@@ -10,15 +10,16 @@
 #define OCTREE_POLYCOUNT_TO_SPLIT_NODE 12
 #define OCTREE_VOXEL_LOCAL_CAPACITY 12
 #define OCTREE_MAX_DEPTH 16
+//#define OCTREE_FILTER_NODES
 
 
 template<typename ElemType>
 class Octree;
 template<typename ElemType>
-class StacktorTypeTools<Octree<ElemType> >{
+class TypeTools<Octree<ElemType> >{
 public:
 	typedef Octree<ElemType> ElementType;
-	DEFINE_STACKTOR_TYPE_TOOLS_CONTENT_FOR(ElementType);
+	DEFINE_TYPE_TOOLS_CONTENT_FOR(ElementType);
 };
 
 
@@ -169,7 +170,12 @@ private:
 		const TreeNode *node;
 		char priorityChild;
 		char curChild;
+#ifdef OCTREE_FILTER_NODES
+		char ignoreLow;
+		char ignoreHigh;
+#endif // OCTREE_FILTER_NODES
 	};
+	__device__ __host__ inline static void configureCastFrame(CastFrame &frame, const TreeNode *children, const Ray &r);
 	__device__ __host__ inline bool castInLeaf(const Ray &r, RaycastHit &hit, int index, bool clipBackfaces)const;
 
 
@@ -180,7 +186,7 @@ private:
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
 	/** Friends: **/
-	DEFINE_STACKTOR_TYPE_TOOLS_FRIENDSHIP_FOR(Octree);
+	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(Octree);
 };
 
 

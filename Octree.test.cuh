@@ -5,6 +5,7 @@
 #include"Tests.h"
 #include"Windows.h"
 #include"Transform.h"
+#include"DefaultShader.cuh"
 #include<iomanip>
 
 
@@ -14,16 +15,29 @@ namespace OctreeTest{
 		// ########################################
 		// ############# PIXEL COLOR: #############
 		// ########################################
+//#define USE_NORMAL_COLOR
 		__device__ __host__ inline static void colorPixel(const Octree<> &octree, Color &pixel, const Transform &trans, int i, int j, int width, int height, int frame){
 			Octree<>::RaycastHit hit;
 			Vector3 dir((float)(j - width / 2), (float)(height / 2 - i), (float)(width / 2));
-			Ray r(Vector3(0, 0, -128.0f) << trans, dir.normalized() << trans);
+			Ray r = (Ray(Vector3(0, 0, -128.0f), dir.normalized()) << trans);
 			if (octree.cast(r, hit)){
+#ifdef USE_NORMAL_COLOR
 				Vector3 normal = (hit.object.norm.massCenter(hit.object.vert.getMases(hit.hitPoint)).normalized() >> trans) / 2.0f + Vector3(0.5f, 0.5f, 0.5f);
 				normal = Vector3(normal.x, normal.y, 1.0f - normal.z) * (64.0f / max(hit.hitDistance, 64.0f));
 				pixel(normal.x, normal.y, normal.z, 1.0f);
+#else
+				DefaultShader shad;
+				Photon ph(Ray(hit.hitPoint - Vector3(0, 0, 1000000000), Vector3::front()), ColorRGB(1, 1, 1));
+				pixel = shad.cast(Material<BakedTriFace>::HitInfo(hit.object, ph, hit.hitPoint, hit.hitDistance, r.origin)).cameraPhoton.color;
+#endif
 			}
-			else pixel((((i ^ j) + frame) % 256) / 256.0f, (((i & j) - frame) % 256) / 256.0f, (((i | j) + frame) % 256) / 256.0f);
+			else {
+#ifdef USE_NORMAL_COLOR
+				pixel((((i ^ j) + frame) % 256) / 256.0f, (((i & j) - frame) % 256) / 256.0f, (((i | j) + frame) % 256) / 256.0f);
+#else
+				pixel(0, 0, 0);
+#endif
+			}
 		}
 
 		// ########################################
@@ -34,7 +48,7 @@ namespace OctreeTest{
 		}
 
 #define OCTREE_TEST_KERNELS_BLOCK_WIDTH 16
-#define OCTREE_TEST_KERNELS_BLOCK_HEIGHT 16
+#define OCTREE_TEST_KERNELS_BLOCK_HEIGHT 8
 		// ########################################
 		// ### DEVICE RENDER KERNEL DIMENSIONS: ###
 		// ########################################
