@@ -8,10 +8,10 @@
 /** ########################################################################## **/
 template<typename Type> class Matrix;
 template<typename ElemType>
-class StacktorTypeTools<Matrix<ElemType> >{
+class TypeTools<Matrix<ElemType> >{
 public:
 	typedef Matrix<ElemType> MatrixType;
-	DEFINE_STACKTOR_TYPE_TOOLS_CONTENT_FOR(MatrixType);
+	DEFINE_TYPE_TOOLS_CONTENT_FOR(MatrixType);
 };
 
 
@@ -58,6 +58,15 @@ public:
 
 
 
+	/** ########################################################################## **/
+	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+	/** ########################################################################## **/
+	DEFINE_CUDA_LOAD_INTERFACE_FOR(Matrix);
+
+
+
+
+
 private:
 	/** ########################################################################## **/
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
@@ -73,7 +82,7 @@ private:
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
 	/** Friends: **/
-	DEFINE_STACKTOR_TYPE_TOOLS_FRIENDSHIP_FOR(Matrix);
+	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(Matrix);
 };
 
 

@@ -72,35 +72,68 @@ __device__ __host__ inline void Matrix<Type>::setDimensions(int width, int heigh
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
+template<typename Type>
+/* Uploads unit to CUDA device and returns the clone address */
+inline Matrix<Type>* Matrix<Type>::upload()const {
+	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_BODY(Matrix);
+}
+template<typename Type>
+/* Uploads unit to the given location on the CUDA device (returns true, if successful; needs RAW data address) */
+inline bool Matrix<Type>::uploadAt(Matrix *address)const {
+	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_AT_BODY(Matrix);
+}
+template<typename Type>
+/* Uploads given source array/unit to the given target location on CUDA device (returns true, if successful; needs RAW data address) */
+inline bool Matrix<Type>::upload(const Matrix *source, Matrix *target, int count) {
+	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_ARRAY_AT_BODY(Matrix);
+}
+template<typename Type>
+/* Uploads given source array/unit to CUDA device and returns the clone address */
+inline Matrix<Type>* Matrix<Type>::upload(const Matrix<Type> *source, int count) {
+	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_ARRAY_BODY(Matrix);
+}
+template<typename Type>
+/* Disposed given array/unit on CUDA device, making it ready to be free-ed (returns true, if successful) */
+inline bool Matrix<Type>::dispose(Matrix *arr, int count) {
+	IMPLEMENT_CUDA_LOAD_INTERFACE_DISPOSE_BODY(Matrix);
+}
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
 /** Friends: **/
 template<typename ElemType>
-__device__ __host__ inline void StacktorTypeTools<Matrix<ElemType> >::init(Matrix<ElemType> &m){
-	StacktorTypeTools<Stacktor<Type, 1> >::init(m.data);
+__device__ __host__ inline void TypeTools<Matrix<ElemType> >::init(Matrix<ElemType> &m){
+	TypeTools<Stacktor<ElemType, 1> >::init(m.data);
 	m.matWidth = 0;
 	m.matHeight = 0;
 }
 template<typename ElemType>
-__device__ __host__ inline void StacktorTypeTools<Matrix<ElemType> >::dispose(Matrix<ElemType> &m){
-	StacktorTypeTools<Stacktor<Type, 1> >::dispose(m.data);
+__device__ __host__ inline void TypeTools<Matrix<ElemType> >::dispose(Matrix<ElemType> &m){
+	TypeTools<Stacktor<ElemType, 1> >::dispose(m.data);
 }
 template<typename ElemType>
-__device__ __host__ inline void StacktorTypeTools<Matrix<ElemType> >::swap(Matrix<ElemType> &a, Matrix<ElemType> &b){
-	StacktorTypeTools<Stacktor<Type, 1> >::swap(a.data, b.data);
-	StacktorTypeTools<int>::swap(a.matWidth, b.matWidth);
-	StacktorTypeTools<int>::swap(a.matHeight, b.matHeight);
+__device__ __host__ inline void TypeTools<Matrix<ElemType> >::swap(Matrix<ElemType> &a, Matrix<ElemType> &b){
+	TypeTools<Stacktor<ElemType, 1> >::swap(a.data, b.data);
+	TypeTools<int>::swap(a.matWidth, b.matWidth);
+	TypeTools<int>::swap(a.matHeight, b.matHeight);
 }
 template<typename ElemType>
-__device__ __host__ inline void StacktorTypeTools<Matrix<ElemType> >::transfer(Matrix<ElemType> &src, Matrix<ElemType> &dst){
-	StacktorTypeTools<Stacktor<Type, 1> >::transfer(src.data, dst.data);
+__device__ __host__ inline void TypeTools<Matrix<ElemType> >::transfer(Matrix<ElemType> &src, Matrix<ElemType> &dst){
+	TypeTools<ElemType>::transfer(src.data, dst.data);
 	dst.matWidth = src.matWidth;
 	dst.matHeight = src.matHeight;
 }
 
 template<typename ElemType>
-inline bool StacktorTypeTools<Matrix<ElemType> >::prepareForCpyLoad(const Matrix<ElemType> *source, Matrix<ElemType> *hosClone, Matrix<ElemType> *devTarget, int count){
+inline bool TypeTools<Matrix<ElemType> >::prepareForCpyLoad(const Matrix<ElemType> *source, Matrix<ElemType> *hosClone, Matrix<ElemType> *devTarget, int count){
 	int i = 0;
 	for (i = 0; i < count; i++){
-		if (!StacktorTypeTools<Stacktor<Type, 1> >::prepareForCpyLoad(&(source + i)->data, &(hosClone + i)->data, &(devTarget + i)->data, 1)) break;
+		if (!TypeTools<Stacktor<ElemType, 1> >::prepareForCpyLoad(&(source + i)->data, &(hosClone + i)->data, &(devTarget + i)->data, 1)) break;
 		hosClone[i].matWidth = source[i].matWidth;
 		hosClone[i].matHeight = source[i].matHeight;
 	}
@@ -112,19 +145,19 @@ inline bool StacktorTypeTools<Matrix<ElemType> >::prepareForCpyLoad(const Matrix
 }
 
 template<typename ElemType>
-inline void StacktorTypeTools<Matrix<ElemType> >::undoCpyLoadPreparations(const Matrix<ElemType> *source, Matrix<ElemType> *hosClone, Matrix<ElemType> *devTarget, int count){
+inline void TypeTools<Matrix<ElemType> >::undoCpyLoadPreparations(const Matrix<ElemType> *source, Matrix<ElemType> *hosClone, Matrix<ElemType> *devTarget, int count){
 	for (int i = 0; i < count; i++)
-		StacktorTypeTools<Stacktor<Type, 1> >::undoCpyLoadPreparations(&(source + i)->data, &(hosClone + i)->data, &(devTarget + i)->data, 1);
+		TypeTools<Stacktor<ElemType, 1> >::undoCpyLoadPreparations(&(source + i)->data, &(hosClone + i)->data, &(devTarget + i)->data, 1);
 }
 
 template<typename ElemType>
-inline bool StacktorTypeTools<Matrix<ElemType> >::devArrayNeedsToBeDisoposed(){
-	return StacktorTypeTools<Stacktor<Type, 1> >::devArrayNeedsToBeDisoposed();
+inline bool TypeTools<Matrix<ElemType> >::devArrayNeedsToBeDisoposed(){
+	return TypeTools<ElemType>::devArrayNeedsToBeDisoposed();
 }
 template<typename ElemType>
-inline bool StacktorTypeTools<Matrix<ElemType> >::disposeDevArray(Matrix<ElemType> *arr, int count){
+inline bool TypeTools<Matrix<ElemType> >::disposeDevArray(Matrix<ElemType> *arr, int count){
 	for (int i = 0; i < count; i++)
-		if (!StacktorTypeTools<Stacktor<Type, 1> >::disposeDevArray(&(arr + i)->data, 1)) return(false);
+		if (!TypeTools<Stacktor<ElemType, 1> >::disposeDevArray(&(arr + i)->data, 1)) return(false);
 	return(true);
 }
 
