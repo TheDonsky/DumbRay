@@ -233,6 +233,13 @@ struct Vector3{
 	// Noraml of the plain, defined by three vertices in space
 	__dumb__ static Vector3 plainNormal(const Vector3 &v1, const Vector3 &v2, const Vector3 &v3);
 
+	/** ------------------------------------ **/
+	// Reflection
+	__dumb__ Vector3 reflection(const Vector3 &normal)const;
+	__dumb__ Vector3& reflect(const Vector3 &normal);
+	__dumb__ Vector3 reflectionOnUnitVector(const Vector3 &normal)const;
+	__dumb__ Vector3& reflectOnUnitVector(const Vector3 &normal);
+
 
 	/** ========================================================== **/
 	/*| Rotation |*/

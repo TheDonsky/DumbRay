@@ -413,6 +413,31 @@ __dumb__ Vector3 Vector3::plainNormal(const Vector3 &v1, const Vector3 &v2, cons
 	return(Vector3(crossX*inevrsedMagnitude, crossY*inevrsedMagnitude, crossZ*inevrsedMagnitude));
 }
 
+/** ------------------------------------ **/
+// Reflection
+__dumb__ Vector3 Vector3::reflection(const Vector3 &normal)const {
+	register float mul = (2.0f * DotProductWith(normal) / SqrMagnitude(normal));
+	return Vector3(x - (normal.x * mul), y - (normal.y * mul), z - (normal.z * mul));
+}
+__dumb__ Vector3& Vector3::reflect(const Vector3 &normal) {
+	register float mul = (2.0f * DotProductWith(normal) / SqrMagnitude(normal));
+	x -= (normal.x * mul);
+	y -= (normal.y * mul);
+	z -= (normal.z * mul);
+	return(*this);
+}
+__dumb__ Vector3 Vector3::reflectionOnUnitVector(const Vector3 &normal)const {
+	register float mul = (2.0f * DotProductWith(normal));
+	return Vector3(x - (normal.x * mul), y - (normal.y * mul), z - (normal.z * mul));
+}
+__dumb__ Vector3& Vector3::reflectOnUnitVector(const Vector3 &normal) {
+	register float mul = (2.0f * DotProductWith(normal));
+	x -= (normal.x * mul);
+	y -= (normal.y * mul);
+	z -= (normal.z * mul);
+	return (*this);
+}
+
 
 /** ========================================================== **/
 /*| Rotation |*/
