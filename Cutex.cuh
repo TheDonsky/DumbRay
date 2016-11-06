@@ -7,6 +7,7 @@
 #include<math.h>
 #include<mutex>
 #include<new>
+#include"Stacktor.cuh"
 
 
 class Cutex{
