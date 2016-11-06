@@ -1,18 +1,18 @@
 #pragma once
 
 
-template<typename Type, unsigned int localCapacity, typename TypeTools> class Stacktor;
 
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 /*
-This is the content, Stacktor requires TypeTools template parameter to have;
+This is the content, required for the Stacktor(and other classes) 
+to be able to transfer data between host and device;
 Default one will work fine with primitive(fully stack-contained) types an Stacktors,
 but will need to be changed/overloaded in case of more complex structures/classes,
-if the user is going to upload the Stacktor on CUDA device, or initialise from raw data.
+if the user is going to upload anything on CUDA device, or initialise from raw data.
 */
-#define DEFINE_STACKTOR_TYPE_TOOLS_CONTENT_FOR(ElemType) \
+#define DEFINE_TYPE_TOOLS_CONTENT_FOR(ElemType) \
 	public: \
 		typedef ElemType Type; \
 		\
@@ -54,7 +54,7 @@ if the user is going to upload the Stacktor on CUDA device, or initialise from r
 		inline static void undoCpyLoadPreparations(const Type *source, Type *hosClone, Type *devTarget, int count); \
 		\
 		/* ################## devArrayNeedsToBeDisoposed ################# */ \
-		/* devArrayNeedsToBeDisoposed tells Stacktor, if the device array needs to be disposed before deallocation */ \
+		/* devArrayNeedsToBeDisoposed tells, if the device array needs to be disposed before deallocation */ \
 		/* (default: false) */ \
 		/* (return value: true, if calling didposeDevArray makes sence) */ \
 		inline static bool devArrayNeedsToBeDisoposed(); \
@@ -65,41 +65,41 @@ if the user is going to upload the Stacktor on CUDA device, or initialise from r
 		/* (return value: true, if successful) */ \
 		inline static bool disposeDevArray(Type *arr, int count)
 
-#define DEFINE_STACKTOR_TYPE_TOOLS_FOR(ElemType) \
+#define DEFINE_TYPE_TOOLS_FOR(ElemType) \
 	template<> \
-	class StacktorTypeTools<ElemType>{ \
-		DEFINE_STACKTOR_TYPE_TOOLS_CONTENT_FOR(ElemType); \
+	class TypeTools<ElemType>{ \
+		DEFINE_TYPE_TOOLS_CONTENT_FOR(ElemType); \
 	}
 
-#define DEFINE_STACKTOR_TYPE_TOOLS_FRIENDSHIP_FOR(ElemType) \
-	__device__ __host__ inline friend void StacktorTypeTools<ElemType>::init(ElemType &t); \
-	__device__ __host__ inline friend void StacktorTypeTools<ElemType>::dispose(ElemType &t); \
-	__device__ __host__ inline friend void StacktorTypeTools<ElemType>::swap(ElemType &a, ElemType &b); \
-	__device__ __host__ inline friend void StacktorTypeTools<ElemType>::transfer(ElemType &src, ElemType &dst); \
+#define DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(ElemType) \
+	__device__ __host__ inline friend void TypeTools<ElemType>::init(ElemType &t); \
+	__device__ __host__ inline friend void TypeTools<ElemType>::dispose(ElemType &t); \
+	__device__ __host__ inline friend void TypeTools<ElemType>::swap(ElemType &a, ElemType &b); \
+	__device__ __host__ inline friend void TypeTools<ElemType>::transfer(ElemType &src, ElemType &dst); \
 	\
-	inline friend bool StacktorTypeTools<ElemType>::prepareForCpyLoad(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
-	inline friend void StacktorTypeTools<ElemType>::undoCpyLoadPreparations(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
-	inline friend bool StacktorTypeTools<ElemType>::devArrayNeedsToBeDisoposed(); \
-	inline friend bool StacktorTypeTools<ElemType>::disposeDevArray(ElemType *arr, int count)
+	inline friend bool TypeTools<ElemType>::prepareForCpyLoad(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
+	inline friend void TypeTools<ElemType>::undoCpyLoadPreparations(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
+	inline friend bool TypeTools<ElemType>::devArrayNeedsToBeDisoposed(); \
+	inline friend bool TypeTools<ElemType>::disposeDevArray(ElemType *arr, int count)
 
-#define SPECIALISE_STACKTOR_TYPE_TOOLS__FOR(ElemType) \
-	template<> __device__ __host__ inline void StacktorTypeTools<ElemType>::init(ElemType &t); \
-	template<> __device__ __host__ inline void StacktorTypeTools<ElemType>::dispose(ElemType &t); \
-	template<> __device__ __host__ inline void StacktorTypeTools<ElemType>::swap(ElemType &a, ElemType &b); \
-	template<> __device__ __host__ inline void StacktorTypeTools<ElemType>::transfer(ElemType &src, ElemType &dst); \
+#define SPECIALISE_TYPE_TOOLS__FOR(ElemType) \
+	template<> __device__ __host__ inline void TypeTools<ElemType>::init(ElemType &t); \
+	template<> __device__ __host__ inline void TypeTools<ElemType>::dispose(ElemType &t); \
+	template<> __device__ __host__ inline void TypeTools<ElemType>::swap(ElemType &a, ElemType &b); \
+	template<> __device__ __host__ inline void TypeTools<ElemType>::transfer(ElemType &src, ElemType &dst); \
 	\
-	template<> inline bool StacktorTypeTools<ElemType>::prepareForCpyLoad(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
-	template<> inline void StacktorTypeTools<ElemType>::undoCpyLoadPreparations(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
-	template<> inline bool StacktorTypeTools<ElemType>::devArrayNeedsToBeDisoposed(); \
-	template<> inline bool StacktorTypeTools<ElemType>::disposeDevArray(ElemType *arr, int count)
+	template<> inline bool TypeTools<ElemType>::prepareForCpyLoad(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
+	template<> inline void TypeTools<ElemType>::undoCpyLoadPreparations(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
+	template<> inline bool TypeTools<ElemType>::devArrayNeedsToBeDisoposed(); \
+	template<> inline bool TypeTools<ElemType>::disposeDevArray(ElemType *arr, int count)
 
 
 
 
 
 template<typename Type>
-class StacktorTypeTools{
-	DEFINE_STACKTOR_TYPE_TOOLS_CONTENT_FOR(Type);
+class TypeTools{
+	DEFINE_TYPE_TOOLS_CONTENT_FOR(Type);
 };
 
 
@@ -138,7 +138,7 @@ class StacktorTypeTools{
 	char stackJunk[sizeof(Type)]; \
 	char *heapJunk = NULL; if(count > 1){ heapJunk = new char[sizeof(Type) * count]; if(heapJunk == NULL) return false; } \
 	Type *hosClone; if(count > 1) hosClone = ((Type*)heapJunk); else hosClone = ((Type*)stackJunk); \
-	bool success = StacktorTypeTools<Type>::prepareForCpyLoad(source, hosClone, target, count); \
+	bool success = TypeTools<Type>::prepareForCpyLoad(source, hosClone, target, count); \
 	if(success){ \
 		cudaStream_t stream; success = (cudaStreamCreate(&stream) == cudaSuccess); \
 		if(success){ \
@@ -167,7 +167,7 @@ class StacktorTypeTools{
 #define IMPLEMENT_CUDA_LOAD_INTERFACE_DISPOSE_BODY(Type) \
 	if(arr == NULL) return false; \
 	if(count < 1) count = 1; \
-	return StacktorTypeTools<Type>::disposeDevArray(arr, count)
+	return TypeTools<Type>::disposeDevArray(arr, count)
 #define IMPLEMENT_CUDA_LOAD_INTERFACE_DISPOSE(Type) \
 	/* Disposed given array/unit on CUDA device, making it ready to be free-ed (returns true, if successful) */ \
 	inline bool Type::dispose(Type *arr, int count){ \
@@ -180,4 +180,32 @@ class StacktorTypeTools{
 	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_ARRAY_AT(Type) \
 	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_ARRAY(Type) \
 	IMPLEMENT_CUDA_LOAD_INTERFACE_DISPOSE(Type)
+
+
+
+#define COPY_TYPE_TOOLS_IMPLEMENTATION(Child, Perent) \
+	template<> __device__ __host__ inline void TypeTools<Child>::init(Child &m) { \
+		TypeTools<Perent >::init(m); \
+	} \
+	template<> __device__ __host__ inline void TypeTools<Child>::dispose(Child &m) { \
+		TypeTools<Perent >::dispose(m); \
+	} \
+	template<> __device__ __host__ inline void TypeTools<Child>::swap(Child &a, Child &b) { \
+		TypeTools<Perent >::swap(a, b); \
+	} \
+	template<> __device__ __host__ inline void TypeTools<Child>::transfer(Child &src, Child &dst) { \
+		TypeTools<Perent >::transfer(src, dst); \
+	} \
+	template<> inline bool TypeTools<Child>::prepareForCpyLoad(const Child *source, Child *hosClone, Child *devTarget, int count) { \
+		return TypeTools<Perent >::prepareForCpyLoad(source, hosClone, devTarget, count); \
+	} \
+	template<> inline void TypeTools<Child>::undoCpyLoadPreparations(const Child *source, Child *hosClone, Child *devTarget, int count) { \
+		TypeTools<Perent >::undoCpyLoadPreparations(source, hosClone, devTarget, count); \
+	} \
+	template<> inline bool TypeTools<Child>::devArrayNeedsToBeDisoposed() { \
+		return TypeTools<Perent >::devArrayNeedsToBeDisoposed(); \
+	} \
+	template<> inline bool TypeTools<Child>::disposeDevArray(Child *arr, int count) { \
+		return TypeTools<Perent >::disposeDevArray(arr, count); \
+	}
 

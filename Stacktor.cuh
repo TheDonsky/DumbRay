@@ -2,7 +2,7 @@
 
 #include"cuda_runtime.h"
 #include"device_launch_parameters.h"
-#include"StacktorTypeTools.cuh"
+#include"TypeTools.cuh"
 #include<iostream>
 #include<string>
 #include<thread>
@@ -15,11 +15,12 @@
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-template<typename ElemType, unsigned int localCapacity, typename TypeTools>
-class StacktorTypeTools<Stacktor<ElemType, localCapacity, TypeTools> >{
+template<typename Type, unsigned int localCapacity> class Stacktor;
+template<typename ElemType, unsigned int localCapacity>
+class TypeTools<Stacktor<ElemType, localCapacity> >{
 public:
-	typedef Stacktor<ElemType, localCapacity, TypeTools> StacktorType;
-	DEFINE_STACKTOR_TYPE_TOOLS_CONTENT_FOR(StacktorType);
+	typedef Stacktor<ElemType, localCapacity> StacktorType;
+	DEFINE_TYPE_TOOLS_CONTENT_FOR(StacktorType);
 };
 
 
@@ -36,7 +37,7 @@ public:
 /** ########################################################################## **/
 /** Stacktor:                                                                  **/
 /** ########################################################################## **/
-template<typename Type, unsigned int localCapacity = 1, typename TypeTools = StacktorTypeTools<Type> >
+template<typename Type, unsigned int localCapacity = 1>
 /*
 	Stacktor class represents a variable sized array, that supports being
 	aploaded/downloaded to/from a cuda device.
@@ -46,9 +47,11 @@ template<typename Type, unsigned int localCapacity = 1, typename TypeTools = Sta
 			anything in heap.
 			(Will give a significant speedup, when using arrays of Stacktors,
 			if localCapacity is set to their average size during runtime)
-		TypeTools: a helper class/struct/namespace, that provides Stacktor
-			with functionality, that allows it to upload and download data,
-			as well as potentially speedup it's transfer speed.
+	Note:
+		TypeTools is a helper class/struct/namespace, that provides Stacktor
+		with functionality, that allows it to upload and download data,
+		as well as potentially speedup it's transfer speed; 
+		you will have to overload it if your class contains something special.
 */
 class Stacktor{
 public:
@@ -94,6 +97,10 @@ public:
 	__device__ __host__ inline Stacktor(const Stacktor &s);
 	// Operator = (copies the data)
 	__device__ __host__ inline Stacktor& operator=(const Stacktor &s);
+	// Pass-constructor
+	__device__ __host__ inline Stacktor(Stacktor &&s);
+	// Pass-assignment
+	__device__ __host__ inline Stacktor& operator=(Stacktor &&s);
 	// Swaps the content with the given Stacktor
 	__device__ __host__ inline void swapWith(Stacktor &s);
 
@@ -268,16 +275,6 @@ private:
 	/** ########################################################################## **/
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
-	/** Friends: **/
-	DEFINE_STACKTOR_TYPE_TOOLS_FRIENDSHIP_FOR(Stacktor);
-
-
-
-
-
-	/** ########################################################################## **/
-	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
-	/** ########################################################################## **/
 	/** Private helpers: **/
 
 
@@ -307,6 +304,16 @@ private:
 	/** ------------------------------------ **/
 	inline static bool disposeOfUnderlyingData(Stacktor *arr, Stacktor *hosClone, int count, bool hasExternalAllocation, cudaStream_t stream);
 	inline static bool disposeOfExternalData(Stacktor *arr, Stacktor *hosClone, int count, cudaStream_t stream);
+
+
+
+
+
+	/** ########################################################################## **/
+	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+	/** ########################################################################## **/
+	/** Friends: **/
+	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(Stacktor);
 };
 
 typedef Stacktor<char, 32> String;
