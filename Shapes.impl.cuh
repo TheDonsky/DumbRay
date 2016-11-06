@@ -1,6 +1,67 @@
 #include"Shapes.cuh"
 
 
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+template<typename Type1, typename Type2>
+__dumb__ bool Shapes::intersect(const Type1 &first, const Type2 &second) {
+	return(first.intersects(second));
+}
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+template<typename Type>
+__dumb__ bool Shapes::cast(const Ray &ray, const Type &object, bool clipBackface) {
+	return object.cast(ray, clipBackface);
+}
+
+template<typename Type>
+__dumb__ bool Shapes::castPreInversed(const Ray &inversedRay, const Type &object, bool clipBackface) {
+	return object.castPreInversed(inversedRay, clipBackface);
+}
+
+template<typename Type>
+__dumb__ bool Shapes::cast(const Ray &ray, const Type &object, float &hitDistance, Vertex &hitPoint, bool clipBackface) {
+	return object.cast(ray, hitDistance, hitPoint, clipBackface);
+}
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+template<typename Type, typename BoundType>
+__dumb__ bool Shapes::sharePoint(const Type &a, const Type &b, const BoundType &commonPointBounds) {
+	return a.sharesPoint(b, commonPointBounds);
+}
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+template<typename Type>
+__dumb__ Vertex Shapes::massCenter(const Type &shape) {
+	return shape.massCenter();
+}
+template<typename Type>
+__dumb__ AABB Shapes::boundingBox(const Type &shape) {
+	return shape.boundingBox();
+}
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+template<typename Type>
+__dumb__ void Shapes::dump(const Type &shape) {
+	shape.dump();
+}
+
+
+
+
 
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
