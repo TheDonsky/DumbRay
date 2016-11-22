@@ -9,10 +9,12 @@
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<typename ElemType>
+// Creates a new Octree with given bounds
 __host__ inline Octree<ElemType>::Octree(AABB bounds){
 	reinit(bounds);
 }
 template<typename ElemType>
+// Recreates a new Octree with given bounds
 __host__ inline void Octree<ElemType>::reinit(AABB bounds){
 	tree.clear();
 	nodeData.clear();
@@ -21,10 +23,12 @@ __host__ inline void Octree<ElemType>::reinit(AABB bounds){
 	nodeData.flush(1);
 }
 template<typename ElemType>
+// Copy-Constructor
 __host__ inline Octree<ElemType>::Octree(const Octree &octree) {
 	(*this) = octree;
 }
 template<typename ElemType>
+// Deep copy function
 __host__ inline Octree<ElemType>& Octree<ElemType>::operator=(const Octree &octree) {
 	tree = octree.tree;
 	fixTreeNodePointers(octree.tree + 0);
@@ -34,19 +38,30 @@ __host__ inline Octree<ElemType>& Octree<ElemType>::operator=(const Octree &octr
 	return (*this);
 }
 template<typename ElemType>
+// Steal constructor
 __host__ inline Octree<ElemType>::Octree(Octree &&octree) {
-	(*this) = octree;
+	swapWith(octree);
 }
 template<typename ElemType>
+// Steal copy function
 __host__ inline Octree<ElemType>& Octree<ElemType>::operator=(Octree &&octree) {
+	swapWith(octree);
+	return (*this);
+}
+template<typename ElemType>
+// Swap function
+__host__ inline void  Octree<ElemType>::swapWith(Octree &octree) {
 	const TreeNode *oldTreeRoot = (octree.tree + 0);
+	const TreeNode *otherTreeRoot = (tree + 0);
 	tree.swapWith(octree.tree);
 	fixTreeNodePointers(oldTreeRoot);
+	octree.fixTreeNodePointers(otherTreeRoot);
 	const ElemType *oldDataRoot = (octree.data + 0);
+	const ElemType *otherDataRoot = (data + 0);
 	nodeData.swapWith(octree.nodeData);
 	data.swapWith(octree.data);
 	fixNodeDataPointers(oldDataRoot);
-	return (*this);
+	octree.fixNodeDataPointers(otherDataRoot);
 }
 
 
@@ -61,6 +76,7 @@ __host__ inline Octree<ElemType>& Octree<ElemType>::operator=(Octree &&octree) {
 /** ========================================================== **/
 /*| push & build |*/
 template<typename ElemType>
+// Cleans Octree
 __host__ inline void Octree<ElemType>::reset(){
 	tree.clear();
 	nodeData.clear();
@@ -69,11 +85,13 @@ __host__ inline void Octree<ElemType>::reset(){
 	nodeData.flush(1);
 }
 template<typename ElemType>
+// Pushes list of objects (needs calling build as a final statement)
 __host__ inline void Octree<ElemType>::push(const Stacktor<ElemType> &objcets){
 	for (int i = 0; i < objcets.size(); i++)
 		push(objcets[i]);
 }
 template<typename ElemType>
+// Pushes an object (needs calling build as a final statement)
 __host__ inline void Octree<ElemType>::push(const ElemType &object){
 	AABB box = Shapes::boundingBox<ElemType>(object);
 	if (data.empty()) tree[0].bounds = box;
@@ -90,25 +108,29 @@ __host__ inline void Octree<ElemType>::push(const ElemType &object){
 	nodeData[0].push(data + data.size() - 1);
 }
 template<typename ElemType>
+// Builds the Octree (needed if and only if it was filled with push() calls, not put()-s)
 __host__ inline void Octree<ElemType>::build(){
 	split(0, 0);
 	reduceNodes();
 }
 template<typename ElemType>
+// Optimizes tree nodes so that their sizes are no larger than they need to be for the current configuration
+// (Recommended after pushing/putting the entire scene in the Octree; after this function, addition will become unreliable)
 __host__ inline void Octree<ElemType>::reduceNodes() {
-	for (int i = 0; i < tree.size(); i++)
-		reduceNode(i);
+	reduceNode(0);
 }
 
 
 /** ========================================================== **/
 /*| put |*/
 template<typename ElemType>
+// Adds the list of objects to the Octree
 __host__ inline void Octree<ElemType>::put(const Stacktor<ElemType> &objcets){
 	for (int i = 0; i < objcets.size(); i++)
 		put(objcets[i]);
 }
 template<typename ElemType>
+// Adds the object to the Octree
 __host__ inline void Octree<ElemType>::put(const ElemType &object){
 	int dataIndex = data.size();
 	pushData(object);
@@ -119,13 +141,15 @@ __host__ inline void Octree<ElemType>::put(const ElemType &object){
 /** ========================================================== **/
 /*| cast |*/
 template<typename ElemType>
+// Casts a ray and returns RaycastHit (if ray hits nothing, hitDistance will be set to FLT_MAX)
 __device__ __host__ inline Octree<ElemType>::RaycastHit Octree<ElemType>::cast(const Ray &r, bool clipBackfaces)const{
 	RaycastHit hit;
-	cast(r, hit, clipBackfaces);
+	if (!cast(r, hit, clipBackfaces))
+		hit.hitDistance = FLT_MAX;
 	return hit;
 }
-//#define CAST_FILTER_NODES
 template<typename ElemType>
+// Casts a ray (returns true if the ray hits something; result is written in hit)
 __device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit &hit, bool clipBackfaces)const{
 	const Ray inversedRay(r.origin, 1.0f / r.direction);
 	const register TreeNode *root = (tree + 0);
@@ -142,11 +166,7 @@ __device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit 
 			else {
 				register char curChild = (frame.priorityChild ^ frame.curChild);
 				const register TreeNode *child = frame.node + curChild;
-				if (
-#ifdef OCTREE_FILTER_NODES
-					(!((~curChild) & frame.ignoreLow)) && (!(curChild & frame.ignoreHigh)) &&
-#endif // OCTREE_FILTER_NODES
-					Shapes::castPreInversed<AABB>(inversedRay, child->bounds, false)) {
+				if (Shapes::castPreInversed<AABB>(inversedRay, child->bounds, false)) {
 					const register TreeNode *children = child->children;
 					if (children == NULL) {
 						if (castInLeaf(r, hit, (int)(child - root), clipBackfaces)) return true;
@@ -170,10 +190,12 @@ __device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit 
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<typename ElemType>
+// Returns current node count
 __device__ __host__ inline int Octree<ElemType>::getNodeCount()const{
 	return tree.size();
 }
 template<typename ElemType>
+// "Dumps the internals" in the console (or whatever's mapped on the standard output)
 __device__ __host__ inline void Octree<ElemType>::dump()const{
 	printf("###################################\n");
 	printf("TREE MASS: %d\n", tree.size());
@@ -257,17 +279,21 @@ __device__ __host__ inline Octree<ElemType>::TreeNode::TreeNode(AABB boundingBox
 
 /** ========================================================== **/
 template<typename ElemType>
+// Default constructor (does nothing)
 __device__ __host__ inline Octree<ElemType>::RaycastHit::RaycastHit(){ }
 template<typename ElemType>
+// Constructs RaycastHit from the given parameters
 __device__ __host__ inline Octree<ElemType>::RaycastHit::RaycastHit(const ElemType &elem, const float d, const Vector3 &p){
 	set(elem, d, p);
 }
 template<typename ElemType>
+// Constructs RaycastHit from the given parameters
 __device__ __host__ inline Octree<ElemType>::RaycastHit& Octree<ElemType>::RaycastHit::operator()(const ElemType &elem, const float d, const Vector3 &p){
 	set(elem, d, p);
 	return (*this);
 }
 template<typename ElemType>
+// Constructs RaycastHit from the given parameters
 __device__ __host__ inline void Octree<ElemType>::RaycastHit::set(const ElemType &elem, const float d, const Vector3 &p){
 	object = elem;
 	hitDistance = d;
@@ -378,10 +404,20 @@ __device__ __host__ inline void Octree<ElemType>::splitNode(int index, Vertex ce
 }
 template<typename ElemType>
 __device__ __host__ inline void Octree<ElemType>::reduceNode(int index){
-	if (tree[index].children != NULL) return;
 	Vertex start = tree[index].bounds.getMax();
 	Vertex end = tree[index].bounds.getMin();
-	for (int i = 0; i < nodeData[index].size(); i++){
+	if (tree[index].children != NULL) {
+		for (int i = 0; i < 8; i++)
+			reduceNode((int)((tree[index].children + i) - (tree + 0)));
+		for (int i = 0; i < 8; i++) {
+			AABB bounds = tree[index].children[i].bounds;
+			const Vertex bStart = bounds.getMin();
+			const Vertex bEnd = bounds.getMax();
+			start(min(start.x, bStart.x), min(start.y, bStart.y), min(start.z, bStart.z));
+			end(max(end.x, bEnd.x), max(end.y, bEnd.y), max(end.z, bEnd.z));
+		}
+	}
+	else for (int i = 0; i < nodeData[index].size(); i++) {
 		AABB objectBounds = Shapes::boundingBox<ElemType>(*nodeData[index][i]);
 		const Vertex bStart = objectBounds.getMin();
 		const Vertex bEnd = objectBounds.getMax();
@@ -431,43 +467,10 @@ __device__ __host__ __noinline__ void Octree<ElemType>::put(const ElemType *elem
 template<typename ElemType>
 __device__ __host__ inline void Octree<ElemType>::configureCastFrame(CastFrame &frame, const TreeNode *children, const Ray &r) {
 	frame.node = children;
-#ifdef OCTREE_FILTER_NODES
-	register Vector3 midpoint = children->bounds.getMax();
-#endif // OCTREE_FILTER_NODES
-	if (r.direction.z < 0) {
-		frame.priorityChild = 1;
-#ifdef OCTREE_FILTER_NODES
-		frame.ignoreLow = 0;
-		if (r.origin.z < midpoint.z) frame.ignoreHigh = 1;
-		else frame.ignoreHigh = 0;
-#endif // OCTREE_FILTER_NODES
-	}
-	else {
-		frame.priorityChild = 0;
-#ifdef OCTREE_FILTER_NODES
-		frame.ignoreHigh = 0;
-		if (r.origin.z > midpoint.z) frame.ignoreLow = 1;
-		else frame.ignoreLow = 0;
-#endif // OCTREE_FILTER_NODES
-	}
-	if (r.direction.y < 0) {
-		frame.priorityChild += 2;
-#ifdef OCTREE_FILTER_NODES
-		if (r.origin.y < midpoint.y) frame.ignoreHigh += 2;
-#endif // OCTREE_FILTER_NODES
-	}
-#ifdef OCTREE_FILTER_NODES
-	else if (r.origin.y > midpoint.y) frame.ignoreLow += 2;
-#endif // OCTREE_FILTER_NODES
-	if (r.direction.x < 0) {
-		frame.priorityChild += 4;
-#ifdef OCTREE_FILTER_NODES
-		if (r.origin.x < midpoint.x) frame.ignoreHigh += 4;
-#endif // OCTREE_FILTER_NODES
-	}
-#ifdef OCTREE_FILTER_NODES
-	else if (r.origin.x > midpoint.x) frame.ignoreLow += 4;
-#endif // OCTREE_FILTER_NODES
+	if (r.direction.z < 0) frame.priorityChild = 1;
+	else frame.priorityChild = 0;
+	if (r.direction.y < 0) frame.priorityChild += 2;
+	if (r.direction.x < 0) frame.priorityChild += 4;
 	frame.curChild = 0;
 }
 template<typename ElemType>

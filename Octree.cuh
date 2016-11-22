@@ -7,10 +7,9 @@
 
 
 #define OCTREE_DEFAULT_SIZE Vector3(100000, 100000, 100000)
-#define OCTREE_POLYCOUNT_TO_SPLIT_NODE 12
-#define OCTREE_VOXEL_LOCAL_CAPACITY 12
+#define OCTREE_POLYCOUNT_TO_SPLIT_NODE 32
+#define OCTREE_VOXEL_LOCAL_CAPACITY 32
 #define OCTREE_MAX_DEPTH 16
-//#define OCTREE_FILTER_NODES
 
 
 template<typename ElemType>
@@ -37,6 +36,9 @@ template<typename ElemType  = BakedTriFace>
 /** ########################################################################## **/
 /** Octree:                                                                    **/
 /** ########################################################################## **/
+/*
+	Octree our main data structure for accelerating raycasts.
+*/
 class Octree{
 public:
 	/** ########################################################################## **/
@@ -54,14 +56,24 @@ public:
 
 
 	/** ========================================================== **/
+	/*
+		Output of Octree::cast
+	*/
 	struct RaycastHit{
+		// Object, the ray hit
 		ElemType object;
+		// Distance, the ray traveled before hitting the object
 		float hitDistance;
+		// Collision point
 		Vector3 hitPoint;
 
+		// Default constructor (does nothing)
 		__device__ __host__ inline RaycastHit();
+		// Constructs RaycastHit from the given parameters
 		__device__ __host__ inline RaycastHit(const ElemType &elem, const float d, const Vector3 &p);
+		// Constructs RaycastHit from the given parameters
 		__device__ __host__ inline RaycastHit& operator()(const ElemType &elem, const float d, const Vector3 &p);
+		// Constructs RaycastHit from the given parameters
 		__device__ __host__ inline void set(const ElemType &elem, const float d, const Vector3 &p);
 	};
 
@@ -73,12 +85,20 @@ public:
 	/** ########################################################################## **/
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
+	// Creates a new Octree with given bounds
 	__host__ inline Octree(AABB bounds = AABB(-OCTREE_DEFAULT_SIZE, OCTREE_DEFAULT_SIZE));
+	// Recreates a new Octree with given bounds
 	__host__ inline void reinit(AABB bounds = AABB(-OCTREE_DEFAULT_SIZE, OCTREE_DEFAULT_SIZE));
+	// Copy-Constructor
 	__host__ inline Octree(const Octree &octree);
+	// Deep copy function
 	__host__ inline Octree& operator=(const Octree &octree);
+	// Steal constructor
 	__host__ inline Octree(Octree &&octree);
+	// Steal copy function
 	__host__ inline Octree& operator=(Octree &&octree);
+	// Swap function
+	__host__ inline void swapWith(Octree &octree);
 
 
 
@@ -91,22 +111,32 @@ public:
 
 	/** ========================================================== **/
 	/*| push & build |*/
+	// Cleans Octree
 	__host__ inline void reset();
+	// Pushes list of objects (needs calling build as a final statement)
 	__host__ inline void push(const Stacktor<ElemType> &objcets);
+	// Pushes an object (needs calling build as a final statement)
 	__host__ inline void push(const ElemType &object);
+	// Builds the Octree (needed if and only if it was filled with push() calls, not put()-s)
 	__host__ inline void build();
+	// Optimizes tree nodes so that their sizes are no larger than they need to be for the current configuration
+	// (Recommended after pushing/putting the entire scene in the Octree; after this function, addition will become unreliable)
 	__host__ inline void reduceNodes();
 
 	
 	/** ========================================================== **/
 	/*| put |*/
+	// Adds the list of objects to the Octree
 	__host__ inline void put(const Stacktor<ElemType> &objcets);
+	// Adds the object to the Octree
 	__host__ inline void put(const ElemType &elem);
 
 
 	/** ========================================================== **/
 	/*| cast |*/
+	// Casts a ray and returns RaycastHit (if ray hits nothing, hitDistance will be set to FLT_MAX)
 	__device__ __host__ inline RaycastHit cast(const Ray &r, bool clipBackfaces = true)const;
+	// Casts a ray (returns true if the ray hits something; result is written in hit)
 	__device__ __host__ inline bool cast(const Ray &r, RaycastHit &hit, bool clipBackfaces = true)const;
 
 
@@ -116,7 +146,9 @@ public:
 	/** ########################################################################## **/
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
+	// Returns current node count
 	__device__ __host__ inline int getNodeCount()const;
+	// "Dumps the internals" in the console (or whatever's mapped on the standard output)
 	__device__ __host__ inline void dump()const;
 
 
@@ -170,10 +202,6 @@ private:
 		const TreeNode *node;
 		char priorityChild;
 		char curChild;
-#ifdef OCTREE_FILTER_NODES
-		char ignoreLow;
-		char ignoreHigh;
-#endif // OCTREE_FILTER_NODES
 	};
 	__device__ __host__ inline static void configureCastFrame(CastFrame &frame, const TreeNode *children, const Ray &r);
 	__device__ __host__ inline bool castInLeaf(const Ray &r, RaycastHit &hit, int index, bool clipBackfaces)const;
