@@ -32,6 +32,31 @@ namespace Windows{
 			return ((dataSize + unitsPerBlock - 1) / unitsPerBlock);
 		}
 
+
+		__device__ __host__ inline static int blockCount(int height){
+			return height;
+		}
+		__device__ __host__ inline static int unitsPerThread() {
+			return 32;
+		}
+		__device__ __host__ inline static int threadsPerBlock(int width){
+			int unitsPerT = unitsPerThread();
+			return ((width + unitsPerT - 1) / unitsPerT);
+		}
+
+		__global__ static void translate(const Matrix<Color> *source, COLORREF *destination, int width, int height, int startX, int startY) {
+			int y = blockIdx.x + startY;
+			if (y >= height || y >= source->height()) return;
+			int x = threadIdx.x * unitsPerThread() + startX;
+			int endX = x + unitsPerThread();
+			if (endX > width) endX = width;
+			if (endX > source->width()) endX = source->width();
+			while (x < endX) {
+				destination[y * width + x] = translateColor(source->operator()(y, x));
+				x++;
+			}
+		}
+
 #undef WINDOWS_KERNELS_THREADS_PER_BLOCKS
 #undef WINDOWS_KERNELS_UNITS_PER_THREAD
 	}
@@ -137,6 +162,20 @@ inline void Windows::Window::updateFrameHost(const Color *devImage, int width, i
 	if (windowDead) return;
 	if (!content.loadFromHost(devImage, width, height)) return;
 	display();
+}
+inline void Windows::Window::updateFrameDevice(const Matrix<Color> *devImage) {
+	int width, height;
+	if (!getDimensions(width, height)) return;
+	if (!content.set(width, height)) return;
+	cudaStream_t stream; if (cudaStreamCreate(&stream) != cudaSuccess) return;
+	Private::translate<<<Private::blockCount(height), Private::threadsPerBlock(width), 0, stream>>>(devImage, content.colorDevice, width, height, 0, 0);
+	bool success = (cudaStreamSynchronize(stream) == cudaSuccess);
+	if (success) success = (cudaMemcpyAsync(content.colorHost, content.colorDevice, (width * height) * sizeof(COLORREF), cudaMemcpyDeviceToHost, stream) == cudaSuccess);
+	if (success) success = (cudaStreamSynchronize(stream) == cudaSuccess);
+	if (cudaStreamDestroy(stream) != cudaSuccess) success = false;
+	if (!success) return;
+	if (SetBitmapBits(content.bitmap, sizeof(COLORREF) * width * height, content.colorHost) != 0)
+		display();
 }
 inline void Windows::Window::updateFrameDevice(const Color *devImage, int width, int height){
 	if (windowDead) return;

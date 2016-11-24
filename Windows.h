@@ -62,6 +62,7 @@ namespace Windows{
 		/** ########################################################################## **/
 		inline void updateFrameHost(const Matrix<Color> &image);
 		inline void updateFrameHost(const Color *devImage, int width, int height);
+		inline void updateFrameDevice(const Matrix<Color> *devImage);
 		inline void updateFrameDevice(const Color *devImage, int width, int height);
 
 
