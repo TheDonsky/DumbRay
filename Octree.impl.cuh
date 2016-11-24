@@ -30,6 +30,7 @@ __host__ inline Octree<ElemType>::Octree(const Octree &octree) {
 template<typename ElemType>
 // Deep copy function
 __host__ inline Octree<ElemType>& Octree<ElemType>::operator=(const Octree &octree) {
+	if (this == (&octree)) return (*this);
 	tree = octree.tree;
 	fixTreeNodePointers(octree.tree + 0);
 	nodeData = octree.nodeData;
@@ -51,6 +52,7 @@ __host__ inline Octree<ElemType>& Octree<ElemType>::operator=(Octree &&octree) {
 template<typename ElemType>
 // Swap function
 __host__ inline void  Octree<ElemType>::swapWith(Octree &octree) {
+	if (this == (&octree)) return;
 	const TreeNode *oldTreeRoot = (octree.tree + 0);
 	const TreeNode *otherTreeRoot = (tree + 0);
 	tree.swapWith(octree.tree);
@@ -86,9 +88,9 @@ __host__ inline void Octree<ElemType>::reset(){
 }
 template<typename ElemType>
 // Pushes list of objects (needs calling build as a final statement)
-__host__ inline void Octree<ElemType>::push(const Stacktor<ElemType> &objcets){
-	for (int i = 0; i < objcets.size(); i++)
-		push(objcets[i]);
+__host__ inline void Octree<ElemType>::push(const Stacktor<ElemType> &objects){
+	for (int i = 0; i < objects.size(); i++)
+		push(objects[i]);
 }
 template<typename ElemType>
 // Pushes an object (needs calling build as a final statement)
@@ -125,9 +127,9 @@ __host__ inline void Octree<ElemType>::reduceNodes() {
 /*| put |*/
 template<typename ElemType>
 // Adds the list of objects to the Octree
-__host__ inline void Octree<ElemType>::put(const Stacktor<ElemType> &objcets){
-	for (int i = 0; i < objcets.size(); i++)
-		put(objcets[i]);
+__host__ inline void Octree<ElemType>::put(const Stacktor<ElemType> &objects){
+	for (int i = 0; i < objects.size(); i++)
+		put(objects[i]);
 }
 template<typename ElemType>
 // Adds the object to the Octree
@@ -142,18 +144,18 @@ __host__ inline void Octree<ElemType>::put(const ElemType &object){
 /*| cast |*/
 template<typename ElemType>
 // Casts a ray and returns RaycastHit (if ray hits nothing, hitDistance will be set to FLT_MAX)
-__device__ __host__ inline Octree<ElemType>::RaycastHit Octree<ElemType>::cast(const Ray &r, bool clipBackfaces)const{
+__device__ __host__ inline Octree<ElemType>::RaycastHit Octree<ElemType>::cast(const Ray &r, bool clipBackfaces, CastBreaker castBreaker)const{
 	RaycastHit hit;
-	if (!cast(r, hit, clipBackfaces))
+	if (!cast(r, hit, clipBackfaces, castBreaker))
 		hit.hitDistance = FLT_MAX;
 	return hit;
 }
 template<typename ElemType>
 // Casts a ray (returns true if the ray hits something; result is written in hit)
-__device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit &hit, bool clipBackfaces)const{
+__device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit &hit, bool clipBackfaces, CastBreaker castBreaker)const{
 	const Ray inversedRay(r.origin, 1.0f / r.direction);
 	const register TreeNode *root = (tree + 0);
-	if (root->children == NULL) return castInLeaf(r, hit, 0, clipBackfaces);
+	if (root->children == NULL) return castInLeaf(r, hit, 0, clipBackfaces, castBreaker);
 	if (!Shapes::castPreInversed<AABB>(inversedRay, (tree + 0)->bounds, false)) return false;
 	CastFrame stack[OCTREE_MAX_DEPTH + 1];
 	int i = 0;
@@ -169,7 +171,7 @@ __device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit 
 				if (Shapes::castPreInversed<AABB>(inversedRay, child->bounds, false)) {
 					const register TreeNode *children = child->children;
 					if (children == NULL) {
-						if (castInLeaf(r, hit, (int)(child - root), clipBackfaces)) return true;
+						if (castInLeaf(r, hit, (int)(child - root), clipBackfaces, castBreaker)) return true;
 					}
 					else {
 						i++;
@@ -225,6 +227,16 @@ __device__ __host__ inline void Octree<ElemType>::dump()const{
 		printf("\n");
 	}
 	printf("\n");
+}
+template<typename ElemType>
+// Returns data
+__device__ __host__ inline Stacktor<ElemType>& Octree<ElemType>::getData() { 
+	return data; 
+}
+template<typename ElemType>
+// Returns data
+__device__ __host__ inline const Stacktor<ElemType>& Octree<ElemType>::getData()const { 
+	return data; 
 }
 
 
@@ -474,7 +486,7 @@ __device__ __host__ inline void Octree<ElemType>::configureCastFrame(CastFrame &
 	frame.curChild = 0;
 }
 template<typename ElemType>
-__device__ __host__ inline bool Octree<ElemType>::castInLeaf(const Ray &r, RaycastHit &hit, int index, bool clipBackfaces)const{
+__device__ __host__ inline bool Octree<ElemType>::castInLeaf(const Ray &r, RaycastHit &hit, int index, bool clipBackfaces, CastBreaker castBreaker)const{
 	const Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> &nodeTris = nodeData[index];
 	if (nodeTris.size() <= 0) return false;
 	const AABB &bounds = tree[index].bounds;
@@ -572,15 +584,11 @@ __device__ __host__ inline void TypeTools<Octree<ElemType> >::dispose(Octree<Ele
 }
 template<typename ElemType>
 __device__ __host__ inline void TypeTools<Octree<ElemType> >::swap(Octree<ElemType> &a, Octree<ElemType> &b){
-	TypeTools<Stacktor<Octree<>::TreeNode> >::swap(a.tree, b.tree);
-	TypeTools<Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > >::swap(a.nodeData, b.nodeData);
-	TypeTools<Stacktor<ElemType > >::swap(a.data, b.data);
+	a.swapWith(b);
 }
 template<typename ElemType>
 __device__ __host__ inline void TypeTools<Octree<ElemType> >::transfer(Octree<ElemType> &src, Octree<ElemType> &dst){
-	TypeTools<Stacktor<Octree<>::TreeNode> >::transfer(src.tree, dst.tree);
-	TypeTools<Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > >::transfer(src.nodeData, dst.nodeData);
-	TypeTools<Stacktor<ElemType > >::transfer(src.data, dst.data);
+	src.swapWith(dst);
 }
 
 template<typename ElemType>

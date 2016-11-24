@@ -114,7 +114,7 @@ public:
 	// Cleans Octree
 	__host__ inline void reset();
 	// Pushes list of objects (needs calling build as a final statement)
-	__host__ inline void push(const Stacktor<ElemType> &objcets);
+	__host__ inline void push(const Stacktor<ElemType> &objects);
 	// Pushes an object (needs calling build as a final statement)
 	__host__ inline void push(const ElemType &object);
 	// Builds the Octree (needed if and only if it was filled with push() calls, not put()-s)
@@ -127,17 +127,19 @@ public:
 	/** ========================================================== **/
 	/*| put |*/
 	// Adds the list of objects to the Octree
-	__host__ inline void put(const Stacktor<ElemType> &objcets);
+	__host__ inline void put(const Stacktor<ElemType> &objects);
 	// Adds the object to the Octree
 	__host__ inline void put(const ElemType &elem);
 
 
 	/** ========================================================== **/
 	/*| cast |*/
+	// Function, that lets the cast terminate
+	typedef bool(*CastBreaker)(RaycastHit &hit, const Ray &ray, bool &rv);
 	// Casts a ray and returns RaycastHit (if ray hits nothing, hitDistance will be set to FLT_MAX)
-	__device__ __host__ inline RaycastHit cast(const Ray &r, bool clipBackfaces = true)const;
+	__device__ __host__ inline RaycastHit cast(const Ray &r, bool clipBackfaces = true, CastBreaker castBreaker = NULL)const;
 	// Casts a ray (returns true if the ray hits something; result is written in hit)
-	__device__ __host__ inline bool cast(const Ray &r, RaycastHit &hit, bool clipBackfaces = true)const;
+	__device__ __host__ inline bool cast(const Ray &r, RaycastHit &hit, bool clipBackfaces = true, CastBreaker castBreaker = NULL)const;
 
 
 
@@ -150,6 +152,10 @@ public:
 	__device__ __host__ inline int getNodeCount()const;
 	// "Dumps the internals" in the console (or whatever's mapped on the standard output)
 	__device__ __host__ inline void dump()const;
+	// Returns data
+	__device__ __host__ inline Stacktor<ElemType>& getData();
+	// Returns data
+	__device__ __host__ inline const Stacktor<ElemType>& getData()const;
 
 
 
@@ -204,7 +210,7 @@ private:
 		char curChild;
 	};
 	__device__ __host__ inline static void configureCastFrame(CastFrame &frame, const TreeNode *children, const Ray &r);
-	__device__ __host__ inline bool castInLeaf(const Ray &r, RaycastHit &hit, int index, bool clipBackfaces)const;
+	__device__ __host__ inline bool castInLeaf(const Ray &r, RaycastHit &hit, int index, bool clipBackfaces, CastBreaker castBreaker)const;
 
 
 
