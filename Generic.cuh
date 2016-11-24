@@ -38,9 +38,7 @@ public:
 	__device__ __host__ inline void swapWith(Generic &g);
 	
 	template<typename Type, typename... Args>
-	__host__ inline Generic(const Args&... args);
-	template<typename Type, typename... Args>
-	__host__ inline bool use(const Args&... args);
+	__host__ inline Type* use(const Args&... args);
 
 
 

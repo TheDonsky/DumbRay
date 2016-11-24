@@ -67,18 +67,13 @@ __device__ __host__ inline void Generic<FunctionPack>::swapWith(Generic &g) {
 
 template<typename FunctionPack>
 template<typename Type, typename... Args>
-__host__ inline Generic<FunctionPack>::Generic(const Args&... args) : Generic() {
-	use<Type>(args...);
-}
-template<typename FunctionPack>
-template<typename Type, typename... Args>
-__host__ inline bool Generic<FunctionPack>::use(const Args&... args) {
+__host__ inline Type* Generic<FunctionPack>::use(const Args&... args) {
 	clean();
 	dataPointer = (void*)(new Type(args...));
-	if (dataPointer == NULL) return false;
+	if (dataPointer == NULL) return NULL;
 	functionPack.template use<Type>();
 	memoryManagementModule.use<Type>();
-	return true;
+	return ((Type*)dataPointer);
 }
 
 
@@ -175,7 +170,7 @@ template<typename FunctionPack>
 template<typename Type>
 __host__ inline bool Generic<FunctionPack>::MemoryManagementModule::copy(const Generic &source, Generic &destination) {
 	if ((&source) == (&destination)) return true;
-	return destination.use<Type>(*((Type*)source.dataPointer));
+	return (destination.use<Type>(*((Type*)source.dataPointer)) != NULL);
 }
 template<typename FunctionPack>
 template<typename Type>
