@@ -5,144 +5,106 @@
 
 
 
-namespace MaterialPrivateKernels {
-	template<typename Shader, typename HitType>
-	__global__ void getCastFn(typename Material<HitType>::CastFunction *destination) {
-		(*destination) = Material<HitType>::template castOnShader<Shader>;
-	}
-
-	template<typename Shader, typename HitType>
-	inline static typename Material<HitType>::CastFunction getDeviceCastFunction() {
-		cudaStream_t stream; if (cudaStreamCreate(&stream) != cudaSuccess) return NULL;
-		else {
-			typename Material<HitType>::CastFunction rv = NULL;
-			typename Material<HitType>::CastFunction *fnPtr;
-			if (cudaMalloc(&fnPtr, sizeof(Material<HitType>::CastFunction)) == cudaSuccess) {
-				getCastFn<Shader, HitType> << <1, 1, 0, stream >> >(fnPtr);
-				if (cudaStreamSynchronize(stream) == cudaSuccess) {
-					bool success = (cudaMemcpyAsync(&rv, fnPtr, sizeof(Material<HitType>::CastFunction), cudaMemcpyDeviceToHost, stream) == cudaSuccess);
-					if (success) if (cudaStreamSynchronize(stream) != cudaSuccess) rv = NULL;
-				}
-				cudaFree(fnPtr);
-			}
-			if (cudaStreamDestroy(stream) != cudaSuccess) rv = NULL;
-			return rv;
-		}
-	}
-}
-
-
-
-template<typename HitType>
-__dumb__ Material<HitType>::HitInfo::HitInfo(){}
-template<typename HitType>
-__dumb__ Material<HitType>::HitInfo::HitInfo(const HitType &obj, const Photon &p, const Vector3 &obsPos) {
-	object = obj;
-	observer = obsPos;
-	photon = p;
-	Shapes::cast<HitType>(p.ray, obj, distance, hitPoint, false);
-}
-template<typename HitType>
-__dumb__ Material<HitType>::HitInfo::HitInfo(const HitType &obj, const Photon &p, const Vector3 &hPoint, float dist, const Vector3 &obsPos) {
-	object = obj;
-	observer = obsPos;
-	photon = p;
-	hitPoint = hPoint;
-	distance = dist;
-}
-
-
-
-
-template<typename HitType>
-__host__ inline void Material<HitType>::init(){
-	hostShader = NULL;
-	devShader = NULL;
-	ownsOnHost = false;
-
-	hostCast = NULL;
-	devCast = NULL;
-
-	disposeOnHost = NULL;
-	disposeOnDevice = NULL;
-}
-template<typename HitType>
-template<typename Shader, typename... Args>
-__host__ inline bool Material<HitType>::init(const Args&... args) {
-	Shader *shaderHos = new Shader(args...);
-	if (shaderHos == NULL) return false;
-	if (!useShader<Shader>(shaderHos)) delete shaderHos;
-	else ownsOnHost = true;
-	return ownsOnHost;
-}
-template<typename HitType>
-template<typename Shader>
-__host__ inline bool Material<HitType>::useShader(Shader *shader) {
-	init();
-	if (shader == NULL) return false;
-	Shader *shaderDev; if (cudaMalloc(&shaderDev, sizeof(Shader)) != cudaSuccess) return false;
-	if (!(shader->uploadAt(shaderDev))){
-		cudaFree(shaderDev);
-		return false;
-	}
-	CastFunction deviceCastFunction = MaterialPrivateKernels::getDeviceCastFunction<Shader, HitType>();
-	if (deviceCastFunction == NULL) {
-		void *shaderDevice = (void*)shaderDev;
-		if (!disposeFnDevice<Shader>(shaderDevice)) cudaFree(shaderDev);
-		return false;
-	}
-	hostShader = ((void*)shader);
-	devShader = ((void*)shaderDev);
-	disposeOnHost = disposeFnHost<Shader>;
-	disposeOnDevice = disposeFnDevice<Shader>;
-	hostCast = Material::castOnShader<Shader>;
-	devCast = deviceCastFunction;
-	return true;
-}
-template<typename HitType>
-__host__ inline bool Material<HitType>::dispose(){
-	if (!disposeOnDevice(devShader)) return false;
-	if (ownsOnHost) if (!disposeOnHost(hostShader)) return false;
-	init();
-	return true;
-}
-
-template<typename HitType>
-__dumb__ Material<HitType>::ShaderReport Material<HitType>::cast(const HitInfo &info) const {
-#ifdef __CUDA_ARCH__
-	return devCast(devShader, info);
-#else
-	return hostCast(hostShader, info);
-#endif
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+__dumb__ ShaderReport::ShaderReport(const Photon &obs, const Photon &refl, const Photon &refr) {
+	observed = obs;
+	reflection = refl;
+	refraction = refr;
 }
 
 
 
 
 
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
 template<typename HitType>
-template<typename Shader>
-__dumb__ Material<HitType>::ShaderReport Material<HitType>::castOnShader(void *shader, const HitInfo &info) {
-	return ((Shader*)shader)->cast(info);
+__dumb__ void Shader<HitType>::clean() {
+	castFunction = NULL;
+}
+template<typename HitType>
+template<typename ShaderType>
+__dumb__ void Shader<HitType>::use() {
+	castFunction = castGeneric<ShaderType>;
+}
+
+template<typename HitType>
+__dumb__ ShaderReport Shader<HitType>::cast(const void *shader, const ShaderHitInfo<HitType>& info)const {
+	return castFunction(shader, info);
+}
+
+template<typename HitType>
+template<typename ShaderType>
+__dumb__ ShaderReport Shader<HitType>::castGeneric(const void *shader, const ShaderHitInfo<HitType>& info) {
+	return ((ShaderType*)shader)->cast(info);
 }
 
 
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
 template<typename HitType>
-template<typename Shader>
-__host__ bool Material<HitType>::disposeFnHost(void *&shader){
-	if (shader == NULL) return true;
-	Shader *shad = ((Shader*)shader);
-	delete shad;
-	shader = NULL;
-	return true;
+__dumb__ ShaderReport Material<HitType>::cast(const ShaderHitInfo<HitType>& info)const {
+	return functions().cast(object(), info);
+}
+
+template<typename HitType>
+inline Material<HitType>* Material<HitType>::upload()const {
+	return ((Material*)Generic<Shader<HitType> >::upload());
 }
 template<typename HitType>
-template<typename Shader>
-__host__ bool Material<HitType>::disposeFnDevice(void *&shader){
-	if (shader == NULL) return true;
-	if (Shader::disposeOnDevice((Shader*)shader))
-		if(cudaFree(shader) == cudaSuccess)
-			shader = NULL;
-	return(shader == NULL);
+inline Material<HitType>* Material<HitType>::upload(const Material *source, int count) {
+	return ((Material*)Generic<Shader<HitType> >::upload(source, count));
+}
+
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+/** Friends: **/
+template<typename HitType>
+__device__ __host__ inline void TypeTools<Material<HitType> >::init(Material<HitType> &m) {
+	TypeTools<Generic<Shader<HitType> > >::init(m);
+}
+template<typename HitType>
+__device__ __host__ inline void TypeTools<Material<HitType> >::dispose(Material<HitType> &m) {
+	TypeTools<Generic<Shader<HitType> > >::dispose(m);
+}
+template<typename HitType>
+__device__ __host__ inline void TypeTools<Material<HitType> >::swap(Material<HitType> &a, Material<HitType> &b) {
+	TypeTools<Generic<Shader<HitType> > >::swap(a, b);
+}
+template<typename HitType>
+__device__ __host__ inline void TypeTools<Material<HitType> >::transfer(Material<HitType> &src, Material<HitType> &dst) {
+	TypeTools<Generic<Shader<HitType> > >::transfer(src, dst);
+}
+
+template<typename HitType>
+inline bool TypeTools<Material<HitType> >::prepareForCpyLoad(const Material<HitType> *source, Material<HitType> *hosClone, Material<HitType> *devTarget, int count) {
+	return TypeTools<Generic<Shader<HitType> > >::prepareForCpyLoad(source, hosClone, devTarget, count);
+}
+
+template<typename HitType>
+inline void TypeTools<Material<HitType> >::undoCpyLoadPreparations(const Material<HitType> *source, Material<HitType> *hosClone, Material<HitType> *devTarget, int count) {
+	TypeTools<Generic<Shader<HitType> > >::undoCpyLoadPreparations(source, hosClone, devTarget, count);
+}
+
+template<typename HitType>
+inline bool TypeTools<Material<HitType> >::devArrayNeedsToBeDisoposed() {
+	return TypeTools<Generic<Shader<HitType> > >::devArrayNeedsToBeDisposed();
+}
+template<typename HitType>
+inline bool TypeTools<Material<HitType> >::disposeDevArray(Material<HitType> *arr, int count) {
+	return TypeTools<Generic<Shader<HitType> > >::disposeDevArray(arr, count);
 }
 
