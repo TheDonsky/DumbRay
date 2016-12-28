@@ -1,6 +1,6 @@
 #include"Octree.cuh"
 
-#define OCTREE_AABB_EPSILON_MULTIPLIER 64
+#define OCTREE_AABB_EPSILON_MULTIPLIER 256
 #define OCTREE_AABB_EPSILON (OCTREE_AABB_EPSILON_MULTIPLIER * VECTOR_EPSILON)
 #define OCTREE_AABB_EPSILON_VECTOR (EPSILON_VECTOR * OCTREE_AABB_EPSILON_MULTIPLIER)
 
@@ -100,8 +100,8 @@ __host__ inline void Octree<ElemType>::push(const ElemType &object){
 	else{
 		const Vertex oldStart = tree[0].bounds.getMin();
 		const Vertex oldEnd = tree[0].bounds.getMax();
-		const Vertex boxStart = box.getMin();
-		const Vertex boxEnd = box.getMax();
+		const Vertex boxStart = box.getMin() - OCTREE_AABB_EPSILON_VECTOR;
+		const Vertex boxEnd = box.getMax() + OCTREE_AABB_EPSILON_VECTOR;
 		Vertex newStart(min(oldStart.x, boxStart.x), min(oldStart.y, boxStart.y), min(oldStart.z, boxStart.z));
 		Vertex newEnd(max(oldEnd.x, boxEnd.x), max(oldEnd.y, boxEnd.y), max(oldEnd.z, boxEnd.z));
 		tree[0].bounds = AABB(newStart, newEnd);
@@ -292,21 +292,21 @@ __device__ __host__ inline Octree<ElemType>::TreeNode::TreeNode(AABB boundingBox
 /** ========================================================== **/
 template<typename ElemType>
 // Default constructor (does nothing)
-__device__ __host__ inline Octree<ElemType>::RaycastHit::RaycastHit(){ }
+__device__ __host__ inline RaycastHit<ElemType>::RaycastHit(){ }
 template<typename ElemType>
 // Constructs RaycastHit from the given parameters
-__device__ __host__ inline Octree<ElemType>::RaycastHit::RaycastHit(const ElemType &elem, const float d, const Vector3 &p){
+__device__ __host__ inline RaycastHit<ElemType>::RaycastHit(const ElemType &elem, const float d, const Vector3 &p){
 	set(elem, d, p);
 }
 template<typename ElemType>
 // Constructs RaycastHit from the given parameters
-__device__ __host__ inline Octree<ElemType>::RaycastHit& Octree<ElemType>::RaycastHit::operator()(const ElemType &elem, const float d, const Vector3 &p){
+__device__ __host__ inline RaycastHit<ElemType>& RaycastHit<ElemType>::RaycastHit::operator()(const ElemType &elem, const float d, const Vector3 &p){
 	set(elem, d, p);
 	return (*this);
 }
 template<typename ElemType>
 // Constructs RaycastHit from the given parameters
-__device__ __host__ inline void Octree<ElemType>::RaycastHit::set(const ElemType &elem, const float d, const Vector3 &p){
+__device__ __host__ inline void RaycastHit<ElemType>::set(const ElemType &elem, const float d, const Vector3 &p){
 	object = elem;
 	hitDistance = d;
 	hitPoint = p;
@@ -541,13 +541,13 @@ namespace OctreePrivateKernels{
 
 #undef OCTREE_PRIVATE_KERNELS_THREADS_PER_BLOCK
 #undef OCTREE_PRIVATE_KERNELS_UNITS_PER_THREAD
-
-	__global__ static void fixRoots(const Octree<>::TreeNode *hostRoot, Octree<>::TreeNode *devRoot, int count){
+	template<typename ElemType>
+	__global__ static void fixRoots(const typename Octree<ElemType>::TreeNode *hostRoot, typename Octree<ElemType>::TreeNode *devRoot, int count){
 		int start = (blockIdx.x * unitsPerBlock() + threadIdx.x * unitsPerThread());
 		int end = start + unitsPerThread();
 		if (end > count) end = count;
-		Octree<>::TreeNode *endNode = (devRoot + end);
-		for (Octree<>::TreeNode *ptr = (devRoot + start); ptr < endNode; ptr++)
+		typename Octree<ElemType>::TreeNode *endNode = (devRoot + end);
+		for (typename Octree<ElemType>::TreeNode *ptr = (devRoot + start); ptr < endNode; ptr++)
 			if (ptr->children != NULL) ptr->children = (devRoot + (ptr->children - hostRoot));
 	}
 	template<typename ElemType>
@@ -564,6 +564,75 @@ namespace OctreePrivateKernels{
 
 
 
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+/** RaycastHit type tools: **/
+template<typename ElemType>
+class TypeTools<RaycastHit<ElemType> > {
+public:
+	typedef RaycastHit<ElemType> ElementType;
+	DEFINE_TYPE_TOOLS_CONTENT_FOR(ElementType);
+};
+
+template<typename ElemType>
+__device__ __host__ inline void TypeTools<RaycastHit<ElemType> >::init(RaycastHit<ElemType> &m) {
+	TypeTools<ElemType>::init(m.object);
+	m.hitDistance = INFINITY;
+	m.hitPoint = Vector3::zero;
+}
+template<typename ElemType>
+__device__ __host__ inline void TypeTools<RaycastHit<ElemType> >::dispose(RaycastHit<ElemType> &m) {
+	TypeTools<ElemType>::dispose(m.object);
+	m.hitDistance = INFINITY;
+	m.hitPoint = Vector3::zero;
+}
+template<typename ElemType>
+__device__ __host__ inline void TypeTools<RaycastHit<ElemType> >::swap(RaycastHit<ElemType> &a, RaycastHit<ElemType> &b) {
+	TypeTools<ElemType>::swap(a.object, b.object);
+	TypeTools<float>::swap(a.hitDistance, b.hitDistance);
+	TypeTools<Vector3>::swap(a.hitPoint, b.hitPoint);
+}
+template<typename ElemType>
+__device__ __host__ inline void TypeTools<RaycastHit<ElemType> >::transfer(RaycastHit<ElemType> &src, RaycastHit<ElemType> &dst) {
+	TypeTools<ElemType>::transfer(src.object, dst.object);
+	TypeTools<float>::transfer(src.hitDistance, dst.hitDistance);
+	TypeTools<Vector3>::transfer(src.hitPoint, dst.hitPoint);
+}
+
+template<typename ElemType>
+inline bool TypeTools<RaycastHit<ElemType> >::prepareForCpyLoad(const RaycastHit<ElemType> *source, RaycastHit<ElemType> *hosClone, RaycastHit<ElemType> *devTarget, int count) {
+	int i = 0;
+	for (i = 0; i < count; i++) {
+		if (!TypeTools<ElemType>::prepareForCpyLoad(&((source + i)->object), &((hosClone + i)->object), &((devTarget + i)->object), 1)) break;
+		hosClone[i].hitDistance = source[i].hitDistance;
+		hosClone[i].hitPoint = source[i].hitPoint;
+	}
+	if (i < count) {
+		undoCpyLoadPreparations(source, hosClone, devTarget, i);
+		return(false);
+	}
+	return(true);
+}
+
+template<typename ElemType>
+inline void TypeTools<RaycastHit<ElemType> >::undoCpyLoadPreparations(const RaycastHit<ElemType> *source, RaycastHit<ElemType> *hosClone, RaycastHit<ElemType> *devTarget, int count) {
+	for (int i = 0; i < count; i++)
+		TypeTools<ElemType>::undoCpyLoadPreparations(&((source + i)->object), &((hosClone + i)->object), &((devTarget + i)->object), 1);
+}
+template<typename ElemType>
+inline bool TypeTools<RaycastHit<ElemType> >::devArrayNeedsToBeDisposed() {
+	return TypeTools<ElemType>::devArrayNeedsToBeDisposed();
+}
+template<typename ElemType>
+inline bool TypeTools<RaycastHit<ElemType> >::disposeDevArray(RaycastHit<ElemType> *arr, int count) {
+	for (int i = 0; i < count; i++)
+		if (!TypeTools<ElemType>::disposeDevArray(&((arr + i)->object), 1)) return false;
+	return(true);
+}
+
+
+
 
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
@@ -572,13 +641,13 @@ namespace OctreePrivateKernels{
 
 template<typename ElemType>
 __device__ __host__ inline void TypeTools<Octree<ElemType> >::init(Octree<ElemType> &m){
-	TypeTools<Stacktor<Octree<>::TreeNode> >::init(m.tree);
+	TypeTools<Stacktor<typename Octree<ElemType>::TreeNode> >::init(m.tree);
 	TypeTools<Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > >::init(m.nodeData);
 	TypeTools<Stacktor<ElemType > >::init(m.data);
 }
 template<typename ElemType>
 __device__ __host__ inline void TypeTools<Octree<ElemType> >::dispose(Octree<ElemType> &m){
-	TypeTools<Stacktor<Octree<>::TreeNode> >::dispose(m.tree);
+	TypeTools<Stacktor<typename Octree<ElemType>::TreeNode> >::dispose(m.tree);
 	TypeTools<Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > >::dispose(m.nodeData);
 	TypeTools<Stacktor<ElemType > >::dispose(m.data);
 }
@@ -595,26 +664,26 @@ template<typename ElemType>
 inline bool TypeTools<Octree<ElemType> >::prepareForCpyLoad(const Octree<ElemType> *source, Octree<ElemType> *hosClone, Octree<ElemType> *devTarget, int count){
 	int i = 0;
 	for (i = 0; i < count; i++){
-		if (!TypeTools<Stacktor<Octree<>::TreeNode> >::prepareForCpyLoad(&source[i].tree, &hosClone[i].tree, &((devTarget + i)->tree), 1)) break;
+		if (!TypeTools<Stacktor<typename Octree<ElemType>::TreeNode> >::prepareForCpyLoad(&source[i].tree, &hosClone[i].tree, &((devTarget + i)->tree), 1)) break;
 		if (!TypeTools<Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > >::prepareForCpyLoad(&source[i].nodeData, &hosClone[i].nodeData, &((devTarget + i)->nodeData), 1)){
-			TypeTools<Stacktor<Octree<>::TreeNode> >::undoCpyLoadPreparations(&source[i].tree, &hosClone[i].tree, &((devTarget + i)->tree), 1);
+			TypeTools<Stacktor<typename Octree<ElemType>::TreeNode> >::undoCpyLoadPreparations(&source[i].tree, &hosClone[i].tree, &((devTarget + i)->tree), 1);
 			break;
 		}
 		if (!TypeTools<Stacktor<ElemType > >::prepareForCpyLoad(&source[i].data, &hosClone[i].data, &((devTarget + i)->data), 1)){
-			TypeTools<Stacktor<Octree<>::TreeNode> >::undoCpyLoadPreparations(&source[i].tree, &hosClone[i].tree, &((devTarget + i)->tree), 1);
+			TypeTools<Stacktor<typename Octree<ElemType>::TreeNode> >::undoCpyLoadPreparations(&source[i].tree, &hosClone[i].tree, &((devTarget + i)->tree), 1);
 			TypeTools<Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > >::undoCpyLoadPreparations(&source[i].nodeData, &hosClone[i].nodeData, &((devTarget + i)->nodeData), 1);
 			break;
 		}
 		bool streamError = false;
 		cudaStream_t stream; if (cudaStreamCreate(&stream) != cudaSuccess) streamError = true;
 		else {
-			OctreePrivateKernels::fixRoots<<<OctreePrivateKernels::numBlocks(source[i].tree.size()), OctreePrivateKernels::numThreads(), 0, stream>>>(source[i].tree + 0, hosClone[i].tree + 0, source[i].tree.size());
+			OctreePrivateKernels::fixRoots<ElemType><<<OctreePrivateKernels::numBlocks(source[i].tree.size()), OctreePrivateKernels::numThreads(), 0, stream>>>(source[i].tree + 0, hosClone[i].tree + 0, source[i].tree.size());
 			OctreePrivateKernels::fixNodeDataPointers<ElemType><<<OctreePrivateKernels::numBlocks(source[i].nodeData.size()), OctreePrivateKernels::numThreads(), 0, stream>>>(source[i].data + 0, hosClone[i].data + 0, hosClone[i].nodeData + 0, source[i].nodeData.size());
 			streamError = (cudaStreamSynchronize(stream) != cudaSuccess);
 			if (cudaStreamDestroy(stream) != cudaSuccess) streamError = true;
 		}
 		if (streamError) {
-			TypeTools<Stacktor<Octree<>::TreeNode> >::undoCpyLoadPreparations(&source[i].tree, &hosClone[i].tree, &((devTarget + i)->tree), 1);
+			TypeTools<Stacktor<typename Octree<ElemType>::TreeNode> >::undoCpyLoadPreparations(&source[i].tree, &hosClone[i].tree, &((devTarget + i)->tree), 1);
 			TypeTools<Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > >::undoCpyLoadPreparations(&source[i].nodeData, &hosClone[i].nodeData, &((devTarget + i)->nodeData), 1);
 			TypeTools<Stacktor<ElemType > >::undoCpyLoadPreparations(&source[i].data, &hosClone[i].data, &((devTarget + i)->data), 1);
 			break;
@@ -630,19 +699,19 @@ inline bool TypeTools<Octree<ElemType> >::prepareForCpyLoad(const Octree<ElemTyp
 template<typename ElemType>
 inline void TypeTools<Octree<ElemType> >::undoCpyLoadPreparations(const Octree<ElemType> *source, Octree<ElemType> *hosClone, Octree<ElemType> *devTarget, int count){
 	for (int i = 0; i < count; i++){
-		TypeTools<Stacktor<Octree<>::TreeNode> >::undoCpyLoadPreparations(&source[i].tree, &hosClone[i].tree, &((devTarget + i)->tree), 1);
+		TypeTools<Stacktor<typename Octree<ElemType>::TreeNode> >::undoCpyLoadPreparations(&source[i].tree, &hosClone[i].tree, &((devTarget + i)->tree), 1);
 		TypeTools<Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > >::undoCpyLoadPreparations(&source[i].nodeData, &hosClone[i].nodeData, &((devTarget + i)->nodeData), 1);
 		TypeTools<Stacktor<ElemType > >::undoCpyLoadPreparations(&source[i].data, &hosClone[i].data, &((devTarget + i)->data), 1);
 	}
 }
 template<typename ElemType>
-inline bool TypeTools<Octree<ElemType> >::devArrayNeedsToBeDisoposed(){
-	return(TypeTools<Octree<>::TreeNode>::devArrayNeedsToBeDisoposed() || TypeTools<Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > >::devArrayNeedsToBeDisoposed() || TypeTools<ElemType >::devArrayNeedsToBeDisoposed());
+inline bool TypeTools<Octree<ElemType> >::devArrayNeedsToBeDisposed(){
+	return(TypeTools<typename Octree<ElemType>::TreeNode>::devArrayNeedsToBeDisposed() || TypeTools<Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > >::devArrayNeedsToBeDisposed() || TypeTools<ElemType >::devArrayNeedsToBeDisposed());
 }
 template<typename ElemType>
 inline bool TypeTools<Octree<ElemType> >::disposeDevArray(Octree<ElemType> *arr, int count){
 	for (int i = 0; i < count; i++){
-		if (!TypeTools<Stacktor<Octree<>::TreeNode> >::disposeDevArray(&((arr + i)->tree), 1)) return false;
+		if (!TypeTools<Stacktor<typename Octree<ElemType>::TreeNode> >::disposeDevArray(&((arr + i)->tree), 1)) return false;
 		if (!TypeTools<Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > >::disposeDevArray(&((arr + i)->nodeData), 1)) return false;
 		if (!TypeTools<Stacktor<ElemType > >::disposeDevArray(&((arr + i)->data), 1)) return false;
 	}

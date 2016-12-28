@@ -22,6 +22,28 @@ public:
 };
 
 
+template<typename ElemType>
+/** ========================================================== **/
+/*
+Output of Octree::cast
+*/
+struct RaycastHit {
+	// Object, the ray hit
+	ElemType object;
+	// Distance, the ray traveled before hitting the object
+	float hitDistance;
+	// Collision point
+	Vector3 hitPoint;
+
+	// Default constructor (does nothing)
+	__device__ __host__ inline RaycastHit();
+	// Constructs RaycastHit from the given parameters
+	__device__ __host__ inline RaycastHit(const ElemType &elem, const float d, const Vector3 &p);
+	// Constructs RaycastHit from the given parameters
+	__device__ __host__ inline RaycastHit& operator()(const ElemType &elem, const float d, const Vector3 &p);
+	// Constructs RaycastHit from the given parameters
+	__device__ __host__ inline void set(const ElemType &elem, const float d, const Vector3 &p);
+};
 
 
 
@@ -54,29 +76,7 @@ public:
 		__device__ __host__ inline TreeNode(AABB boundingBox = AABB());
 	};
 
-
-	/** ========================================================== **/
-	/*
-		Output of Octree::cast
-	*/
-	struct RaycastHit{
-		// Object, the ray hit
-		ElemType object;
-		// Distance, the ray traveled before hitting the object
-		float hitDistance;
-		// Collision point
-		Vector3 hitPoint;
-
-		// Default constructor (does nothing)
-		__device__ __host__ inline RaycastHit();
-		// Constructs RaycastHit from the given parameters
-		__device__ __host__ inline RaycastHit(const ElemType &elem, const float d, const Vector3 &p);
-		// Constructs RaycastHit from the given parameters
-		__device__ __host__ inline RaycastHit& operator()(const ElemType &elem, const float d, const Vector3 &p);
-		// Constructs RaycastHit from the given parameters
-		__device__ __host__ inline void set(const ElemType &elem, const float d, const Vector3 &p);
-	};
-
+	typedef RaycastHit<ElemType> RaycastHit;
 
 
 

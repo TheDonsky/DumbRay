@@ -29,6 +29,7 @@ struct Shaded {
 	__dumb__ Shaded(const HitType &obj, Material<HitType> *mat);
 
 	__dumb__ bool intersects(const Shaded &other)const;
+	__dumb__ bool intersects(const AABB &other)const;
 	__dumb__ bool cast(const Ray& r, bool clipBackface)const;
 	__dumb__ bool castPreInversed(const Ray& inversedRay, bool clipBackface)const;
 	__dumb__ bool cast(const Ray& ray, float &hitDistance, Vertex& hitPoint, bool clipBackface)const;
@@ -75,7 +76,7 @@ public:
 	// Cleans Octree
 	__host__ inline void reset();
 	// Adds material (returns materialId)
-	__host__ inline int addMaterial(const Material &material);
+	__host__ inline int addMaterial(const Material<HitType> &material);
 	
 	// Pushes list of objects (needs calling build as a final statement) (default material)
 	__host__ inline void push(const Stacktor<HitType> &objects);
@@ -161,8 +162,12 @@ private:
 	Stacktor<Material<HitType> > materials;
 
 	__device__ __host__ inline void fixMaterialPointers(Material<HitType> *falseRoot);
+
+	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(ShadedOctree);
 };
 
 
 
 
+
+#include"ShadedOctree.impl.cuh"

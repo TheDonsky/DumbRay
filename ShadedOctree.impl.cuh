@@ -53,8 +53,8 @@ inline void TypeTools<Shaded<HitType> >::undoCpyLoadPreparations(const Shaded<Hi
 	}
 }
 template<typename HitType>
-inline bool TypeTools<Shaded<HitType> >::devArrayNeedsToBeDisoposed() { 
-	return (TypeTools<HitType>::devArrayNeedsToBeDisoposed() || TypeTools<Material<HitType>*>::devArrayNeedsToBeDisoposed());
+inline bool TypeTools<Shaded<HitType> >::devArrayNeedsToBeDisposed() { 
+	return (TypeTools<HitType>::devArrayNeedsToBeDisposed() || TypeTools<Material<HitType>*>::devArrayNeedsToBeDisposed());
 }
 template<typename HitType>
 inline bool TypeTools<Shaded<HitType> >::disposeDevArray(Shaded<HitType> *arr, int count) {
@@ -110,7 +110,7 @@ namespace ShadedOctreePrivateKernels {
 #undef SHADED_OCTREE_PRIVATE_KERNELS_UNITS_PER_THREAD
 
 	template<typename HitType>
-	__global__ static void fixMaterialPointers(Material<HitType> *falseRoot, Material<HitType> *trueRoot, Shaded<HitType> *data, int count) {
+	__global__ static void fixMaterialPointers(const Material<HitType> *falseRoot, Material<HitType> *trueRoot, Shaded<HitType> *data, int count) {
 		int start = (blockIdx.x * unitsPerBlock() + threadIdx.x * unitsPerThread());
 		int end = start + unitsPerThread();
 		if (end > count) end = count;
@@ -132,7 +132,7 @@ inline bool TypeTools<ShadedOctree<HitType> >::prepareForCpyLoad(const ShadedOct
 		bool streamError = false;
 		cudaStream_t stream; if (cudaStreamCreate(&stream) != cudaSuccess) streamError = true;
 		else {
-			Material<HitType> *falseRoot = (source[i].materials + 0);
+			const Material<HitType> *falseRoot = (source[i].materials + 0);
 			Material<HitType> *trueRoot = (hosClone[i].materials + 0);
 			Shaded<HitType> *data = (hosClone[i].octree.getData() + 0);
 			int dataSize = hosClone[i].octree.getData().size();
@@ -163,8 +163,8 @@ inline void TypeTools<ShadedOctree<HitType> >::undoCpyLoadPreparations(const Sha
 	}
 }
 template<typename HitType>
-inline bool TypeTools<ShadedOctree<HitType> >::devArrayNeedsToBeDisoposed() {
-	return (TypeTools<Octree<Shaded<HitType> > >::devArrayNeedsToBeDisoposed() || TypeTools<Stacktor<Material<HitType> > >::devArrayNeedsToBeDisoposed());
+inline bool TypeTools<ShadedOctree<HitType> >::devArrayNeedsToBeDisposed() {
+	return (TypeTools<Octree<Shaded<HitType> > >::devArrayNeedsToBeDisposed() || TypeTools<Stacktor<Material<HitType> > >::devArrayNeedsToBeDisposed());
 }
 template<typename HitType>
 inline bool TypeTools<ShadedOctree<HitType> >::disposeDevArray(ShadedOctree<HitType> *arr, int count) {
@@ -191,6 +191,10 @@ __dumb__ Shaded<HitType>::Shaded(const HitType &obj, Material<HitType> *mat) {
 template<typename HitType>
 __dumb__ bool Shaded<HitType>::intersects(const Shaded &other)const {
 	return Shapes::intersect<HitType>(object, other.object);
+}
+template<typename HitType>
+__dumb__ bool Shaded<HitType>::intersects(const AABB &other)const {
+	return Shapes::intersect<AABB, HitType>(other, object);
 }
 template<typename HitType>
 __dumb__ bool Shaded<HitType>::cast(const Ray& r, bool clipBackface)const {
@@ -292,7 +296,7 @@ __host__ inline void ShadedOctree<HitType>::reinit(AABB bounds) {
 	octree.reinit(bounds);
 	materials.clear();
 	materials.flush(2);
-	materials[0].use<DefaultShader>();
+	materials[0].template use<DefaultShaderGeneric<HitType> >();
 }
 template<typename HitType>
 // Copy-Constructor
@@ -348,11 +352,11 @@ __host__ inline void ShadedOctree<HitType>::reset() {
 	octree.reset();
 	materials.clear();
 	materials.flush(2);
-	materials[0].use<DefaultShader>();
+	materials[0].template use<DefaultShaderGeneric<HitType> >();
 }
 template<typename HitType>
 // Adds material (returns materialId)
-__host__ inline int ShadedOctree<HitType>::addMaterial(const Material &material) {
+__host__ inline int ShadedOctree<HitType>::addMaterial(const Material<HitType> &material) {
 	int materialId = materials.size();
 	Material<HitType> *materialRoot = (materials + 1);
 	materials.push(material);
@@ -404,7 +408,9 @@ __host__ inline int ShadedOctree<HitType>::push(const HitType &object, const Mat
 
 template<typename HitType>
 // Builds the Octree (needed if and only if it was filled with push() calls, not put()-s)
-__host__ inline void ShadedOctree<HitType>::build();
+__host__ inline void ShadedOctree<HitType>::build() {
+	octree.build();
+}
 
 
 /** ========================================================== **/
@@ -439,7 +445,7 @@ template<typename HitType>
 // Adds the object to the Octree (returns true, if materialId is valid)
 __host__ inline bool ShadedOctree<HitType>::put(const HitType &elem, int materialId) {
 	if (materialId < 0 || materialId >= materials.size()) return false;
-	octree.put(Shaded<HitType>(object, materials + materialId));
+	octree.put(Shaded<HitType>(elem, materials + materialId));
 	return true;
 }
 template<typename HitType>
