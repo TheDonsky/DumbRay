@@ -58,8 +58,8 @@ inline void TypeTools<Pair<Type1, Type2> >::undoCpyLoadPreparations(const Pair<T
 	}
 }
 template<typename Type1, typename Type2>
-inline bool TypeTools<Pair<Type1, Type2> >::devArrayNeedsToBeDisoposed(){
-	return(TypeTools<Type1>::devArrayNeedsToBeDisoposed() || TypeTools<Type2>::devArrayNeedsToBeDisoposed());
+inline bool TypeTools<Pair<Type1, Type2> >::devArrayNeedsToBeDisposed(){
+	return(TypeTools<Type1>::devArrayNeedsToBeDisposed() || TypeTools<Type2>::devArrayNeedsToBeDisposed());
 }
 template<typename Type1, typename Type2>
 inline bool TypeTools<Pair<Type1, Type2> >::disposeDevArray(Pair<Type1, Type2> *arr, int count){
