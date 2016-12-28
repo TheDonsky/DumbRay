@@ -1,5 +1,8 @@
 #pragma once
 
+#include"cuda_runtime.h"
+#include"device_launch_parameters.h"
+
 
 
 /** ########################################################################## **/
@@ -53,11 +56,11 @@ if the user is going to upload anything on CUDA device, or initialise from raw d
 		/* (return value: nothing) */ \
 		inline static void undoCpyLoadPreparations(const Type *source, Type *hosClone, Type *devTarget, int count); \
 		\
-		/* ################## devArrayNeedsToBeDisoposed ################# */ \
-		/* devArrayNeedsToBeDisoposed tells, if the device array needs to be disposed before deallocation */ \
+		/* ################## devArrayNeedsToBeDisposed ################# */ \
+		/* devArrayNeedsToBeDisposed tells, if the device array needs to be disposed before deallocation */ \
 		/* (default: false) */ \
 		/* (return value: true, if calling didposeDevArray makes sence) */ \
-		inline static bool devArrayNeedsToBeDisoposed(); \
+		inline static bool devArrayNeedsToBeDisposed(); \
 		\
 		/* ################## disposeDevArray ################# */ \
 		/* disposeDevArray should dispose the array on the device(without deallocation it) */ \
@@ -79,10 +82,10 @@ if the user is going to upload anything on CUDA device, or initialise from raw d
 	\
 	inline friend bool TypeTools<ElemType>::prepareForCpyLoad(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
 	inline friend void TypeTools<ElemType>::undoCpyLoadPreparations(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
-	inline friend bool TypeTools<ElemType>::devArrayNeedsToBeDisoposed(); \
+	inline friend bool TypeTools<ElemType>::devArrayNeedsToBeDisposed(); \
 	inline friend bool TypeTools<ElemType>::disposeDevArray(ElemType *arr, int count)
 
-#define SPECIALISE_TYPE_TOOLS__FOR(ElemType) \
+#define SPECIALISE_TYPE_TOOLS_FOR(ElemType) \
 	template<> __device__ __host__ inline void TypeTools<ElemType>::init(ElemType &t); \
 	template<> __device__ __host__ inline void TypeTools<ElemType>::dispose(ElemType &t); \
 	template<> __device__ __host__ inline void TypeTools<ElemType>::swap(ElemType &a, ElemType &b); \
@@ -90,7 +93,7 @@ if the user is going to upload anything on CUDA device, or initialise from raw d
 	\
 	template<> inline bool TypeTools<ElemType>::prepareForCpyLoad(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
 	template<> inline void TypeTools<ElemType>::undoCpyLoadPreparations(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
-	template<> inline bool TypeTools<ElemType>::devArrayNeedsToBeDisoposed(); \
+	template<> inline bool TypeTools<ElemType>::devArrayNeedsToBeDisposed(); \
 	template<> inline bool TypeTools<ElemType>::disposeDevArray(ElemType *arr, int count)
 
 
@@ -202,10 +205,52 @@ class TypeTools{
 	template<> inline void TypeTools<Child>::undoCpyLoadPreparations(const Child *source, Child *hosClone, Child *devTarget, int count) { \
 		TypeTools<Perent >::undoCpyLoadPreparations(source, hosClone, devTarget, count); \
 	} \
-	template<> inline bool TypeTools<Child>::devArrayNeedsToBeDisoposed() { \
-		return TypeTools<Perent >::devArrayNeedsToBeDisoposed(); \
+	template<> inline bool TypeTools<Child>::devArrayNeedsToBeDisposed() { \
+		return TypeTools<Perent >::devArrayNeedsToBeDisposed(); \
 	} \
 	template<> inline bool TypeTools<Child>::disposeDevArray(Child *arr, int count) { \
 		return TypeTools<Perent >::disposeDevArray(arr, count); \
 	}
 
+
+
+
+
+
+
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+/* Default implementations: */
+template<typename Type>
+__device__ __host__ inline void TypeTools<Type>::init(Type &t) {}
+template<typename Type>
+__device__ __host__ inline void TypeTools<Type>::dispose(Type &t) {}
+template<typename Type>
+__device__ __host__ inline void TypeTools<Type>::swap(Type &a, Type &b) {
+	Type c = a;
+	a = b;
+	b = c;
+}
+template<typename Type>
+__device__ __host__ inline void TypeTools<Type>::transfer(Type &src, Type &dst) {
+	dst = src;
+}
+
+template<typename Type>
+inline bool TypeTools<Type>::prepareForCpyLoad(const Type *source, Type *hosClone, Type *devTarget, int count) {
+	for (int i = 0; i < count; i++)
+		hosClone[i] = source[i];
+	return(true);
+}
+template<typename Type>
+inline void TypeTools<Type>::undoCpyLoadPreparations(const Type *source, Type *hosClone, Type *devTarget, int count) { }
+template<typename Type>
+inline bool TypeTools<Type>::devArrayNeedsToBeDisposed() { return(false); }
+template<typename Type>
+inline bool TypeTools<Type>::disposeDevArray(Type *arr, int count) { return(true); }
