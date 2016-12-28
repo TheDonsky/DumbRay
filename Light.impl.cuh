@@ -7,12 +7,30 @@
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-template<typename IlluminatedType>
-__dumb__ void LightInterface<IlluminatedType>::clean() {
+__dumb__ void LightInterface::clean() {
+	getPhotonFunction = NULL;
+	ambientFunction = NULL;
 }
-template<typename IlluminatedType>
 template<typename LightType>
-__dumb__ void LightInterface<IlluminatedType>::use() {
+__dumb__ void LightInterface::use() {
+	getPhotonFunction = getPhotonAbstract<LightType>;
+	ambientFunction = ambientAbstract<LightType>;
+}
+
+__dumb__ Photon LightInterface::getPhoton(const void *lightSource, const Vertex &targetPoint, bool *noShadows) const {
+	return getPhotonFunction(lightSource, targetPoint, noShadows);
+}
+__dumb__ ColorRGB LightInterface::ambient(const void *lightSource, const Vertex &targetPoint) const {
+	return ambientFunction(lightSource, targetPoint);
+}
+
+template<typename LightType>
+__dumb__ Photon LightInterface::getPhotonAbstract(const void *lightSource, const Vertex &targetPoint, bool *noShadows) {
+	return ((LightType*)lightSource)->getPhoton(targetPoint, noShadows);
+}
+template<typename LightType>
+__dumb__ ColorRGB LightInterface::ambientAbstract(const void *lightSource, const Vertex &targetPoint) {
+	return ((LightType*)lightSource)->ambient(targetPoint);
 }
 
 
@@ -22,13 +40,18 @@ __dumb__ void LightInterface<IlluminatedType>::use() {
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-template<typename IlluminatedType>
-inline Light<IlluminatedType>* Light<IlluminatedType>::upload()const {
-	return (Light*)(Generic<LightInterface<IlluminatedType> >::upload());
+__dumb__ Photon Light::getPhoton(const Vertex &targetPoint, bool *noShadows) const {
+	return functions().getPhoton(object(), targetPoint, noShadows);
 }
-template<typename IlluminatedType>
-inline Light<IlluminatedType>* Light<IlluminatedType>::upload(const Light *source, int count) {
-	return (Light*)(Generic<LightInterface<IlluminatedType> >::upload(source, count));
+__dumb__ ColorRGB Light::ambient(const Vertex &targetPoint) const {
+	return functions().ambient(object(), targetPoint);
+}
+
+inline Light* Light::upload()const {
+	return (Light*)(Generic<LightInterface>::upload());
+}
+inline Light* Light::upload(const Light *source, int count) {
+	return (Light*)(Generic<LightInterface>::upload(source, count));
 }
 
 
@@ -39,41 +62,8 @@ inline Light<IlluminatedType>* Light<IlluminatedType>::upload(const Light *sourc
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 /** Friends: **/
-template<typename IlluminatedType>
-__device__ __host__ inline void TypeTools<Light<IlluminatedType> >::init(Light<IlluminatedType> &m) {
-	TypeTools<Generic<LightInterface<IlluminatedType> > >::init(m);
-}
-template<typename IlluminatedType>
-__device__ __host__ inline void TypeTools<Light<IlluminatedType> >::dispose(Light<IlluminatedType> &m) {
-	TypeTools<Generic<LightInterface<IlluminatedType> > >::dispose(m);
-}
-template<typename IlluminatedType>
-__device__ __host__ inline void TypeTools<Light<IlluminatedType> >::swap(Light<IlluminatedType> &a, Light<IlluminatedType> &b) {
-	TypeTools<Generic<LightInterface<IlluminatedType> > >::swap(a, b);
-}
-template<typename IlluminatedType>
-__device__ __host__ inline void TypeTools<Light<IlluminatedType> >::transfer(Light<IlluminatedType> &src, Light<IlluminatedType> &dst) {
-	TypeTools<Generic<LightInterface<IlluminatedType> > >::transfer(src, dst);
-}
+COPY_TYPE_TOOLS_IMPLEMENTATION(Light, Generic<LightInterface>);
 
-template<typename IlluminatedType>
-inline bool TypeTools<Light<IlluminatedType> >::prepareForCpyLoad(const Light<IlluminatedType> *source, Light<IlluminatedType> *hosClone, Light<IlluminatedType> *devTarget, int count) {
-	return TypeTools<Generic<LightInterface<IlluminatedType> > >::prepareForCpyLoad(source, hosClone, devTarget, count);
-}
-
-template<typename IlluminatedType>
-inline void TypeTools<Light<IlluminatedType> >::undoCpyLoadPreparations(const Light<IlluminatedType> *source, Light<IlluminatedType> *hosClone, Light<IlluminatedType> *devTarget, int count) {
-	TypeTools<Generic<LightInterface<IlluminatedType> > >::undoCpyLoadPreparations(source, hosClone, devTarget, count);
-}
-
-template<typename IlluminatedType>
-inline bool TypeTools<Light<IlluminatedType> >::devArrayNeedsToBeDisoposed() {
-	return TypeTools<Generic<LightInterface<IlluminatedType> > >::devArrayNeedsToBeDisposed();
-}
-template<typename IlluminatedType>
-inline bool TypeTools<Light<IlluminatedType> >::disposeDevArray(Light<IlluminatedType> *arr, int count) {
-	return TypeTools<Generic<LightInterface<IlluminatedType> > >::disposeDevArray(arr, count);
-}
 
 
 

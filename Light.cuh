@@ -1,5 +1,6 @@
 #pragma once
 #include"Generic.cuh"
+#include"Photon.cuh"
 #include"Vector3.h"
 
 
@@ -9,15 +10,23 @@
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-template<typename IlluminatedType>
 class LightInterface {
 public:
 	__dumb__ void clean();
-	template<typename LenseType>
+	template<typename LightType>
 	__dumb__ void use();
 
+	__dumb__ Photon getPhoton(const void *lightSource, const Vertex &targetPoint, bool *noShadows)const;
+	__dumb__ ColorRGB ambient(const void *lightSource, const Vertex &targetPoint)const;
+
 private:
-	Photon(*photonToFunction)(const Vertex &v);
+	Photon(*getPhotonFunction)(const void *lightSource, const Vertex &targetPoint, bool *noShadows);
+	ColorRGB(*ambientFunction)(const void *lightSource, const Vertex &targetPoint);
+
+	template<typename LightType>
+	__dumb__ static Photon getPhotonAbstract(const void *lightSource, const Vertex &targetPoint, bool *noShadows);
+	template<typename LightType>
+	__dumb__ static ColorRGB ambientAbstract(const void *lightSource, const Vertex &targetPoint);
 };
 
 
@@ -27,30 +36,23 @@ private:
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-template<typename IlluminatedType> class Light;
-template<typename IlluminatedType>
-class TypeTools<Light<IlluminatedType> > {
+class Light : public Generic<LightInterface> {
 public:
-	typedef Light<IlluminatedType> LightType;
-	DEFINE_TYPE_TOOLS_CONTENT_FOR(LightType);
-};
-
-
-
-
-
-/** ########################################################################## **/
-/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
-/** ########################################################################## **/
-template<typename IlluminatedType>
-class Light : public Generic<LightInterface<IlluminatedType> > {
-public:
+	__dumb__ Photon getPhoton(const Vertex &targetPoint, bool *noShadows)const;
+	__dumb__ ColorRGB ambient(const Vertex &targetPoint)const;
 
 	inline Light *upload()const;
 	inline static Light* upload(const Light *source, int count = 1);
 };
 
 
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+SPECIALISE_TYPE_TOOLS_FOR(Light);
 
 
 
