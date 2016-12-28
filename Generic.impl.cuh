@@ -307,7 +307,7 @@ inline void TypeTools<Generic<FunctionPack> >::undoCpyLoadPreparations(const Gen
 }
 
 template<typename FunctionPack>
-inline bool TypeTools<Generic<FunctionPack> >::devArrayNeedsToBeDisoposed() {
+inline bool TypeTools<Generic<FunctionPack> >::devArrayNeedsToBeDisposed() {
 	return true;
 }
 template<typename FunctionPack>
