@@ -2,6 +2,7 @@
 
 #include"Ray.h"
 #include"ColorRGB.cuh"
+#include"Transform.h"
 
 
 

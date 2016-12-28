@@ -214,6 +214,7 @@ namespace BackwardTracerPrivate {
 			if (!shade(maxRaycasts)) {
 				output.depth = -1;
 				renderComplete = true;
+				return true;
 			}
 			else {
 				renderComplete = false;

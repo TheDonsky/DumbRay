@@ -1,6 +1,7 @@
 #pragma once
 #include"ShadedOctree.cuh"
-#include"World.cuh"
+#include"Camera.cuh"
+#include"Light.cuh"
 #include"Camera.cuh"
 #include"Matrix.h"
 #include"Handler.cuh"
