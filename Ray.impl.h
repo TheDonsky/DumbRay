@@ -28,25 +28,6 @@ __device__ __host__ inline Ray& Ray::operator()(const Vector3 &org, const Vector
 
 
 /** -------------------------------------------------------------------------- **/
-/** Operators: **/
-__device__ __host__ inline Ray Ray::operator>>(const Transform &trans)const {
-	return Ray(origin >> trans, (direction - trans.getPosition()) >> trans);
-}
-__device__ __host__ inline Ray& Ray::operator>>=(const Transform &trans) {
-	return ((*this) = ((*this) >> trans));
-}
-__device__ __host__ inline Ray Ray::operator<<(const Transform &trans)const {
-	return Ray(origin << trans, (direction + trans.getPosition()) << trans);
-}
-__device__ __host__ inline Ray& Ray::operator<<=(const Transform &trans) {
-	return ((*this) = ((*this) << trans));
-}
-
-
-
-
-
-/** -------------------------------------------------------------------------- **/
 /** Stream operators: **/
 std::istream& operator>>(std::istream &stream, Ray &r){
 	return(stream >> r.origin >> r.direction);
