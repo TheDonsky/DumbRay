@@ -286,8 +286,8 @@ inline void TypeTools<PolyMesh>::undoCpyLoadPreparations(const PolyMesh *source,
 	}
 }
 template<>
-inline bool TypeTools<PolyMesh>::devArrayNeedsToBeDisoposed(){
-	return(TypeTools<PolyMesh::VertexList>::devArrayNeedsToBeDisoposed() || TypeTools<PolyMesh::FaceList>::devArrayNeedsToBeDisoposed());
+inline bool TypeTools<PolyMesh>::devArrayNeedsToBeDisposed(){
+	return(TypeTools<PolyMesh::VertexList>::devArrayNeedsToBeDisposed() || TypeTools<PolyMesh::FaceList>::devArrayNeedsToBeDisposed());
 }
 template<>
 inline bool TypeTools<PolyMesh>::disposeDevArray(PolyMesh *arr, int count){

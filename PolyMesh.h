@@ -6,7 +6,7 @@
 
 
 class PolyMesh;
-SPECIALISE_TYPE_TOOLS__FOR(PolyMesh);
+SPECIALISE_TYPE_TOOLS_FOR(PolyMesh);
 
 
 
