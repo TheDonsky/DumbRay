@@ -19,7 +19,7 @@ namespace OctreeTest{
 		__device__ __host__ inline static void colorPixel(const Octree<> &octree, Color &pixel, const Transform &trans, int i, int j, int width, int height, int frame){
 			Octree<>::RaycastHit hit;
 			Vector3 dir((float)(j - width / 2), (float)(height / 2 - i), (float)(width / 2));
-			Ray r = (Ray(Vector3(0, 0, -128.0f), dir.normalized()) << trans);
+			Ray r = trans.ray(dir.normalized());
 			if (octree.cast(r, hit)){
 #ifdef USE_NORMAL_COLOR
 				Vector3 normal = (hit.object.norm.massCenter(hit.object.vert.getMases(hit.hitPoint)).normalized() >> trans) / 2.0f + Vector3(0.5f, 0.5f, 0.5f);
@@ -27,8 +27,12 @@ namespace OctreeTest{
 				pixel(normal.x, normal.y, normal.z, 1.0f);
 #else
 				DefaultShader shad;
+				/*
 				Photon ph(Ray(hit.hitPoint - Vector3(0, 0, 1000000000), Vector3::front()), ColorRGB(1, 1, 1));
-				pixel = shad.cast(ShaderHitInfo<BakedTriFace> { hit.object, ph, hit.hitPoint, hit.hitDistance, r.origin }).observed.color;
+				/*/
+				Photon ph(trans.frontRay(), ColorRGB(1, 1, 1));
+				//*/
+				pixel = shad.cast(ShaderHitInfo<BakedTriFace> { hit.object, ph, hit.hitPoint, r.origin }).observed.color;
 #endif
 			}
 			else {
@@ -124,14 +128,14 @@ namespace OctreeTest{
 			for (int i = 0; i < meshes.size(); i++){
 				BakedTriMesh mesh;
 				meshes[i].bake(mesh);
-				/*
+				//*
 				octree.push(mesh);
 				/*/
 				octree.put(mesh);
 				//*/
 				std::cout << "PUSHED " << i << std::endl;
 			}
-			/*
+			//*
 			octree.build();
 			/*/
 			octree.reduceNodes();
@@ -158,6 +162,8 @@ namespace OctreeTest{
 			POINT cursor;
 			Vector3 euler;
 			Transform trans;
+			Vector3 pivot;
+			float distance;
 			bool mouseWasDown;
 
 			struct CPUrenderThread{
@@ -194,19 +200,23 @@ namespace OctreeTest{
 			// ############### ROTATION: ##############
 			// ########################################
 			inline void rotate(){
-				if (GetKeyState(VK_LBUTTON) & 0x100 && window().inFocus()){
-					POINT newCursor; GetCursorPos(&newCursor);
-					if (mouseWasDown){
-						euler.y += (newCursor.x - cursor.x) / 4.0f;
-						euler.x += (newCursor.y - cursor.y) / 4.0f;
-						if (euler.x <= -80) euler.x = -80;
-						else if (euler.x >= 80) euler.x = 80;
-						trans.setEulerAngles(euler);
+				if (window().inFocus()) {
+					if (GetKeyState(VK_LBUTTON) & 0x100) {
+						POINT newCursor; GetCursorPos(&newCursor);
+						if (mouseWasDown) {
+							euler.y += (newCursor.x - cursor.x) / 4.0f;
+							euler.x += (newCursor.y - cursor.y) / 4.0f;
+							if (euler.x <= -80) euler.x = -80;
+							else if (euler.x >= 80) euler.x = 80;
+							trans.setEulerAngles(euler);
+						}
+						else mouseWasDown = true;
+						cursor = newCursor;
 					}
-					else mouseWasDown = true;
-					cursor = newCursor;
+					else mouseWasDown = false;
 				}
 				else mouseWasDown = false;
+				trans.setPosition(pivot + trans.back() * distance);
 			}
 
 			// ########################################
@@ -300,6 +310,11 @@ namespace OctreeTest{
 				Octree<Vertex> octo;
 				octo.put(Vertex(0, 0, 0));
 				octo.cast(Ray(Vector3(-32, -32, -32), Vector3(1, 1, 1)));
+				// ######### TRANSFORM: #########
+				pivot(0, 0, 0);
+				distance = 128.0f;
+				trans.setEulerAngles(euler);
+				trans.setPosition(pivot + trans.back() * distance);
 			}
 
 			// ########################################
