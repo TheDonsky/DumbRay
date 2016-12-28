@@ -72,6 +72,9 @@ public:
 	__dumb__ bool contains(const Vertex &v)const;
 	// Checks, if the axis aligned bounding box intersects the given triangle
 	__dumb__ bool intersects(const Triangle &t)const;
+	template <typename Type>
+	// Generic intersection check
+	__dumb__ bool intersects(const Type &t)const;
 	// Checks, if the axis aligned bounding box intersects the given triangle, defined by vertexes
 	__dumb__ bool intersectsTriangle(const Vertex &a, const Vertex &b, const Vertex &c)const;
 	// Returns the distance the ray needs to travel in order to hit the box (0 or negative if inside, FLT_MAX, if hit can't occure)

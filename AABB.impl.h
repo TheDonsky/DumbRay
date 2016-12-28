@@ -99,6 +99,11 @@ __dumb__ bool AABB::intersectsTri<0>(Triangle t)const;
 __dumb__ bool AABB::intersects(const Triangle &t)const{
 	return(intersectsTri<0>(t));
 }
+template <typename Type>
+// Generic intersection check
+__dumb__ bool AABB::intersects(const Type &t)const {
+	return (t.intersects(*this));
+}
 // Checks, if the axis aligned bounding box intersects the given triangle, defined by vertexes
 __dumb__ bool AABB::intersectsTriangle(const Vertex &a, const Vertex &b, const Vertex &c)const{
 	return(intersectsTri<0>(Triangle(a, b, c)));
