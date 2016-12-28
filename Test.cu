@@ -1,4 +1,3 @@
-//*
 #include"Stacktor.test.cuh"
 #include"PolyMesh.h"
 #include"MeshReader.h"
@@ -9,26 +8,13 @@
 #include"ColorRGB.cuh"
 #include"DummyShader.cuh"
 #include"Vector2.h"
-#include"DumbScript.h"
-#include"World.cuh"
-#include"curand.h"
-#include"BackwardTracer.cuh"
 #include"Generic.test.cuh"
 #include"Lense.test.cuh"
+#include"BackwardTracer.test.cuh"
+#include"Handler.test.cuh"
+#include"Material.test.cuh"
+#include"Device.cuh"
 
-
-
-static void dump(Stacktor<PolyMesh> meshes, Stacktor<String> meshNames){
-	std::cout << "####################### OBJECTS READ: #######################" << std::endl;
-	for (int i = 0; i < meshes.size(); i++){
-		std::cout << "MESH: " << (meshNames[i] + 0) << std::endl;
-		std::cout << "   . Verts: " << meshes[i].vertextCount() << std::endl;
-		std::cout << "   . Norms: " << meshes[i].normalCount() << std::endl;
-		std::cout << "   . Texs:  " << meshes[i].textureCount() << std::endl;
-		std::cout << "   . Faces: " << meshes[i].faceCount() << std::endl;
-		Tests::logLine();
-	}
-}
 
 inline static __device__ __host__ Color color(int y, int x, float time){
 	//*
@@ -149,7 +135,6 @@ inline static void testWindow(){
 static void makeAndDestroyWindow(){
 	Windows::Window window("I Will Close");
 }
-
 static void windowTrap(){
 	Windows::Window window("CLOSE ME IF YOU CAN");
 	while (!window.dead()) Sleep(256);
@@ -163,7 +148,7 @@ __dumb__ void printVector(const char *label, const Vector3 &v){
 	printf("%s: (%f, %f, %f)\n", label, v.x, v.y, v.z);
 }
 
-__global__ void testConstants(){
+__global__ void testConstantsKernel(){
 	if (blockIdx.x == 0 && threadIdx.x == 0){
 		printVector(" zero", Vector3::zero());
 		printVector("  one", Vector3::one());
@@ -182,134 +167,28 @@ __global__ void testConstants(){
 		printf("\n");
 	}
 }
-
-__dumb__ void makeMaterialShout(const Material<BakedTriFace> &material) {
-	material.cast(Material<BakedTriFace>::HitInfo());
-}
-
-__global__ void materialShoutFromKernel(const Material<BakedTriFace> material) {
-	makeMaterialShout(material);
-}
-
-static void testMaterial() {
-	Material<BakedTriFace> material;
-	material.init<DummyShader>();
-	materialShoutFromKernel<<<1, 1>>>(material);
+static void testConstants() {
+	testConstantsKernel<<<1, 1>>>();
 	cudaDeviceSynchronize();
-	makeMaterialShout(material);
-	material.dispose();
-}
-
-__global__ void testPowKernel() {
-	printf("Pow(4, 1.5)=%f (DEVICE)\n", pow(4.0f, 1.5f));
-}
-
-static void testPow() {
-	printf("Pow(4, 1.5)=%f (HOST)\n", pow(4.0f, 1.5f));
-	testPowKernel<<<1, 1>>>();
-	cudaDeviceSynchronize();
-}
-
-static void testDumbBackTracer() {
-	World<BakedTriFace> world;
-	Camera camera;
-	Matrix<ColorRGB> matrix;
-	DumbBackTracer tracer(&world, &camera, &matrix, true);
-	tracer.set(&world, &camera, &matrix, true);
-	tracer.reset();
-	tracer.canIterate();
-	tracer.iterate();
-	tracer.world();
-	tracer.camera();
-	tracer.matrix();
-	tracer.lastIteration();
-	tracer.iteration();
-	tracer.onHost();
-	tracer.dispose();
-}
-
-static void testWorld() {
-	World<> world;
-	Octree<World<>::HitNode>::RaycastHit hit;
-	Material<BakedTriFace>::ShaderReport report;
-	Photon photon(Ray(Vector3::zero(), Vector3::front()), ColorRGB(0, 0, 0));
-	world.cast(photon, hit);
-	world.cast(photon, report, Vector3::zero());
-	world.cast(photon, hit, report, Vector3::zero());
-}
-
-__global__ static void kernel() {
 }
 
 int main(){
-	kernel<<<1, 1>>>();
-	cudaDeviceSynchronize();
-
+	cudaSetDevice(0);
+	Device::dumpCurrentDevice();
+	BackwardTracerTest::test();
+	HandlerTest::test();
 	GenericTest::test();
 	LenseTest::testMemory();
-
-	testDumbBackTracer();
-	testPow();
-	testWorld();
-
-	DumbScript::Tree tree;
-
-	Vector2 vec = Vector3(0, 0, 0);
-	std::cout << vec << std::endl;
-
-	ColorRGB c = Vector3(0, 0, 0);
-	testConstants<<<1, 1>>>();
-	cudaDeviceSynchronize();
-
-	testMaterial();
-
-	while (true){
-		std::string s;
-		std::cout << "Enter anything to prevent running Octree test... ";
-		std::getline(std::cin, s);
-		if (s.length() > 0) break;
-		OctreeTest::test();
-	}
+	testConstants();
+	MaterialTest::test();
+	OctreeTest::runtContinuousTest();
 	CutexTest::test();
-
+	StacktorTest::Load::test();
+	StacktorTest::fullTest();
+	IntMapTest::test();
 	makeAndDestroyWindow();
 	testWindow();
-
-	std::thread windowTrapThread(windowTrap);
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
-
-	IntMapTest::test();
-
-	Stacktor<PolyMesh> meshes;
-	Stacktor<String> meshNames;
-
-	if (!MeshReader::readObj(meshes, meshNames, "Boxes.obj", true))
-		std::cout << "ERROR READING \"Boxes.obj\"" << std::endl;
-
-	long long t;
-
-	t = clock();
-	std::cout << "READING \"D:\\Knot.obj\"..." << std::endl;
-	if (MeshReader::readObj(meshes, meshNames, "D:\\Knot.obj"))
-		std::cout << "CLOCK: " << (clock() - t) << std::endl;
-	else std::cout << "FAILED!" << std::endl;
-
-	dump(meshes, meshNames);
-	system("PAUSE");
-
-	cudaSetDevice(0);
-	Stacktor<PolyMesh> s;
-	s.push(PolyMesh());
-	s.push(PolyMesh());
-	Stacktor<PolyMesh> *arrM; cudaMalloc(&arrM, sizeof(Stacktor<PolyMesh>));
-	Stacktor<PolyMesh>::upload(&s, arrM);
-	Stacktor<PolyMesh>::dispose(arrM);
-	cudaFree(arrM);
-	while (true){
-		StacktorTest::Load::test();
-		StacktorTest::fullTest();
-		system("PAUSE");
-	}
+	std::thread windowTrapThread(windowTrap);
 	windowTrapThread.join();
 }
-//*/
