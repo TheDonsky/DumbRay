@@ -1,40 +1,6 @@
 #include"Stacktor.cuh"
 
 
-
-
-/** ########################################################################## **/
-/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
-/** ########################################################################## **/
-template<typename Type>
-__device__ __host__ inline void TypeTools<Type>::init(Type &t){}
-template<typename Type>
-__device__ __host__ inline void TypeTools<Type>::dispose(Type &t){}
-template<typename Type>
-__device__ __host__ inline void TypeTools<Type>::swap(Type &a, Type &b){
-	Type c = a;
-	a = b;
-	b = c;
-}
-template<typename Type>
-__device__ __host__ inline void TypeTools<Type>::transfer(Type &src, Type &dst){
-	dst = src;
-}
-
-template<typename Type>
-inline bool TypeTools<Type>::prepareForCpyLoad(const Type *source, Type *hosClone, Type *devTarget, int count){
-	for (int i = 0; i < count; i++)
-		hosClone[i] = source[i];
-	return(true);
-}
-template<typename Type>
-inline void TypeTools<Type>::undoCpyLoadPreparations(const Type *source, Type *hosClone, Type *devTarget, int count){ }
-template<typename Type>
-inline bool TypeTools<Type>::devArrayNeedsToBeDisoposed(){ return(false); }
-template<typename Type>
-inline bool TypeTools<Type>::disposeDevArray(Type *arr, int count){ return(true); }
-
-
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
@@ -73,7 +39,7 @@ inline void TypeTools<Stacktor<ElemType, localCapacity> >::undoCpyLoadPreparatio
 	}
 }
 template<typename ElemType, unsigned int localCapacity>
-inline bool TypeTools<Stacktor<ElemType, localCapacity> >::devArrayNeedsToBeDisoposed(){ return(true); }
+inline bool TypeTools<Stacktor<ElemType, localCapacity> >::devArrayNeedsToBeDisposed(){ return(true); }
 template<typename ElemType, unsigned int localCapacity>
 inline bool TypeTools<Stacktor<ElemType, localCapacity> >::disposeDevArray(Type *arr, int count){
 	return(Type::dispose(arr, count));
@@ -725,7 +691,7 @@ inline bool Stacktor<Type, localCapacity>::cpyLoad(Stacktor *hosClone, Stacktor 
 /** ------------------------------------ **/
 template<typename Type, unsigned int localCapacity>
 inline bool Stacktor<Type, localCapacity>::disposeOfUnderlyingData(Stacktor *arr, Stacktor *devClone, int count, bool hasExternalAllocation, cudaStream_t stream){
-	if (!TypeTools<Type>::devArrayNeedsToBeDisoposed()) return(true);
+	if (!TypeTools<Type>::devArrayNeedsToBeDisposed()) return(true);
 	for (int i = 0; i < count; i++)
 		if (!TypeTools<Type>::disposeDevArray((arr + i)->stackData, localCapacity)) return(false);
 	if (hasExternalAllocation)
