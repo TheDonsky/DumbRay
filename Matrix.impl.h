@@ -151,8 +151,8 @@ inline void TypeTools<Matrix<ElemType> >::undoCpyLoadPreparations(const Matrix<E
 }
 
 template<typename ElemType>
-inline bool TypeTools<Matrix<ElemType> >::devArrayNeedsToBeDisoposed(){
-	return TypeTools<ElemType>::devArrayNeedsToBeDisoposed();
+inline bool TypeTools<Matrix<ElemType> >::devArrayNeedsToBeDisposed(){
+	return TypeTools<ElemType>::devArrayNeedsToBeDisposed();
 }
 template<typename ElemType>
 inline bool TypeTools<Matrix<ElemType> >::disposeDevArray(Matrix<ElemType> *arr, int count){
