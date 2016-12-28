@@ -19,6 +19,14 @@ struct Photon{
 	__device__ __host__ inline Photon& operator>>=(const Transform &trans);
 	__device__ __host__ inline Photon operator<<(const Transform &trans)const;
 	__device__ __host__ inline Photon& operator<<=(const Transform &trans);
+
+
+
+	__dumb__ float energy()const;
+	__dumb__ float dead()const;
+
+
+	__dumb__ static Photon zero();
 };
 
 
