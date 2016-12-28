@@ -9,19 +9,28 @@
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<typename HitType>
+struct ShaderBounceInfo {
+	HitType object;
+	Photon photon;
+	Vector3 hitPoint;
+};
+#define SHADER_BOUNCE_MAX_SAMPLES 64
+struct ShaderBounce {
+	Photon samples[SHADER_BOUNCE_MAX_SAMPLES];
+	int count;
+};
+
+template<typename HitType>
 struct ShaderHitInfo {
 	HitType object;
 	Photon photon;
 	Vector3 hitPoint;
-	float distance;
 	Vector3 observer;
 };
 
 struct ShaderReport {
 	Photon observed;
-	Photon reflection;
-	Photon refraction;
-	__dumb__ ShaderReport(const Photon &obs = Photon::zero(), const Photon &refl = Photon::zero(), const Photon &refr = Photon::zero());
+	Photon bounce;
 };
 
 
@@ -38,12 +47,20 @@ public:
 	__dumb__ void use();
 
 	__dumb__ ShaderReport cast(const void *shader, const ShaderHitInfo<HitType>& info)const;
+	__dumb__ void bounce(const void *shader, const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce)const;
+	__dumb__ Photon illuminate(const void *shader, const ShaderHitInfo<HitType>& info)const;
 
 
 private:
 	ShaderReport(*castFunction)(const void *shader, const ShaderHitInfo<HitType>&info);
+	void(*bounceFunction)(const void *shader, const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce);
+	Photon(*illuminateFunction)(const void *shader, const ShaderHitInfo<HitType>&info);
 	template<typename ShaderType>
 	__dumb__ static ShaderReport castGeneric(const void *shader, const ShaderHitInfo<HitType>& info);
+	template<typename ShaderType>
+	__dumb__ static void bounceGeneric(const void *shader, const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce);
+	template<typename ShaderType>
+	__dumb__ static Photon illuminateGeneric(const void *shader, const ShaderHitInfo<HitType>& info);
 };
 
 
@@ -66,6 +83,8 @@ template<typename HitType>
 class Material : public Generic<Shader<HitType> > {
 public:
 	__dumb__ ShaderReport cast(const ShaderHitInfo<HitType>& info)const;
+	__dumb__ void bounce(const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce)const;
+	__dumb__ Photon illuminate(const ShaderHitInfo<HitType>& info)const;
 
 
 	inline Material *upload()const;

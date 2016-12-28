@@ -8,19 +8,6 @@
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-__dumb__ ShaderReport::ShaderReport(const Photon &obs, const Photon &refl, const Photon &refr) {
-	observed = obs;
-	reflection = refl;
-	refraction = refr;
-}
-
-
-
-
-
-/** ########################################################################## **/
-/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
-/** ########################################################################## **/
 template<typename HitType>
 __dumb__ void Shader<HitType>::clean() {
 	castFunction = NULL;
@@ -29,17 +16,38 @@ template<typename HitType>
 template<typename ShaderType>
 __dumb__ void Shader<HitType>::use() {
 	castFunction = castGeneric<ShaderType>;
+	bounceFunction = bounceGeneric<ShaderType>;
+	illuminateFunction = illuminateGeneric<ShaderType>;
 }
 
 template<typename HitType>
 __dumb__ ShaderReport Shader<HitType>::cast(const void *shader, const ShaderHitInfo<HitType>& info)const {
 	return castFunction(shader, info);
 }
+template<typename HitType>
+__dumb__ void Shader<HitType>::bounce(const void *shader, const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce)const {
+	return bounceFunction(shader, info, bounce);
+}
+template<typename HitType>
+__dumb__ Photon Shader<HitType>::illuminate(const void *shader, const ShaderHitInfo<HitType>& info)const {
+	return illuminateFunction(shader, info);
+}
+
 
 template<typename HitType>
 template<typename ShaderType>
 __dumb__ ShaderReport Shader<HitType>::castGeneric(const void *shader, const ShaderHitInfo<HitType>& info) {
 	return ((ShaderType*)shader)->cast(info);
+}
+template<typename HitType>
+template<typename ShaderType>
+__dumb__  void Shader<HitType>::bounceGeneric(const void *shader, const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce) {
+	return ((ShaderType*)shader)->bounce(info, bounce);
+}
+template<typename HitType>
+template<typename ShaderType>
+__dumb__ Photon Shader<HitType>::illuminateGeneric(const void *shader, const ShaderHitInfo<HitType>& info)  {
+	return ((ShaderType*)shader)->illuminate(info);
 }
 
 
@@ -52,6 +60,14 @@ __dumb__ ShaderReport Shader<HitType>::castGeneric(const void *shader, const Sha
 template<typename HitType>
 __dumb__ ShaderReport Material<HitType>::cast(const ShaderHitInfo<HitType>& info)const {
 	return functions().cast(object(), info);
+}
+template<typename HitType>
+__dumb__ void Material<HitType>::bounce(const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce)const {
+	return functions().bounce(object(), info, bounce);
+}
+template<typename HitType>
+__dumb__ Photon Material<HitType>::illuminate(const ShaderHitInfo<HitType>& info)const {
+	return functions().illuminate(object(), info);
 }
 
 template<typename HitType>
@@ -100,7 +116,7 @@ inline void TypeTools<Material<HitType> >::undoCpyLoadPreparations(const Materia
 }
 
 template<typename HitType>
-inline bool TypeTools<Material<HitType> >::devArrayNeedsToBeDisoposed() {
+inline bool TypeTools<Material<HitType> >::devArrayNeedsToBeDisposed() {
 	return TypeTools<Generic<Shader<HitType> > >::devArrayNeedsToBeDisposed();
 }
 template<typename HitType>

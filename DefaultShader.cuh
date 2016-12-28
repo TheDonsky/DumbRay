@@ -3,10 +3,13 @@
 
 
 
-class DefaultShader {
+template<typename HitType = BakedTriFace>
+class DefaultShaderGeneric {
 public:
-	__dumb__ DefaultShader(ColorRGB color = ColorRGB(1, 1, 1), float diffuse = 0.2f, float smoothness = 0.8f, float shine = 16.0f);
-	__dumb__ ShaderReport cast(const ShaderHitInfo<BakedTriFace> &input);
+	__dumb__ DefaultShaderGeneric(ColorRGB color = ColorRGB(1, 1, 1), float diffuse = 0.7f, float smoothness = 0.2f, float shine = 8.0f);
+	__dumb__ ShaderReport cast(const ShaderHitInfo<HitType> &input)const;
+	__dumb__ void bounce(const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce)const;
+	__dumb__ Photon illuminate(const ShaderHitInfo<HitType>& info)const;
 
 private:
 	ColorRGB albedo;
@@ -15,6 +18,7 @@ private:
 	float shininess;
 };
 
+typedef DefaultShaderGeneric<> DefaultShader;
 
 
 
