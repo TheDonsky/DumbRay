@@ -18,62 +18,18 @@ __dumb__ Photon Camera::getPhoton(const Vector2 &screenSpacePosition)const {
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-/** Friends: **/
-template<>
-__device__ __host__ inline void TypeTools<Camera>::init(Camera &m) {
-	TypeTools<Lense>::init(m.lense);
-	TypeTools<Transform>::init(m.transform);
+/** CUDA communication: **/
+__dumb__ Transform &Camera::component0() {
+	return transform;
 }
-template<>
-__device__ __host__ inline void TypeTools<Camera>::dispose(Camera &m) {
-	TypeTools<Lense>::dispose(m.lense);
-	TypeTools<Transform>::dispose(m.transform);
+__dumb__ const Transform &Camera::component0()const {
+	return transform;
 }
-template<>
-__device__ __host__ inline void TypeTools<Camera>::swap(Camera &a, Camera &b) {
-	TypeTools<Lense>::swap(a.lense, b.lense);
-	TypeTools<Transform>::swap(a.transform, b.transform);
+__dumb__ Lense &Camera::component1() {
+	return lense;
 }
-template<>
-__device__ __host__ inline void TypeTools<Camera>::transfer(Camera &src, Camera &dst) {
-	TypeTools<Lense>::transfer(src.lense, dst.lense);
-	TypeTools<Transform>::transfer(src.transform, dst.transform);
+__dumb__ const Lense &Camera::component1()const {
+	return lense;
 }
-
-template<>
-inline bool TypeTools<Camera>::prepareForCpyLoad(const Camera *source, Camera *hosClone, Camera *devTarget, int count) {
-	int i = 0;
-	for (i = 0; i < count; i++) {
-		if (!TypeTools<Lense>::prepareForCpyLoad(&(source + i)->lense, &(hosClone + i)->lense, &(devTarget + i)->lense, 1)) break;
-		if (!TypeTools<Transform>::prepareForCpyLoad(&(source + i)->transform, &(hosClone + i)->transform, &(devTarget + i)->transform, 1)) {
-			TypeTools<Lense>::undoCpyLoadPreparations(&(source + i)->lense, &(hosClone + i)->lense, &(devTarget + i)->lense, 1);
-			break;
-		}
-	}
-	if (i < count) {
-		undoCpyLoadPreparations(source, hosClone, devTarget, i);
-		return(false);
-	}
-	return(true);
-}
-
-template<>
-inline void TypeTools<Camera>::undoCpyLoadPreparations(const Camera *source, Camera *hosClone, Camera *devTarget, int count) {
-	for (int i = 0; i < count; i++) {
-		TypeTools<Lense>::undoCpyLoadPreparations(&(source + i)->lense, &(hosClone + i)->lense, &(devTarget + i)->lense, 1);
-		TypeTools<Transform>::undoCpyLoadPreparations(&(source + i)->transform, &(hosClone + i)->transform, &(devTarget + i)->transform, 1);
-	}
-}
-
-template<>
-inline bool TypeTools<Camera>::devArrayNeedsToBeDisposed() {
-	return (TypeTools<Lense>::devArrayNeedsToBeDisposed() || TypeTools<Transform>::devArrayNeedsToBeDisposed());
-}
-template<>
-inline bool TypeTools<Camera>::disposeDevArray(Camera *arr, int count) {
-	for (int i = 0; i < count; i++) {
-		if (!TypeTools<Lense>::disposeDevArray(&(arr + i)->lense, 1)) return(false);
-		if (!TypeTools<Transform>::disposeDevArray(&(arr + i)->transform, 1)) return(false);
-	}
-	return(true);
-}
+IMPLEMENT_CUDA_LOAD_INTERFACE_FOR(Camera);
+TYPE_TOOLS_IMPLEMENTATION_2(Camera);
