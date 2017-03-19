@@ -147,7 +147,7 @@ namespace BackwardTracerTest {
 					if (!rotateCamera(window, mouseWasDown, cursor, camera));
 					if (!swapState(usingDevice, renderer, shouldSwapState)) break;
 					if (!resetResolution(renderer, image, window)) break;
-					/*
+					//*
 					if (!cleanFrame(renderer, frame)) break;
 					/*/
 					renderer.resetIterations();

@@ -246,32 +246,7 @@ __device__ __host__ inline const Stacktor<ElemType>& Octree<ElemType>::getData()
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-template<typename ElemType>
-/* Uploads unit to CUDA device and returns the clone address */
-inline Octree<ElemType>* Octree<ElemType>::upload()const{
-	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_BODY(Octree);
-}
-template<typename ElemType>
-/* Uploads unit to the given location on the CUDA device (returns true, if successful; needs RAW data address) */
-inline bool Octree<ElemType>::uploadAt(Octree *address)const{
-	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_AT_BODY(Octree);
-}
-template<typename ElemType>
-/* Uploads given source array/unit to the given target location on CUDA device (returns true, if successful; needs RAW data address) */
-inline bool Octree<ElemType>::upload(const Octree *source, Octree *target, int count){
-	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_ARRAY_AT_BODY(Octree);
-}
-template<typename ElemType>
-/* Uploads given source array/unit to CUDA device and returns the clone address */
-inline Octree<ElemType>* Octree<ElemType>::upload(const Octree<ElemType> *source, int count){
-	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_ARRAY_BODY(Octree);
-}
-template<typename ElemType>
-/* Disposed given array/unit on CUDA device, making it ready to be free-ed (returns true, if successful) */
-inline bool Octree<ElemType>::dispose(Octree *arr, int count){
-	IMPLEMENT_CUDA_LOAD_INTERFACE_DISPOSE_BODY(Octree);
-}
-
+IMPLEMENT_CUDA_LOAD_INTERFACE_FOR_TEMPLATE(Octree);
 
 
 
@@ -579,13 +554,13 @@ template<typename ElemType>
 __device__ __host__ inline void TypeTools<RaycastHit<ElemType> >::init(RaycastHit<ElemType> &m) {
 	TypeTools<ElemType>::init(m.object);
 	m.hitDistance = INFINITY;
-	m.hitPoint = Vector3::zero;
+	m.hitPoint = Vector3::zero();
 }
 template<typename ElemType>
 __device__ __host__ inline void TypeTools<RaycastHit<ElemType> >::dispose(RaycastHit<ElemType> &m) {
 	TypeTools<ElemType>::dispose(m.object);
 	m.hitDistance = INFINITY;
-	m.hitPoint = Vector3::zero;
+	m.hitPoint = Vector3::zero();
 }
 template<typename ElemType>
 __device__ __host__ inline void TypeTools<RaycastHit<ElemType> >::swap(RaycastHit<ElemType> &a, RaycastHit<ElemType> &b) {

@@ -250,33 +250,7 @@ __dumb__ void Shaded<HitType>::dump()const {
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-template<typename HitType>
-/* Uploads unit to CUDA device and returns the clone address */
-inline ShadedOctree<HitType>* ShadedOctree<HitType>::upload()const {
-	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_BODY(ShadedOctree);
-}
-template<typename HitType>
-/* Uploads unit to the given location on the CUDA device (returns true, if successful; needs RAW data address) */
-inline bool ShadedOctree<HitType>::uploadAt(ShadedOctree *address)const {
-	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_AT_BODY(ShadedOctree);
-}
-template<typename HitType>
-/* Uploads given source array/unit to the given target location on CUDA device (returns true, if successful; needs RAW data address) */
-inline bool ShadedOctree<HitType>::upload(const ShadedOctree *source, ShadedOctree *target, int count) {
-	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_ARRAY_AT_BODY(ShadedOctree);
-}
-template<typename HitType>
-/* Uploads given source array/unit to CUDA device and returns the clone address */
-inline ShadedOctree<HitType>* ShadedOctree<HitType>::upload(const ShadedOctree<HitType> *source, int count) {
-	IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_ARRAY_BODY(ShadedOctree);
-}
-template<typename HitType>
-/* Disposed given array/unit on CUDA device, making it ready to be free-ed (returns true, if successful) */
-inline bool ShadedOctree<HitType>::dispose(ShadedOctree *arr, int count) {
-	IMPLEMENT_CUDA_LOAD_INTERFACE_DISPOSE_BODY(ShadedOctree);
-}
-
-
+IMPLEMENT_CUDA_LOAD_INTERFACE_FOR_TEMPLATE(ShadedOctree);
 
 
 
@@ -351,17 +325,8 @@ template<typename HitType>
 __host__ inline void ShadedOctree<HitType>::reset() {
 	octree.reset();
 	materials.clear();
-	materials.flush(2);
+	materials.flush(1);
 	materials[0].template use<DefaultShaderGeneric<HitType> >();
-}
-template<typename HitType>
-// Adds material (returns materialId)
-__host__ inline int ShadedOctree<HitType>::addMaterial(const Material<HitType> &material) {
-	int materialId = materials.size();
-	Material<HitType> *materialRoot = (materials + 1);
-	materials.push(material);
-	fixMaterialPointers(materialRoot);
-	return materialId;
 }
 
 
@@ -503,6 +468,48 @@ template<typename HitType>
 // Returns data
 __device__ __host__ inline const Stacktor<Shaded<HitType> >& ShadedOctree<HitType>::getData()const {
 	return octree.getData();
+}
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+template<typename HitType>
+// Adds material (returns materialId)
+__host__ inline int ShadedOctree<HitType>::addMaterial(const Material<HitType> &material) {
+	int materialId = materials.size();
+	Material<HitType> *materialRoot = (materials + 0);
+	materials.push(material);
+	fixMaterialPointers(materialRoot);
+	return materialId;
+}
+template<typename HitType>
+// Material count
+__device__ __host__ inline int ShadedOctree<HitType>::materialCount()const {
+	return materials.size();
+}
+template<typename HitType>
+// Returns default material
+__device__ __host__ inline Material<HitType> &ShadedOctree<HitType>::defaultMaterial() {
+	return materials[0];
+}
+template<typename HitType>
+// Returns default material
+__device__ __host__ inline const Material<HitType> &ShadedOctree<HitType>::defaultMaterial()const {
+	return materials[0];
+}
+template<typename HitType>
+// Returns material with given id (may crash, if id is not valid)
+__device__ __host__ inline Material<HitType> &ShadedOctree<HitType>::material(int id) {
+	return materials[id];
+}
+template<typename HitType>
+// Returns material with given id (may crash, if id is not valid)
+__device__ __host__ inline const Material<HitType> &ShadedOctree<HitType>::material(int id)const {
+	return materials[id];
 }
 
 

@@ -75,8 +75,6 @@ public:
 	/*| push & build |*/
 	// Cleans Octree
 	__host__ inline void reset();
-	// Adds material (returns materialId)
-	__host__ inline int addMaterial(const Material<HitType> &material);
 	
 	// Pushes list of objects (needs calling build as a final statement) (default material)
 	__host__ inline void push(const Stacktor<HitType> &objects);
@@ -143,6 +141,26 @@ public:
 	__device__ __host__ inline Stacktor<Shaded<HitType> >& getData();
 	// Returns data
 	__device__ __host__ inline const Stacktor<Shaded<HitType> >& getData()const;
+
+
+
+
+
+	/** ########################################################################## **/
+	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+	/** ########################################################################## **/
+	// Adds material (returns materialId)
+	__host__ inline int addMaterial(const Material<HitType> &material);
+	// Material count
+	__device__ __host__ inline int materialCount()const;
+	// Returns default material
+	__device__ __host__ inline Material<HitType> &defaultMaterial();
+	// Returns default material
+	__device__ __host__ inline const Material<HitType> &defaultMaterial()const;
+	// Returns material with given id (may crash, if id is not valid)
+	__device__ __host__ inline Material<HitType> &material(int id);
+	// Returns material with given id (may crash, if id is not valid)
+	__device__ __host__ inline const Material<HitType> &material(int id)const;
 
 
 

@@ -2,7 +2,6 @@
 #include"ShadedOctree.cuh"
 #include"Camera.cuh"
 #include"Light.cuh"
-#include"Camera.cuh"
 #include"Matrix.h"
 #include"Handler.cuh"
 #include"Cutex.cuh"
@@ -16,8 +15,8 @@
 /** ########################################################################## **/
 namespace BackwardTracerPrivate {
 	struct Pixel;
-	//template<typename HitType, unsigned int MaxStackSize>
-	//struct BackwardTracerRenderProcess;
+	template<typename HitType, unsigned int MaxStackSize>
+	struct BackwardTracerRenderProcess;
 }
 
 
@@ -70,6 +69,7 @@ private:
 	int iterationId;
 	Parameters parameters;
 	Handler<Matrix<BackwardTracerPrivate::Pixel> > pixels;
+	Handler<BackwardTracerPrivate::BackwardTracerRenderProcess<HitType, MaxBounces> > renderProcess;
 
 	const Handler<const Camera> *camera;
 	const Handler<const ShadedOctree<HitType> > *scene;

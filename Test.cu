@@ -13,6 +13,7 @@
 #include"BackwardTracer.test.cuh"
 #include"Handler.test.cuh"
 #include"Material.test.cuh"
+#include"TypeTools.test.cuh"
 #include"Device.cuh"
 
 
@@ -173,9 +174,16 @@ static void testConstants() {
 }
 
 int main(){
+	//Stacktor<PolyMesh> meshes;
+	//MeshReaderTest::readMeshes(meshes);
+	//Stacktor<String> names;
+	//MeshReader::writeObj(meshes, names, "Sphere.obj");
+
 	cudaSetDevice(0);
+	TypeToolsTest::test();
 	Device::dumpCurrentDevice();
 	BackwardTracerTest::test();
+	//*
 	HandlerTest::test();
 	GenericTest::test();
 	LenseTest::testMemory();
@@ -191,4 +199,6 @@ int main(){
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
 	std::thread windowTrapThread(windowTrap);
 	windowTrapThread.join();
+	//*/
+	cudaDeviceReset();
 }
