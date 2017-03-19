@@ -35,11 +35,11 @@ namespace CutexTest{
 		}
 
 
-		__global__ void increment(int *value, Cutex *c){
+		__global__ static void increment(int *value, Cutex *c){
 			c->atomicCall(increase, *value);
 		}
 
-		__global__ void init(Cutex *c){
+		__global__ static void init(Cutex *c){
 			c->initRaw();
 		}
 
