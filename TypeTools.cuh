@@ -185,6 +185,34 @@ class TypeTools{
 	IMPLEMENT_CUDA_LOAD_INTERFACE_DISPOSE(Type)
 
 
+#define IMPLEMENT_CUDA_LOAD_INTERFACE_FOR_TEMPLATE(Type) \
+	template<typename TemplateType> \
+	/* Uploads unit to CUDA device and returns the clone address */ \
+	inline Type<TemplateType>* Type<TemplateType>::upload()const { \
+		IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_BODY(Type); \
+	} \
+	template<typename TemplateType> \
+	/* Uploads unit to the given location on the CUDA device (returns true, if successful; needs RAW data address) */ \
+	inline bool Type<TemplateType>::uploadAt(Type *address)const { \
+		IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_AT_BODY(Type); \
+	} \
+	template<typename TemplateType> \
+	/* Uploads given source array/unit to the given target location on CUDA device (returns true, if successful; needs RAW data address) */ \
+	inline bool Type<TemplateType>::upload(const Type *source, Type *target, int count) { \
+		IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_ARRAY_AT_BODY(Type); \
+	} \
+	template<typename TemplateType> \
+	/* Uploads given source array/unit to CUDA device and returns the clone address */ \
+	inline Type<TemplateType>* Type<TemplateType>::upload(const Type<TemplateType> *source, int count) { \
+		IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_ARRAY_BODY(Type); \
+	} \
+	template<typename TemplateType> \
+	/* Disposed given array/unit on CUDA device, making it ready to be free-ed (returns true, if successful) */ \
+	inline bool Type<TemplateType>::dispose(Type *arr, int count) { \
+		IMPLEMENT_CUDA_LOAD_INTERFACE_DISPOSE_BODY(Type); \
+	}
+
+
 
 #define COPY_TYPE_TOOLS_IMPLEMENTATION(Child, Perent) \
 	template<> __device__ __host__ inline void TypeTools<Child>::init(Child &m) { \
@@ -254,3 +282,9 @@ template<typename Type>
 inline bool TypeTools<Type>::devArrayNeedsToBeDisposed() { return(false); }
 template<typename Type>
 inline bool TypeTools<Type>::disposeDevArray(Type *arr, int count) { return(true); }
+
+
+
+
+
+#include"TypeTools.impl.cuh"
