@@ -344,7 +344,10 @@ namespace MeshReaderPrivate{
 inline static bool MeshReader::readObj(Stacktor<PolyMesh> &meshList, Stacktor<String> &nameList, std::string filename, bool dump){
 	bool passed = true;
 	std::ifstream fileStream(filename);
-	if (fileStream.fail()) return false;
+	if (fileStream.fail()) {
+		if (dump) std::cout << "ERROR opening file: " << filename << std::endl;
+		return false;
+	}
 	std::string file((std::istreambuf_iterator<char>(fileStream)), std::istreambuf_iterator<char>());
 	std::string next; fileStream >> next;
 	if (!fileStream.eof()) passed = false;
@@ -360,3 +363,56 @@ inline static bool MeshReader::readObj(Stacktor<PolyMesh> &meshList, Stacktor<St
 	MeshReaderPrivate::read(meshList, nameList, verts, norms, texs, faces, objects, file.c_str(), dump);
 	return MeshReaderPrivate::extructObjects(meshList, verts, norms, texs, faces, objects, dump);
 }
+
+
+inline static bool MeshReader::writeObj(const Stacktor<PolyMesh> &meshList, const Stacktor<String> &nameList, std::string filename) {
+	std::ofstream stream(filename);
+	if (stream.fail()) return false;
+	stream << std::fixed;
+	stream << "# DUMPED WITH DumbRay .obj EXPORTER" << std::endl;
+	int vertsSoFar = 1;
+	int normsSoFar = 1;
+	int texsSoFar = 1;
+	for (int i = 0; i < meshList.size(); i++) {
+		stream << std::endl << std::endl << std::endl;
+		std::string objectName = ((i >= nameList.size()) ? (std::string("Object ") + std::to_string(i)) : (nameList[i] + 0));
+		stream << "#######################################################" << std::endl;
+		stream << "# OBJECT: " << objectName << std::endl << std::endl;
+		stream << "# -----------------------------" << std::endl;
+		for (int j = 0; j < meshList[i].vertextCount(); j++)
+			stream << "v " << meshList[i].vertex(j).x << " " << meshList[i].vertex(j).y << " " << meshList[i].vertex(j).z << std::endl;
+		stream << "# " << meshList[i].vertextCount() << " VERTICES" << std::endl << std::endl;
+		stream << "# -----------------------------" << std::endl;
+		for (int j = 0; j < meshList[i].normalCount(); j++)
+			stream << "vn " << meshList[i].normal(j).x << " " << meshList[i].normal(j).y << " " << meshList[i].normal(j).z << std::endl;
+		stream << "# " << meshList[i].normalCount() << " NORMALS" << std::endl << std::endl;
+		stream << "# -----------------------------" << std::endl;
+		for (int j = 0; j < meshList[i].textureCount(); j++)
+			stream << "vt " << meshList[i].texture(j).x << " " << meshList[i].texture(j).y << " " << meshList[i].texture(j).z << std::endl;
+		stream << "# " << meshList[i].textureCount() << " TEXTURE COORDINATES" << std::endl << std::endl;
+		stream << "# -----------------------------" << std::endl;
+		stream << "g " << objectName << std::endl;
+		for (int j = 0; j < meshList[i].faceCount(); j++) {
+			stream << "f";
+			for (int k = 0; k < meshList[i].indexFace(j).size(); k++) {
+				bool vertHere = (meshList[i].indexFace(j)[k].vert >= 0);
+				bool normHere = (meshList[i].indexFace(j)[k].norm >= 0);
+				bool texHere = (meshList[i].indexFace(j)[k].tex >= 0);
+				if (vertHere) {
+					stream << " " << (meshList[i].indexFace(j)[k].vert + vertsSoFar);
+					if (normHere || texHere) stream << "/";
+					if (texHere) stream << (meshList[i].indexFace(j)[k].tex + texsSoFar);
+					if (normHere) stream << "/" << (meshList[i].indexFace(j)[k].norm + normsSoFar);
+				}
+			}
+			stream << std::endl;
+		}
+		stream << "# " << meshList[i].faceCount() << " FACES" << std::endl << std::endl;
+		vertsSoFar += meshList[i].vertextCount();
+		normsSoFar += meshList[i].normalCount();
+		texsSoFar += meshList[i].textureCount();
+	}
+	stream.close();
+	return true;
+}
+
