@@ -20,10 +20,10 @@ TYPE_TOOLS_REDEFINE_1_PART(TypeToolsTest::OneElem, int);
 TYPE_TOOLS_REDEFINE_2_PART(TypeToolsTest::TwoElem, int, Vector3);
 TYPE_TOOLS_REDEFINE_3_PART(TypeToolsTest::ThreeElem, int, Vector3, Stacktor<char>);
 TYPE_TOOLS_REDEFINE_4_PART(TypeToolsTest::FourElem, int, Vector3, Stacktor<char>, Stacktor<Stacktor<short> >);
-TYPE_TOOLS_REDEFINE_1_PART_TEMPLATE(TypeToolsTest::OneElemTemplate, TemplateType, TemplateType);
-TYPE_TOOLS_REDEFINE_2_PART_TEMPLATE(TypeToolsTest::TwoElemTemplate, TemplateType, TemplateType, TemplateType);
-TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(TypeToolsTest::ThreeElemTemplate, TemplateType, TemplateType, TemplateType, TemplateType);
-TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE(TypeToolsTest::FourElemTemplate, TemplateType, TemplateType, TemplateType, TemplateType, TemplateType);
+TYPE_TOOLS_REDEFINE_1_PART_TEMPLATE(TypeToolsTest::OneElemTemplate, TemplateType, typename TemplateType);
+TYPE_TOOLS_REDEFINE_2_PART_TEMPLATE(TypeToolsTest::TwoElemTemplate, TemplateType, TemplateType, typename TemplateType);
+TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(TypeToolsTest::ThreeElemTemplate, TemplateType, TemplateType, TemplateType, typename TemplateType);
+TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE(TypeToolsTest::FourElemTemplate, TemplateType, TemplateType, TemplateType, TemplateType, typename TemplateType);
 TYPE_TOOLS_REDEFINE_1_PART(TypeToolsTest::SomethingTerriblyHuge, Stacktor<int>);
 namespace TypeToolsTest {
 	struct OneElem {
@@ -152,10 +152,10 @@ TYPE_TOOLS_IMPLEMENT_1_PART(TypeToolsTest::OneElem);
 TYPE_TOOLS_IMPLEMENT_2_PART(TypeToolsTest::TwoElem);
 TYPE_TOOLS_IMPLEMENT_3_PART(TypeToolsTest::ThreeElem);
 TYPE_TOOLS_IMPLEMENT_4_PART(TypeToolsTest::FourElem);
-TYPE_TOOLS_IMPLEMENT_1_PART_TEMPLATE(TypeToolsTest::OneElemTemplate);
-TYPE_TOOLS_IMPLEMENT_2_PART_TEMPLATE(TypeToolsTest::TwoElemTemplate);
-TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE(TypeToolsTest::ThreeElemTemplate);
-TYPE_TOOLS_IMPLEMENT_4_PART_TEMPLATE(TypeToolsTest::FourElemTemplate);
+TYPE_TOOLS_IMPLEMENT_1_PART_TEMPLATE(TypeToolsTest::OneElemTemplate, typename TemplateType);
+TYPE_TOOLS_IMPLEMENT_2_PART_TEMPLATE(TypeToolsTest::TwoElemTemplate, typename TemplateType);
+TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE(TypeToolsTest::ThreeElemTemplate, typename TemplateType);
+TYPE_TOOLS_IMPLEMENT_4_PART_TEMPLATE(TypeToolsTest::FourElemTemplate, typename TemplateType);
 TYPE_TOOLS_IMPLEMENT_1_PART(TypeToolsTest::SomethingTerriblyHuge);
 namespace TypeToolsTest {
 	template<typename Type>

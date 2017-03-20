@@ -8,13 +8,13 @@
 
 /** ========================================================== **/
 #define TYPE_TOOLS_REDEFINE_1_PART(ClassType, TypeName)
-#define TYPE_TOOLS_REDEFINE_1_PART_TEMPLATE(ClassType, TemplateType, TypeName)
+#define TYPE_TOOLS_REDEFINE_1_PART_TEMPLATE(ClassType, TypeName, ...) // Insert template typename list in __VA_ARGS__ (...);
 #define TYPE_TOOLS_REDEFINE_2_PART(ClassType, TypeName0, TypeName1)
-#define TYPE_TOOLS_REDEFINE_2_PART_TEMPLATE(ClassType, TemplateType, TypeName0, TypeName1)
+#define TYPE_TOOLS_REDEFINE_2_PART_TEMPLATE(ClassType, TypeName0, TypeName1, ...) // Insert template typename list in __VA_ARGS__ (...);
 #define TYPE_TOOLS_REDEFINE_3_PART(ClassType, TypeName0, TypeName1, TypeName2)
-#define TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(ClassType, TemplateType, TypeName0, TypeName1, TypeName2)
+#define TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(ClassType, TypeName0, TypeName1, TypeName2, ...) // Insert template typename list in __VA_ARGS__ (...);
 #define TYPE_TOOLS_REDEFINE_4_PART(ClassType, TypeName0, TypeName1, TypeName2, TypeName3)
-#define TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE(ClassType, TemplateType, TypeName0, TypeName1, TypeName2, TypeName3)
+#define TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE(ClassType, TypeName0, TypeName1, TypeName2, TypeName3, ...) // Insert template typename list in __VA_ARGS__ (...);
 
 /** ========================================================== **/
 #define TYPE_TOOLS_DEFINE_PART_TYPE(TypeName)
@@ -30,13 +30,13 @@
 
 /** ========================================================== **/
 #define TYPE_TOOLS_IMPLEMENT_1_PART(ClassType)
-#define TYPE_TOOLS_IMPLEMENT_1_PART_TEMPLATE(ClassType)
+#define TYPE_TOOLS_IMPLEMENT_1_PART_TEMPLATE(ClassType, ...) // Insert template typename list in __VA_ARGS__ (...);
 #define TYPE_TOOLS_IMPLEMENT_2_PART(ClassType)
-#define TYPE_TOOLS_IMPLEMENT_2_PART_TEMPLATE(ClassType)
+#define TYPE_TOOLS_IMPLEMENT_2_PART_TEMPLATE(ClassType, ...) // Insert template typename list in __VA_ARGS__ (...);
 #define TYPE_TOOLS_IMPLEMENT_3_PART(ClassType)
-#define TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE(ClassType)
+#define TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE(ClassType, ...) // Insert template typename list in __VA_ARGS__ (...);
 #define TYPE_TOOLS_IMPLEMENT_4_PART(ClassType)
-#define TYPE_TOOLS_IMPLEMENT_4_PART_TEMPLATE(ClassType)
+#define TYPE_TOOLS_IMPLEMENT_4_PART_TEMPLATE(ClassType, ...) // Insert template typename list in __VA_ARGS__ (...);
 
 
 
@@ -46,6 +46,123 @@
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 // DON'T BOTHER READING BELOW.....
+
+
+
+
+
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+
+/** ========================================================== **/
+#undef TYPE_TOOLS_DEFINE_PART_TYPE
+#define TYPE_TOOLS_DEFINE_PART_TYPE(TypeName) \
+	typedef TypeName PartType0
+#undef TYPE_TOOLS_DEFINE_PART_TYPES_2
+#define TYPE_TOOLS_DEFINE_PART_TYPES_2(TypeName0, TypeName1) \
+	TYPE_TOOLS_DEFINE_PART_TYPE(TypeName0); \
+	typedef TypeName1 PartType1
+#undef TYPE_TOOLS_DEFINE_PART_TYPES_3
+#define TYPE_TOOLS_DEFINE_PART_TYPES_3(TypeName0, TypeName1, TypeName2) \
+	TYPE_TOOLS_DEFINE_PART_TYPES_2(TypeName0, TypeName1); \
+	typedef TypeName2 PartType2
+#undef TYPE_TOOLS_DEFINE_PART_TYPES_4
+#define TYPE_TOOLS_DEFINE_PART_TYPES_4(TypeName0, TypeName1, TypeName2, TypeName3) \
+	TYPE_TOOLS_DEFINE_PART_TYPES_3(TypeName0, TypeName1, TypeName2); \
+	typedef TypeName3 PartType3
+
+/** ========================================================== **/
+#undef TYPE_TOOLS_REDEFINE_1_PART
+#define TYPE_TOOLS_REDEFINE_1_PART(ClassType, TypeName) \
+	template<> class TypeTools<ClassType> { \
+	public: \
+		typedef ClassType MasterType; \
+		TYPE_TOOLS_DEFINE_PART_TYPE(TypeName); \
+		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
+	}
+#undef TYPE_TOOLS_REDEFINE_1_PART_TEMPLATE
+#define TYPE_TOOLS_REDEFINE_1_PART_TEMPLATE(ClassType, TypeName, ...) \
+	template<__VA_ARGS__> class TypeTools<ClassType<__VA_ARGS__> > { \
+	public: \
+		typedef ClassType<__VA_ARGS__> MasterType; \
+		TYPE_TOOLS_DEFINE_PART_TYPE(TypeName); \
+		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
+	}
+#undef TYPE_TOOLS_REDEFINE_2_PART
+#define TYPE_TOOLS_REDEFINE_2_PART(ClassType, TypeName0, TypeName1) \
+	template<> class TypeTools<ClassType> { \
+	public: \
+		typedef ClassType MasterType; \
+		TYPE_TOOLS_DEFINE_PART_TYPES_2(TypeName0, TypeName1); \
+		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
+	}
+#undef TYPE_TOOLS_REDEFINE_2_PART_TEMPLATE
+#define TYPE_TOOLS_REDEFINE_2_PART_TEMPLATE(ClassType, TypeName0, TypeName1, ...) \
+	template<__VA_ARGS__> class TypeTools<ClassType<__VA_ARGS__> > { \
+	public: \
+		typedef ClassType<__VA_ARGS__> MasterType; \
+		TYPE_TOOLS_DEFINE_PART_TYPES_2(TypeName0, TypeName1); \
+		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
+	}
+#undef TYPE_TOOLS_REDEFINE_3_PART
+#define TYPE_TOOLS_REDEFINE_3_PART(ClassType, TypeName0, TypeName1, TypeName2) \
+	template<> class TypeTools<ClassType> { \
+	public: \
+		typedef ClassType MasterType; \
+		TYPE_TOOLS_DEFINE_PART_TYPES_3(TypeName0, TypeName1, TypeName2); \
+		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
+	}
+#undef TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE
+#define TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(ClassType, TypeName0, TypeName1, TypeName2, ...) \
+	template<__VA_ARGS__> class TypeTools<ClassType<__VA_ARGS__> > { \
+	public: \
+		typedef ClassType<__VA_ARGS__> MasterType; \
+		TYPE_TOOLS_DEFINE_PART_TYPES_3(TypeName0, TypeName1, TypeName2); \
+		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
+	}
+#undef TYPE_TOOLS_REDEFINE_4_PART
+#define TYPE_TOOLS_REDEFINE_4_PART(ClassType, TypeName0, TypeName1, TypeName2, TypeName3) \
+	template<> class TypeTools<ClassType> { \
+	public: \
+		typedef ClassType MasterType; \
+		TYPE_TOOLS_DEFINE_PART_TYPES_4(TypeName0, TypeName1, TypeName2, TypeName3); \
+		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
+	}
+#undef TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE
+#define TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE(ClassType, TypeName0, TypeName1, TypeName2, TypeName3, ...) \
+	template<__VA_ARGS__> class TypeTools<ClassType<__VA_ARGS__> > { \
+	public: \
+		typedef ClassType<__VA_ARGS__> MasterType; \
+		TYPE_TOOLS_DEFINE_PART_TYPES_4(TypeName0, TypeName1, TypeName2, TypeName3); \
+		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
+	}
+
+/** ========================================================== **/
+#define TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(VariableType, FunctionName, VariableName) \
+	__device__ __host__ inline VariableType & FunctionName() { return VariableName; } \
+	__device__ __host__ inline const VariableType & FunctionName() const { return VariableName; }
+#undef TYPE_TOOLS_ADD_COMPONENT_GETTER
+#define TYPE_TOOLS_ADD_COMPONENT_GETTER(ClassName, VariableName0) \
+	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(ClassName); \
+	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(TypeTools<ClassName>::PartType0, component0, VariableName0)
+#undef TYPE_TOOLS_ADD_COMPONENT_GETTERS_2
+#define TYPE_TOOLS_ADD_COMPONENT_GETTERS_2(ClassName, VariableName0, VariableName1) \
+	TYPE_TOOLS_ADD_COMPONENT_GETTER(ClassName, VariableName0); \
+	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(TypeTools<ClassName>::PartType1, component1, VariableName1)
+#undef TYPE_TOOLS_ADD_COMPONENT_GETTERS_3
+#define TYPE_TOOLS_ADD_COMPONENT_GETTERS_3(ClassName, VariableName0, VariableName1, VariableName2) \
+	TYPE_TOOLS_ADD_COMPONENT_GETTERS_2(ClassName, VariableName0, VariableName1); \
+	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(TypeTools<ClassName>::PartType2, component2, VariableName2)
+#undef TYPE_TOOLS_ADD_COMPONENT_GETTERS_4
+#define TYPE_TOOLS_ADD_COMPONENT_GETTERS_4(ClassName, VariableName0, VariableName1, VariableName2, VariableName3) \
+	TYPE_TOOLS_ADD_COMPONENT_GETTERS_3(ClassName, VariableName0, VariableName1, VariableName2); \
+	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(TypeTools<ClassName>::PartType3, component3, VariableName3)
 
 
 
@@ -157,7 +274,8 @@
 
 
 /** ========================================================== **/
-#define TYPE_TOOLS_IMPLEMENTATION_1(ClassType) \
+#undef TYPE_TOOLS_IMPLEMENT_1_PART
+#define TYPE_TOOLS_IMPLEMENT_1_PART(ClassType) \
 	__device__ __host__ inline void TypeTools<ClassType>::init(ClassType &variable) { \
 		TYPE_TOOLS_INIT_CALL_0(variable); \
 	} \
@@ -182,29 +300,30 @@
 	inline bool TypeTools<ClassType>::disposeDevArray(ClassType *arr, int count) { \
 		TYPE_TOOLS_DISPOSE_DEV_ARRAY_1_BODY; \
 	}
-#define TYPE_TOOLS_IMPLEMENTATION_1_TEMPLATE_1(ClassType) \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::init(ClassType<TemplateType> &variable) { \
+#undef TYPE_TOOLS_IMPLEMENT_1_PART_TEMPLATE
+#define TYPE_TOOLS_IMPLEMENT_1_PART_TEMPLATE(ClassType, ...) \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::init(ClassType<__VA_ARGS__> &variable) { \
 		TYPE_TOOLS_INIT_CALL_0(variable); \
 	} \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::dispose(ClassType<TemplateType> &variable) { \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::dispose(ClassType<__VA_ARGS__> &variable) { \
 		TYPE_TOOLS_DISPOSE_CALL_0(variable); \
 	} \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::swap(ClassType<TemplateType> &a, ClassType<TemplateType> &b) { \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::swap(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
 		TYPE_TOOLS_SWAP_CALL_0(a, b); \
 	} \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::transfer(ClassType<TemplateType> &a, ClassType<TemplateType> &b) { \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::transfer(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
 		TYPE_TOOLS_TRANSFER_CALL_0(a, b); \
 	} \
-	template<typename TemplateType> inline bool TypeTools<ClassType<TemplateType> >::prepareForCpyLoad(const ClassType<TemplateType> *source, ClassType<TemplateType> *hosClone, ClassType<TemplateType> *devTarget, int count) { \
+	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::prepareForCpyLoad(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
 		TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_1_BODY; \
 	} \
-	template<typename TemplateType> inline void TypeTools<ClassType<TemplateType> >::undoCpyLoadPreparations(const ClassType<TemplateType> *source, ClassType<TemplateType> *hosClone, ClassType<TemplateType> *devTarget, int count) { \
+	template<__VA_ARGS__> inline void TypeTools<ClassType<__VA_ARGS__> >::undoCpyLoadPreparations(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
 		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_1_BODY; \
 	} \
-	template<typename TemplateType> inline bool TypeTools<ClassType<TemplateType> >::devArrayNeedsToBeDisposed() { \
+	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::devArrayNeedsToBeDisposed() { \
 		TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_1_BODY; \
 	} \
-	template<typename TemplateType> inline bool TypeTools<ClassType<TemplateType> >::disposeDevArray(ClassType<TemplateType> *arr, int count) { \
+	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::disposeDevArray(ClassType<__VA_ARGS__> *arr, int count) { \
 		TYPE_TOOLS_DISPOSE_DEV_ARRAY_1_BODY; \
 	}
 
@@ -266,7 +385,8 @@
 
 
 /** ========================================================== **/
-#define TYPE_TOOLS_IMPLEMENTATION_2(ClassType) \
+#undef TYPE_TOOLS_IMPLEMENT_2_PART
+#define TYPE_TOOLS_IMPLEMENT_2_PART(ClassType) \
 	__device__ __host__ inline void TypeTools<ClassType>::init(ClassType &variable) { \
 		TYPE_TOOLS_INIT_2_BODY; \
 	} \
@@ -291,29 +411,30 @@
 	inline bool TypeTools<ClassType>::disposeDevArray(ClassType *arr, int count) { \
 		TYPE_TOOLS_DISPOSE_DEV_ARRAY_2_BODY; \
 	}
-#define TYPE_TOOLS_IMPLEMENTATION_2_TEMPLATE_1(ClassType) \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::init(ClassType<TemplateType> &variable) { \
+#undef TYPE_TOOLS_IMPLEMENT_2_PART_TEMPLATE
+#define TYPE_TOOLS_IMPLEMENT_2_PART_TEMPLATE(ClassType, ...) \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::init(ClassType<__VA_ARGS__> &variable) { \
 		TYPE_TOOLS_INIT_2_BODY; \
 	} \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::dispose(ClassType<TemplateType> &variable) { \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::dispose(ClassType<__VA_ARGS__> &variable) { \
 		TYPE_TOOLS_DISPOSE_2_BODY; \
 	} \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::swap(ClassType<TemplateType> &a, ClassType<TemplateType> &b) { \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::swap(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
 		TYPE_TOOLS_SWAP_2_BODY; \
 	} \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::transfer(ClassType<TemplateType> &a, ClassType<TemplateType> &b) { \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::transfer(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
 		TYPE_TOOLS_TRANSFER_2_BODY; \
 	} \
-	template<typename TemplateType> inline bool TypeTools<ClassType<TemplateType> >::prepareForCpyLoad(const ClassType<TemplateType> *source, ClassType<TemplateType> *hosClone, ClassType<TemplateType> *devTarget, int count) { \
+	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::prepareForCpyLoad(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
 		TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_2_BODY; \
 	} \
-	template<typename TemplateType> inline void TypeTools<ClassType<TemplateType> >::undoCpyLoadPreparations(const ClassType<TemplateType> *source, ClassType<TemplateType> *hosClone, ClassType<TemplateType> *devTarget, int count) { \
+	template<__VA_ARGS__> inline void TypeTools<ClassType<__VA_ARGS__> >::undoCpyLoadPreparations(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
 		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_2_BODY; \
 	} \
-	template<typename TemplateType> inline bool TypeTools<ClassType<TemplateType> >::devArrayNeedsToBeDisposed() { \
+	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::devArrayNeedsToBeDisposed() { \
 		TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_2_BODY; \
 	} \
-	template<typename TemplateType> inline bool TypeTools<ClassType<TemplateType> >::disposeDevArray(ClassType<TemplateType> *arr, int count) { \
+	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::disposeDevArray(ClassType<__VA_ARGS__> *arr, int count) { \
 		TYPE_TOOLS_DISPOSE_DEV_ARRAY_2_BODY; \
 	}
 
@@ -388,7 +509,8 @@
 
 
 /** ========================================================== **/
-#define TYPE_TOOLS_IMPLEMENTATION_3(ClassType) \
+#undef TYPE_TOOLS_IMPLEMENT_3_PART
+#define TYPE_TOOLS_IMPLEMENT_3_PART(ClassType) \
 	__device__ __host__ inline void TypeTools<ClassType>::init(ClassType &variable) { \
 		TYPE_TOOLS_INIT_3_BODY; \
 	} \
@@ -413,29 +535,30 @@
 	inline bool TypeTools<ClassType>::disposeDevArray(ClassType *arr, int count) { \
 		TYPE_TOOLS_DISPOSE_DEV_ARRAY_3_BODY; \
 	}
-#define TYPE_TOOLS_IMPLEMENTATION_3_TEMPLATE_1(ClassType) \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::init(ClassType<TemplateType> &variable) { \
+#undef TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE
+#define TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE(ClassType, ...) \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::init(ClassType<__VA_ARGS__> &variable) { \
 		TYPE_TOOLS_INIT_3_BODY; \
 	} \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::dispose(ClassType<TemplateType> &variable) { \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::dispose(ClassType<__VA_ARGS__> &variable) { \
 		TYPE_TOOLS_DISPOSE_3_BODY; \
 	} \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::swap(ClassType<TemplateType> &a, ClassType<TemplateType> &b) { \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::swap(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
 		TYPE_TOOLS_SWAP_3_BODY; \
 	} \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::transfer(ClassType<TemplateType> &a, ClassType<TemplateType> &b) { \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::transfer(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
 		TYPE_TOOLS_TRANSFER_3_BODY; \
 	} \
-	template<typename TemplateType> inline bool TypeTools<ClassType<TemplateType> >::prepareForCpyLoad(const ClassType<TemplateType> *source, ClassType<TemplateType> *hosClone, ClassType<TemplateType> *devTarget, int count) { \
+	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::prepareForCpyLoad(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
 		TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_3_BODY; \
 	} \
-	template<typename TemplateType> inline void TypeTools<ClassType<TemplateType> >::undoCpyLoadPreparations(const ClassType<TemplateType> *source, ClassType<TemplateType> *hosClone, ClassType<TemplateType> *devTarget, int count) { \
+	template<__VA_ARGS__> inline void TypeTools<ClassType<__VA_ARGS__> >::undoCpyLoadPreparations(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
 		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_3_BODY; \
 	} \
-	template<typename TemplateType> inline bool TypeTools<ClassType<TemplateType> >::devArrayNeedsToBeDisposed() { \
+	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::devArrayNeedsToBeDisposed() { \
 		TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_3_BODY; \
 	} \
-	template<typename TemplateType> inline bool TypeTools<ClassType<TemplateType> >::disposeDevArray(ClassType<TemplateType> *arr, int count) { \
+	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::disposeDevArray(ClassType<__VA_ARGS__> *arr, int count) { \
 		TYPE_TOOLS_DISPOSE_DEV_ARRAY_3_BODY; \
 	}
 
@@ -520,7 +643,8 @@
 
 
 /** ========================================================== **/
-#define TYPE_TOOLS_IMPLEMENTATION_4(ClassType) \
+#undef TYPE_TOOLS_IMPLEMENT_4_PART
+#define TYPE_TOOLS_IMPLEMENT_4_PART(ClassType) \
 	__device__ __host__ inline void TypeTools<ClassType>::init(ClassType &variable) { \
 		TYPE_TOOLS_INIT_4_BODY; \
 	} \
@@ -545,166 +669,31 @@
 	inline bool TypeTools<ClassType>::disposeDevArray(ClassType *arr, int count) { \
 		TYPE_TOOLS_DISPOSE_DEV_ARRAY_4_BODY; \
 	}
-#define TYPE_TOOLS_IMPLEMENTATION_4_TEMPLATE_1(ClassType) \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::init(ClassType<TemplateType> &variable) { \
+#undef TYPE_TOOLS_IMPLEMENT_4_PART_TEMPLATE
+#define TYPE_TOOLS_IMPLEMENT_4_PART_TEMPLATE(ClassType, ...) \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::init(ClassType<__VA_ARGS__> &variable) { \
 		TYPE_TOOLS_INIT_4_BODY; \
 	} \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::dispose(ClassType<TemplateType> &variable) { \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::dispose(ClassType<__VA_ARGS__> &variable) { \
 		TYPE_TOOLS_DISPOSE_4_BODY; \
 	} \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::swap(ClassType<TemplateType> &a, ClassType<TemplateType> &b) { \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::swap(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
 		TYPE_TOOLS_SWAP_4_BODY; \
 	} \
-	template<typename TemplateType> __device__ __host__ inline void TypeTools<ClassType<TemplateType> >::transfer(ClassType<TemplateType> &a, ClassType<TemplateType> &b) { \
+	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::transfer(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
 		TYPE_TOOLS_TRANSFER_4_BODY; \
 	} \
-	template<typename TemplateType> inline bool TypeTools<ClassType<TemplateType> >::prepareForCpyLoad(const ClassType<TemplateType> *source, ClassType<TemplateType> *hosClone, ClassType<TemplateType> *devTarget, int count) { \
+	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::prepareForCpyLoad(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
 		TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_4_BODY; \
 	} \
-	template<typename TemplateType> inline void TypeTools<ClassType<TemplateType> >::undoCpyLoadPreparations(const ClassType<TemplateType> *source, ClassType<TemplateType> *hosClone, ClassType<TemplateType> *devTarget, int count) { \
+	template<__VA_ARGS__> inline void TypeTools<ClassType<__VA_ARGS__> >::undoCpyLoadPreparations(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
 		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_4_BODY; \
 	} \
-	template<typename TemplateType> inline bool TypeTools<ClassType<TemplateType> >::devArrayNeedsToBeDisposed() { \
+	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::devArrayNeedsToBeDisposed() { \
 		TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_4_BODY; \
 	} \
-	template<typename TemplateType> inline bool TypeTools<ClassType<TemplateType> >::disposeDevArray(ClassType<TemplateType> *arr, int count) { \
+	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::disposeDevArray(ClassType<__VA_ARGS__> *arr, int count) { \
 		TYPE_TOOLS_DISPOSE_DEV_ARRAY_4_BODY; \
 	}
 
 
-
-
-
-/** ########################################################################## **/
-/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
-/** ########################################################################## **/
-
-/** ========================================================== **/
-#undef TYPE_TOOLS_DEFINE_PART_TYPE
-#define TYPE_TOOLS_DEFINE_PART_TYPE(TypeName) \
-	typedef TypeName PartType0
-#undef TYPE_TOOLS_DEFINE_PART_TYPES_2
-#define TYPE_TOOLS_DEFINE_PART_TYPES_2(TypeName0, TypeName1) \
-	TYPE_TOOLS_DEFINE_PART_TYPE(TypeName0); \
-	typedef TypeName1 PartType1
-#undef TYPE_TOOLS_DEFINE_PART_TYPES_3
-#define TYPE_TOOLS_DEFINE_PART_TYPES_3(TypeName0, TypeName1, TypeName2) \
-	TYPE_TOOLS_DEFINE_PART_TYPES_2(TypeName0, TypeName1); \
-	typedef TypeName2 PartType2
-#undef TYPE_TOOLS_DEFINE_PART_TYPES_4
-#define TYPE_TOOLS_DEFINE_PART_TYPES_4(TypeName0, TypeName1, TypeName2, TypeName3) \
-	TYPE_TOOLS_DEFINE_PART_TYPES_3(TypeName0, TypeName1, TypeName2); \
-	typedef TypeName3 PartType3
-
-/** ========================================================== **/
-#undef TYPE_TOOLS_REDEFINE_1_PART
-#define TYPE_TOOLS_REDEFINE_1_PART(ClassType, TypeName) \
-	template<> class TypeTools<ClassType> { \
-	public: \
-		typedef ClassType MasterType; \
-		TYPE_TOOLS_DEFINE_PART_TYPE(TypeName); \
-		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
-	}
-#undef TYPE_TOOLS_REDEFINE_1_PART_TEMPLATE
-#define TYPE_TOOLS_REDEFINE_1_PART_TEMPLATE(ClassType, TemplateType, TypeName) \
-	template<typename TemplateType> class TypeTools<ClassType<TemplateType> > { \
-	public: \
-		typedef ClassType<TemplateType> MasterType; \
-		TYPE_TOOLS_DEFINE_PART_TYPE(TypeName); \
-		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
-	}
-#undef TYPE_TOOLS_REDEFINE_2_PART
-#define TYPE_TOOLS_REDEFINE_2_PART(ClassType, TypeName0, TypeName1) \
-	template<> class TypeTools<ClassType> { \
-	public: \
-		typedef ClassType MasterType; \
-		TYPE_TOOLS_DEFINE_PART_TYPES_2(TypeName0, TypeName1); \
-		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
-	}
-#undef TYPE_TOOLS_REDEFINE_2_PART_TEMPLATE
-#define TYPE_TOOLS_REDEFINE_2_PART_TEMPLATE(ClassType, TemplateType, TypeName0, TypeName1) \
-	template<typename TemplateType> class TypeTools<ClassType<TemplateType> > { \
-	public: \
-		typedef ClassType<TemplateType> MasterType; \
-		TYPE_TOOLS_DEFINE_PART_TYPES_2(TypeName0, TypeName1); \
-		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
-	}
-#undef TYPE_TOOLS_REDEFINE_3_PART
-#define TYPE_TOOLS_REDEFINE_3_PART(ClassType, TypeName0, TypeName1, TypeName2) \
-	template<> class TypeTools<ClassType> { \
-	public: \
-		typedef ClassType MasterType; \
-		TYPE_TOOLS_DEFINE_PART_TYPES_3(TypeName0, TypeName1, TypeName2); \
-		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
-	}
-#undef TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE
-#define TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(ClassType, TemplateType, TypeName0, TypeName1, TypeName2) \
-	template<typename TemplateType> class TypeTools<ClassType<TemplateType> > { \
-	public: \
-		typedef ClassType<TemplateType> MasterType; \
-		TYPE_TOOLS_DEFINE_PART_TYPES_3(TypeName0, TypeName1, TypeName2); \
-		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
-	}
-#undef TYPE_TOOLS_REDEFINE_4_PART
-#define TYPE_TOOLS_REDEFINE_4_PART(ClassType, TypeName0, TypeName1, TypeName2, TypeName3) \
-	template<> class TypeTools<ClassType> { \
-	public: \
-		typedef ClassType MasterType; \
-		TYPE_TOOLS_DEFINE_PART_TYPES_4(TypeName0, TypeName1, TypeName2, TypeName3); \
-		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
-	}
-#undef TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE
-#define TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE(ClassType, TemplateType, TypeName0, TypeName1, TypeName2, TypeName3) \
-	template<typename TemplateType> class TypeTools<ClassType<TemplateType> > { \
-	public: \
-		typedef ClassType<TemplateType> MasterType; \
-		TYPE_TOOLS_DEFINE_PART_TYPES_4(TypeName0, TypeName1, TypeName2, TypeName3); \
-		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
-	}
-
-/** ========================================================== **/
-#define TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(VariableType, FunctionName, VariableName) \
-	__device__ __host__ inline VariableType & FunctionName() { return VariableName; } \
-	__device__ __host__ inline const VariableType & FunctionName() const { return VariableName; }
-#undef TYPE_TOOLS_ADD_COMPONENT_GETTER
-#define TYPE_TOOLS_ADD_COMPONENT_GETTER(ClassName, VariableName0) \
-	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(ClassName); \
-	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(TypeTools<ClassName>::PartType0, component0, VariableName0)
-#undef TYPE_TOOLS_ADD_COMPONENT_GETTERS_2
-#define TYPE_TOOLS_ADD_COMPONENT_GETTERS_2(ClassName, VariableName0, VariableName1) \
-	TYPE_TOOLS_ADD_COMPONENT_GETTER(ClassName, VariableName0); \
-	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(TypeTools<ClassName>::PartType1, component1, VariableName1)
-#undef TYPE_TOOLS_ADD_COMPONENT_GETTERS_3
-#define TYPE_TOOLS_ADD_COMPONENT_GETTERS_3(ClassName, VariableName0, VariableName1, VariableName2) \
-	TYPE_TOOLS_ADD_COMPONENT_GETTERS_2(ClassName, VariableName0, VariableName1); \
-	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(TypeTools<ClassName>::PartType2, component2, VariableName2)
-#undef TYPE_TOOLS_ADD_COMPONENT_GETTERS_4
-#define TYPE_TOOLS_ADD_COMPONENT_GETTERS_4(ClassName, VariableName0, VariableName1, VariableName2, VariableName3) \
-	TYPE_TOOLS_ADD_COMPONENT_GETTERS_3(ClassName, VariableName0, VariableName1, VariableName2); \
-	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(TypeTools<ClassName>::PartType3, component3, VariableName3)
-
-/** ========================================================== **/
-#undef TYPE_TOOLS_IMPLEMENT_1_PART
-#define TYPE_TOOLS_IMPLEMENT_1_PART(ClassType) \
-	TYPE_TOOLS_IMPLEMENTATION_1(ClassType)
-#undef TYPE_TOOLS_IMPLEMENT_1_PART_TEMPLATE
-#define TYPE_TOOLS_IMPLEMENT_1_PART_TEMPLATE(ClassType) \
-	TYPE_TOOLS_IMPLEMENTATION_1_TEMPLATE_1(ClassType)
-#undef TYPE_TOOLS_IMPLEMENT_2_PART
-#define TYPE_TOOLS_IMPLEMENT_2_PART(ClassType) \
-	TYPE_TOOLS_IMPLEMENTATION_2(ClassType)
-#undef TYPE_TOOLS_IMPLEMENT_2_PART_TEMPLATE
-#define TYPE_TOOLS_IMPLEMENT_2_PART_TEMPLATE(ClassType) \
-	TYPE_TOOLS_IMPLEMENTATION_2_TEMPLATE_1(ClassType)
-#undef TYPE_TOOLS_IMPLEMENT_3_PART
-#define TYPE_TOOLS_IMPLEMENT_3_PART(ClassType) \
-	TYPE_TOOLS_IMPLEMENTATION_3(ClassType)
-#undef TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE
-#define TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE(ClassType) \
-	TYPE_TOOLS_IMPLEMENTATION_3_TEMPLATE_1(ClassType)
-#undef TYPE_TOOLS_IMPLEMENT_4_PART
-#define TYPE_TOOLS_IMPLEMENT_4_PART(ClassType) \
-	TYPE_TOOLS_IMPLEMENTATION_4(ClassType)
-#undef TYPE_TOOLS_IMPLEMENT_4_PART_TEMPLATE
-#define TYPE_TOOLS_IMPLEMENT_4_PART_TEMPLATE(ClassType) \
-	TYPE_TOOLS_IMPLEMENTATION_4_TEMPLATE_1(ClassType)
