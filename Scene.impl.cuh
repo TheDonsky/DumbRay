@@ -14,4 +14,4 @@ IMPLEMENT_CUDA_LOAD_INTERFACE_FOR_TEMPLATE(Scene);
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 /** TypeTools: **/
-TYPE_TOOLS_IMPLEMENTATION_3_TEMPLATE_1(Scene);
+TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE(Scene, typename HitType);

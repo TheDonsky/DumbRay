@@ -7,15 +7,7 @@
 
 
 template<typename HitType> struct Scene;
-template<typename HitType>
-class TypeTools<Scene<HitType> > {
-public:
-	typedef Scene<HitType> SceneType;
-	typedef ShadedOctree<HitType> PartType0;
-	typedef Stacktor<Light> PartType1;
-	typedef Stacktor<Camera> PartType2;
-	DEFINE_TYPE_TOOLS_CONTENT_FOR(SceneType);
-};
+TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(Scene, ShadedOctree<HitType>, Stacktor<Light>, Stacktor<Camera>, typename HitType);
 
 template<typename HitType>
 struct Scene {
