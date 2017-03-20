@@ -14,6 +14,8 @@
 #include"Handler.test.cuh"
 #include"Material.test.cuh"
 #include"TypeTools.test.cuh"
+#include"Scene.cuh"
+#include"Pair.cuh"
 #include"Device.cuh"
 
 
