@@ -158,6 +158,8 @@ namespace StacktorTest{
 		namespace Private{
 			template<int stackDataSize>
 			__global__ static void testUplodedIntegrity(Stacktor<int, stackDataSize> *s, int size, int count){
+				if (threadIdx.x == 0 && blockIdx.x == 0)
+					printf("KERNEL testUplodedIntegrity RUNNING\n");
 				int ind = StacktorPrivateKernels::getStartIndex();
 				int end = StacktorPrivateKernels::getEndIndex(count);
 				while (ind < end){
@@ -201,7 +203,8 @@ namespace StacktorTest{
 					std::cout << "Upload clock: " << (clock() - timer) << std::endl; timer = clock();
 					int nBlocks = StacktorPrivateKernels::getBlockCount(count);
 					int nthreads = StacktorPrivateKernels::getThreadCount();
-					testUplodedIntegrity<<<nBlocks, nthreads>>>(dev, size, count);
+					std::cout << "BLOCKS: " << nBlocks << "; " << "THREADS: " + nthreads << ";" << std::endl;
+					testUplodedIntegrity<stackDataSize><<<nBlocks, nthreads>>>(dev, size, count);
 					cudaDeviceSynchronize();
 					std::cout << "Check clock: " << (clock() - timer) << std::endl; timer = clock();
 				}
@@ -219,10 +222,8 @@ namespace StacktorTest{
 				testUpload<32>(16, 1);
 				testUpload<16>(16, 1);
 				testUpload<8>(16, 1);
-				typedef void(*voidFunc)(int, int);
-				Tests::call("16 x 32024000 Upload", (voidFunc)(testUpload<16>), 32024000, 16);
-				Tests::call("8024000 x 16 Upload", (voidFunc)(testUpload<16>), 16, 8024000);
-				Tests::call("32024000 x 16 Upload", (voidFunc)(testUpload<16>), 16, 32024000);
+				Tests::call("16 x 32024000 Upload", testUpload<16>, 32024000, 16);
+				Tests::call("8024000 x 16 Upload", testUpload<16>, 16, 8024000);
 			}
 
 			typedef Stacktor<int, 4> Node;

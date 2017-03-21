@@ -167,7 +167,7 @@ namespace TypeToolsTest {
 		}
 	}
 	template<typename Type>
-	inline static void testType(const std::string &className, bool log = true) {
+	inline static bool testType(const std::string &className, bool log = true) {
 		std::cout << "______________________________________" << std::endl;
 		std::cout << "...........TEST STRATED..............." << std::endl;
 		std::cout << "TESTING: " << className << std::endl;
@@ -253,30 +253,40 @@ namespace TypeToolsTest {
 		TypeTools<Type>::dispose(*elem);
 		std::cout << "...........TEST FINISHED............." << std::endl << std::endl;
 		std::cout << "_______STATUS: " << (success ? "PASS" : "FAIL") << std::endl;
+		return success;
 	}
 	static void testFunction() {
 		int device;
 		if (cudaGetDevice(&device) == cudaSuccess) {
-			testType<OneElem>("OneElem");
-			testType<TwoElem>("TwoElem");
-			testType<ThreeElem>("ThreeElem");
-			testType<FourElem>("FourElem");
-			testType<OneElemTemplate<OneElem> >("OneElemTemplate<OneElem>");
-			testType<TwoElemTemplate<TwoElem> >("TwoElemTemplate<TwoElem>");
-			testType<ThreeElemTemplate<ThreeElem> >("ThreeElemTemplate<ThreeElem>");
-			testType<FourElemTemplate<FourElem> >("FourElemTemplate<FourElem>");
-			testType<SomethingTerriblyHuge>("SomethingTerriblyHuge");
-			std::cout << std::endl << std::endl << std::endl << "PRESS ENTER TO RE-RUN THE TEST FOR SomethingTerriblyHuge MULTIPLE TIMES... " << std::endl;
+			bool success = testType<OneElem>("OneElem");
+			success &= testType<TwoElem>("TwoElem");
+			success &= testType<ThreeElem>("ThreeElem");
+			success &= testType<FourElem>("FourElem");
+			success &= testType<OneElemTemplate<OneElem> >("OneElemTemplate<OneElem>");
+			success &= testType<TwoElemTemplate<TwoElem> >("TwoElemTemplate<TwoElem>");
+			success &= testType<ThreeElemTemplate<ThreeElem> >("ThreeElemTemplate<ThreeElem>");
+			success &= testType<FourElemTemplate<FourElem> >("FourElemTemplate<FourElem>");
+			success &= testType<SomethingTerriblyHuge>("SomethingTerriblyHuge");
+			const int n = 8;
+			std::cout << std::endl << std::endl << std::endl << "PRESS ENTER TO RE-RUN THE TEST FOR SomethingTerriblyHuge " << n << " MORE TIMES... ";
 			std::string s;
 			std::getline(std::cin, s);
-			for (int i = 0; i < 8; i++)
-				testType<SomethingTerriblyHuge>("SomethingTerriblyHuge", false);
-			std::cout << std::endl << std::endl << std::endl << "DONE; MAKE SURE, RAM AND VRAM USAGES ARE UNDER CONTROLL" << std::endl;
+			for (int i = 0; i < n; i++)
+				success &= testType<SomethingTerriblyHuge>("SomethingTerriblyHuge", false);
+			std::cout << std::endl << std::endl << std::endl << "============================================================" << std::endl;
+			std::cout << "DONE; FULL TEST RESULT: " << (success ? "PASS" : "FAIL") << std::endl;
+			std::cout << "MAKE SURE, RAM AND VRAM USAGES ARE UNDER CONTROLL..." << std::endl;
 		}
 		else std::cout << "NO ACTIVE CUDA DEVICE FOUND TO RUN THE TEST..." << std::endl;
 	}
 	void test() {
-		Tests::runTest(testFunction, "RUNNING TESTS FOR DEFAULT IMPLEMENTATIONS OF TYPE_TOOLS");
+		while (true) {
+			std::cout << "Enter anthing to run TypeTools test: ";
+			std::string s;
+			std::getline(std::cin, s);
+			if (s.length() <= 0) break;
+			Tests::runTest(testFunction, "RUNNING TESTS FOR DEFAULT IMPLEMENTATIONS OF TYPE_TOOLS");
+		}
 	}
 }
 

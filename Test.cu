@@ -182,10 +182,9 @@ int main(){
 	//MeshReader::writeObj(meshes, names, "Sphere.obj");
 
 	cudaSetDevice(0);
-	TypeToolsTest::test();
 	Device::dumpCurrentDevice();
+	TypeToolsTest::test();
 	BackwardTracerTest::test();
-	//*
 	HandlerTest::test();
 	GenericTest::test();
 	LenseTest::testMemory();
@@ -198,9 +197,10 @@ int main(){
 	IntMapTest::test();
 	makeAndDestroyWindow();
 	testWindow();
+	cudaDeviceReset();
+	/*
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
 	std::thread windowTrapThread(windowTrap);
 	windowTrapThread.join();
 	//*/
-	cudaDeviceReset();
 }

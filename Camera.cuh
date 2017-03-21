@@ -5,7 +5,7 @@
 #include"Lense.cuh"
 
 
-struct Camera;
+class Camera;
 TYPE_TOOLS_REDEFINE_2_PART(Camera, Transform, Lense);
 
 
