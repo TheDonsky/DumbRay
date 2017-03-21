@@ -7,13 +7,13 @@
 /** ########################################################################## **/
 
 /** ========================================================== **/
-#define TYPE_TOOLS_REDEFINE_1_PART(ClassType, TypeName)
+#define TYPE_TOOLS_REDEFINE_1_PART(ClassType, TypeName, ...) // Insert template typename list in __VA_ARGS__ (...) (Should be ignored unless you know the implementation);
 #define TYPE_TOOLS_REDEFINE_1_PART_TEMPLATE(ClassType, TypeName, ...) // Insert template typename list in __VA_ARGS__ (...);
-#define TYPE_TOOLS_REDEFINE_2_PART(ClassType, TypeName0, TypeName1)
+#define TYPE_TOOLS_REDEFINE_2_PART(ClassType, TypeName0, TypeName1, ...) // Insert template typename list in __VA_ARGS__ (...) (Should be ignored unless you know the implementation);
 #define TYPE_TOOLS_REDEFINE_2_PART_TEMPLATE(ClassType, TypeName0, TypeName1, ...) // Insert template typename list in __VA_ARGS__ (...);
-#define TYPE_TOOLS_REDEFINE_3_PART(ClassType, TypeName0, TypeName1, TypeName2)
+#define TYPE_TOOLS_REDEFINE_3_PART(ClassType, TypeName0, TypeName1, TypeName2, ...) // Insert template typename list in __VA_ARGS__ (...) (Should be ignored unless you know the implementation);
 #define TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(ClassType, TypeName0, TypeName1, TypeName2, ...) // Insert template typename list in __VA_ARGS__ (...);
-#define TYPE_TOOLS_REDEFINE_4_PART(ClassType, TypeName0, TypeName1, TypeName2, TypeName3)
+#define TYPE_TOOLS_REDEFINE_4_PART(ClassType, TypeName0, TypeName1, TypeName2, TypeName3, ...) // Insert template typename list in __VA_ARGS__ (...) (Should be ignored unless you know the implementation);
 #define TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE(ClassType, TypeName0, TypeName1, TypeName2, TypeName3, ...) // Insert template typename list in __VA_ARGS__ (...);
 
 /** ========================================================== **/
@@ -29,13 +29,13 @@
 #define TYPE_TOOLS_ADD_COMPONENT_GETTERS_4(ClassName, VariableName0, VariableName1, VariableName2, VariableName3)
 
 /** ========================================================== **/
-#define TYPE_TOOLS_IMPLEMENT_1_PART(ClassType)
+#define TYPE_TOOLS_IMPLEMENT_1_PART(ClassType, ...) // Insert template typename list in __VA_ARGS__ (...) (Should be ignored unless you know the implementation);
 #define TYPE_TOOLS_IMPLEMENT_1_PART_TEMPLATE(ClassType, ...) // Insert template typename list in __VA_ARGS__ (...);
-#define TYPE_TOOLS_IMPLEMENT_2_PART(ClassType)
+#define TYPE_TOOLS_IMPLEMENT_2_PART(ClassType, ...) // Insert template typename list in __VA_ARGS__ (...) (Should be ignored unless you know the implementation);
 #define TYPE_TOOLS_IMPLEMENT_2_PART_TEMPLATE(ClassType, ...) // Insert template typename list in __VA_ARGS__ (...);
-#define TYPE_TOOLS_IMPLEMENT_3_PART(ClassType)
+#define TYPE_TOOLS_IMPLEMENT_3_PART(ClassType, ...) // Insert template typename list in __VA_ARGS__ (...) (Should be ignored unless you know the implementation);
 #define TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE(ClassType, ...) // Insert template typename list in __VA_ARGS__ (...);
-#define TYPE_TOOLS_IMPLEMENT_4_PART(ClassType)
+#define TYPE_TOOLS_IMPLEMENT_4_PART(ClassType, ...) // Insert template typename list in __VA_ARGS__ (...) (Should be ignored unless you know the implementation);
 #define TYPE_TOOLS_IMPLEMENT_4_PART_TEMPLATE(ClassType, ...) // Insert template typename list in __VA_ARGS__ (...);
 
 
@@ -79,8 +79,8 @@
 
 /** ========================================================== **/
 #undef TYPE_TOOLS_REDEFINE_1_PART
-#define TYPE_TOOLS_REDEFINE_1_PART(ClassType, TypeName) \
-	template<> class TypeTools<ClassType> { \
+#define TYPE_TOOLS_REDEFINE_1_PART(ClassType, TypeName, ...) \
+	template<__VA_ARGS__> class TypeTools<ClassType> { \
 	public: \
 		typedef ClassType MasterType; \
 		TYPE_TOOLS_DEFINE_PART_TYPE(TypeName); \
@@ -88,15 +88,10 @@
 	}
 #undef TYPE_TOOLS_REDEFINE_1_PART_TEMPLATE
 #define TYPE_TOOLS_REDEFINE_1_PART_TEMPLATE(ClassType, TypeName, ...) \
-	template<__VA_ARGS__> class TypeTools<ClassType<__VA_ARGS__> > { \
-	public: \
-		typedef ClassType<__VA_ARGS__> MasterType; \
-		TYPE_TOOLS_DEFINE_PART_TYPE(TypeName); \
-		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
-	}
+	TYPE_TOOLS_REDEFINE_1_PART(ClassType<__VA_ARGS__>, TypeName, __VA_ARGS__)
 #undef TYPE_TOOLS_REDEFINE_2_PART
-#define TYPE_TOOLS_REDEFINE_2_PART(ClassType, TypeName0, TypeName1) \
-	template<> class TypeTools<ClassType> { \
+#define TYPE_TOOLS_REDEFINE_2_PART(ClassType, TypeName0, TypeName1, ...) \
+	template<__VA_ARGS__> class TypeTools<ClassType> { \
 	public: \
 		typedef ClassType MasterType; \
 		TYPE_TOOLS_DEFINE_PART_TYPES_2(TypeName0, TypeName1); \
@@ -104,15 +99,10 @@
 	}
 #undef TYPE_TOOLS_REDEFINE_2_PART_TEMPLATE
 #define TYPE_TOOLS_REDEFINE_2_PART_TEMPLATE(ClassType, TypeName0, TypeName1, ...) \
-	template<__VA_ARGS__> class TypeTools<ClassType<__VA_ARGS__> > { \
-	public: \
-		typedef ClassType<__VA_ARGS__> MasterType; \
-		TYPE_TOOLS_DEFINE_PART_TYPES_2(TypeName0, TypeName1); \
-		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
-	}
+	TYPE_TOOLS_REDEFINE_2_PART(ClassType<__VA_ARGS__>, TypeName0, TypeName1, __VA_ARGS__)
 #undef TYPE_TOOLS_REDEFINE_3_PART
-#define TYPE_TOOLS_REDEFINE_3_PART(ClassType, TypeName0, TypeName1, TypeName2) \
-	template<> class TypeTools<ClassType> { \
+#define TYPE_TOOLS_REDEFINE_3_PART(ClassType, TypeName0, TypeName1, TypeName2, ...) \
+	template<__VA_ARGS__> class TypeTools<ClassType> { \
 	public: \
 		typedef ClassType MasterType; \
 		TYPE_TOOLS_DEFINE_PART_TYPES_3(TypeName0, TypeName1, TypeName2); \
@@ -120,15 +110,10 @@
 	}
 #undef TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE
 #define TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(ClassType, TypeName0, TypeName1, TypeName2, ...) \
-	template<__VA_ARGS__> class TypeTools<ClassType<__VA_ARGS__> > { \
-	public: \
-		typedef ClassType<__VA_ARGS__> MasterType; \
-		TYPE_TOOLS_DEFINE_PART_TYPES_3(TypeName0, TypeName1, TypeName2); \
-		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
-	}
+	TYPE_TOOLS_REDEFINE_3_PART(ClassType<__VA_ARGS__>, TypeName0, TypeName1, TypeName2, __VA_ARGS__)
 #undef TYPE_TOOLS_REDEFINE_4_PART
-#define TYPE_TOOLS_REDEFINE_4_PART(ClassType, TypeName0, TypeName1, TypeName2, TypeName3) \
-	template<> class TypeTools<ClassType> { \
+#define TYPE_TOOLS_REDEFINE_4_PART(ClassType, TypeName0, TypeName1, TypeName2, TypeName3, ...) \
+	template<__VA_ARGS__> class TypeTools<ClassType> { \
 	public: \
 		typedef ClassType MasterType; \
 		TYPE_TOOLS_DEFINE_PART_TYPES_4(TypeName0, TypeName1, TypeName2, TypeName3); \
@@ -136,12 +121,7 @@
 	}
 #undef TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE
 #define TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE(ClassType, TypeName0, TypeName1, TypeName2, TypeName3, ...) \
-	template<__VA_ARGS__> class TypeTools<ClassType<__VA_ARGS__> > { \
-	public: \
-		typedef ClassType<__VA_ARGS__> MasterType; \
-		TYPE_TOOLS_DEFINE_PART_TYPES_4(TypeName0, TypeName1, TypeName2, TypeName3); \
-		DEFINE_TYPE_TOOLS_CONTENT_FOR(MasterType); \
-	}
+	TYPE_TOOLS_REDEFINE_4_PART(ClassType<__VA_ARGS__>, TypeName0, TypeName1, TypeName2, TypeName3, __VA_ARGS__)
 
 /** ========================================================== **/
 #define TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(VariableType, FunctionName, VariableName) \
@@ -248,84 +228,45 @@
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-
-/** ========================================================== **/
-#define TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_1_BODY \
-	int i = 0; \
-	for (i = 0; i < count; i++) \
-		if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_0) break;\
-	if (i < count) { \
-		undoCpyLoadPreparations(source, hosClone, devTarget, i); \
-		return false; \
-	} \
-	return true
-
-#define TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_1_BODY \
-	for(int i = 0; i < count; i++) \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0
-
-#define TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_1_BODY \
-	return TypeTools<PartType0>::devArrayNeedsToBeDisposed()
-
-#define TYPE_TOOLS_DISPOSE_DEV_ARRAY_1_BODY \
-	for(int i = 0; i < count; i++) \
-		if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_0) return false; \
-	return true
-
-
-/** ========================================================== **/
 #undef TYPE_TOOLS_IMPLEMENT_1_PART
-#define TYPE_TOOLS_IMPLEMENT_1_PART(ClassType) \
-	__device__ __host__ inline void TypeTools<ClassType>::init(ClassType &variable) { \
+#define TYPE_TOOLS_IMPLEMENT_1_PART(ClassType, ...) \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::init(ClassType &variable) { \
 		TYPE_TOOLS_INIT_CALL_0(variable); \
 	} \
-	__device__ __host__ inline void TypeTools<ClassType>::dispose(ClassType &variable) { \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::dispose(ClassType &variable) { \
 		TYPE_TOOLS_DISPOSE_CALL_0(variable); \
 	} \
-	__device__ __host__ inline void TypeTools<ClassType>::swap(ClassType &a, ClassType &b) { \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::swap(ClassType &a, ClassType &b) { \
 		TYPE_TOOLS_SWAP_CALL_0(a, b); \
 	} \
-	__device__ __host__ inline void TypeTools<ClassType>::transfer(ClassType &a, ClassType &b) { \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::transfer(ClassType &a, ClassType &b) { \
 		TYPE_TOOLS_TRANSFER_CALL_0(a, b); \
 	} \
-	inline bool TypeTools<ClassType>::prepareForCpyLoad(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
-		TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_1_BODY; \
+	__VA_ARGS__ inline bool TypeTools<ClassType>::prepareForCpyLoad(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
+		int i = 0; \
+		for (i = 0; i < count; i++) \
+			if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_0) break;\
+		if (i < count) { \
+			undoCpyLoadPreparations(source, hosClone, devTarget, i); \
+			return false; \
+		} \
+		return true; \
 	} \
-	inline void TypeTools<ClassType>::undoCpyLoadPreparations(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_1_BODY; \
+	__VA_ARGS__ inline void TypeTools<ClassType>::undoCpyLoadPreparations(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
+		for(int i = 0; i < count; i++) \
+			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
 	} \
-	inline bool TypeTools<ClassType>::devArrayNeedsToBeDisposed() { \
-		TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_1_BODY; \
+	__VA_ARGS__ inline bool TypeTools<ClassType>::devArrayNeedsToBeDisposed() { \
+		return TypeTools<PartType0>::devArrayNeedsToBeDisposed(); \
 	} \
-	inline bool TypeTools<ClassType>::disposeDevArray(ClassType *arr, int count) { \
-		TYPE_TOOLS_DISPOSE_DEV_ARRAY_1_BODY; \
+	__VA_ARGS__ inline bool TypeTools<ClassType>::disposeDevArray(ClassType *arr, int count) { \
+		for(int i = 0; i < count; i++) \
+			if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_0) return false; \
+		return true; \
 	}
 #undef TYPE_TOOLS_IMPLEMENT_1_PART_TEMPLATE
 #define TYPE_TOOLS_IMPLEMENT_1_PART_TEMPLATE(ClassType, ...) \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::init(ClassType<__VA_ARGS__> &variable) { \
-		TYPE_TOOLS_INIT_CALL_0(variable); \
-	} \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::dispose(ClassType<__VA_ARGS__> &variable) { \
-		TYPE_TOOLS_DISPOSE_CALL_0(variable); \
-	} \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::swap(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
-		TYPE_TOOLS_SWAP_CALL_0(a, b); \
-	} \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::transfer(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
-		TYPE_TOOLS_TRANSFER_CALL_0(a, b); \
-	} \
-	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::prepareForCpyLoad(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
-		TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_1_BODY; \
-	} \
-	template<__VA_ARGS__> inline void TypeTools<ClassType<__VA_ARGS__> >::undoCpyLoadPreparations(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_1_BODY; \
-	} \
-	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::devArrayNeedsToBeDisposed() { \
-		TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_1_BODY; \
-	} \
-	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::disposeDevArray(ClassType<__VA_ARGS__> *arr, int count) { \
-		TYPE_TOOLS_DISPOSE_DEV_ARRAY_1_BODY; \
-	}
+	TYPE_TOOLS_IMPLEMENT_1_PART(ClassType<__VA_ARGS__>, template<__VA_ARGS__>)
 
 
 
@@ -334,109 +275,58 @@
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-
-/** ========================================================== **/
-#define TYPE_TOOLS_INIT_2_BODY \
-	TYPE_TOOLS_INIT_CALL_0(variable); \
-	TYPE_TOOLS_INIT_CALL_1(variable)
-
-#define TYPE_TOOLS_DISPOSE_2_BODY \
-	TYPE_TOOLS_DISPOSE_CALL_0(variable); \
-	TYPE_TOOLS_DISPOSE_CALL_1(variable);
-
-#define TYPE_TOOLS_SWAP_2_BODY \
+#undef TYPE_TOOLS_IMPLEMENT_2_PART
+#define TYPE_TOOLS_IMPLEMENT_2_PART(ClassType, ...) \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::init(ClassType &variable) { \
+		TYPE_TOOLS_INIT_CALL_0(variable); \
+		TYPE_TOOLS_INIT_CALL_1(variable); \
+	} \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::dispose(ClassType &variable) { \
+		TYPE_TOOLS_DISPOSE_CALL_0(variable); \
+		TYPE_TOOLS_DISPOSE_CALL_1(variable); \
+	} \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::swap(ClassType &a, ClassType &b) { \
 		TYPE_TOOLS_SWAP_CALL_0(a, b); \
-		TYPE_TOOLS_SWAP_CALL_1(a, b)
-
-#define TYPE_TOOLS_TRANSFER_2_BODY \
+		TYPE_TOOLS_SWAP_CALL_1(a, b); \
+	} \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::transfer(ClassType &a, ClassType &b) { \
 		TYPE_TOOLS_TRANSFER_CALL_0(a, b); \
-		TYPE_TOOLS_TRANSFER_CALL_1(a, b)
-
-#define TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_2_BODY \
-	int i = 0; \
-	for (i = 0; i < count; i++) { \
-		if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_0) break; \
-		if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_1) { \
+		TYPE_TOOLS_TRANSFER_CALL_1(a, b); \
+	} \
+	__VA_ARGS__ inline bool TypeTools<ClassType>::prepareForCpyLoad(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
+		int i = 0; \
+		for (i = 0; i < count; i++) { \
+			if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_0) break; \
+			if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_1) { \
+				TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
+				break; \
+			} \
+		} \
+		if (i < count) { \
+			undoCpyLoadPreparations(source, hosClone, devTarget, i); \
+			return false; \
+		} \
+		return true; \
+	} \
+	__VA_ARGS__ inline void TypeTools<ClassType>::undoCpyLoadPreparations(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
+		for(int i = 0; i < count; i++) { \
 			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
-			break; \
+			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_1; \
 		} \
 	} \
-	if (i < count) { \
-		undoCpyLoadPreparations(source, hosClone, devTarget, i); \
-		return false; \
+	__VA_ARGS__ inline bool TypeTools<ClassType>::devArrayNeedsToBeDisposed() { \
+		return (TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_0 || TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_1); \
 	} \
-	return true
-
-#define TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_2_BODY \
-	for(int i = 0; i < count; i++) { \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_1; \
-	}
-
-#define TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_2_BODY \
-	return (TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_0 || TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_1)
-
-#define TYPE_TOOLS_DISPOSE_DEV_ARRAY_2_BODY \
-	for(int i = 0; i < count; i++) { \
-		if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_0) return false; \
-		if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_1) return false; \
-	} \
-	return true
-
-
-/** ========================================================== **/
-#undef TYPE_TOOLS_IMPLEMENT_2_PART
-#define TYPE_TOOLS_IMPLEMENT_2_PART(ClassType) \
-	__device__ __host__ inline void TypeTools<ClassType>::init(ClassType &variable) { \
-		TYPE_TOOLS_INIT_2_BODY; \
-	} \
-	__device__ __host__ inline void TypeTools<ClassType>::dispose(ClassType &variable) { \
-		TYPE_TOOLS_DISPOSE_2_BODY; \
-	} \
-	__device__ __host__ inline void TypeTools<ClassType>::swap(ClassType &a, ClassType &b) { \
-		TYPE_TOOLS_SWAP_2_BODY; \
-	} \
-	__device__ __host__ inline void TypeTools<ClassType>::transfer(ClassType &a, ClassType &b) { \
-		TYPE_TOOLS_TRANSFER_2_BODY; \
-	} \
-	inline bool TypeTools<ClassType>::prepareForCpyLoad(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
-		TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_2_BODY; \
-	} \
-	inline void TypeTools<ClassType>::undoCpyLoadPreparations(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_2_BODY; \
-	} \
-	inline bool TypeTools<ClassType>::devArrayNeedsToBeDisposed() { \
-		TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_2_BODY; \
-	} \
-	inline bool TypeTools<ClassType>::disposeDevArray(ClassType *arr, int count) { \
-		TYPE_TOOLS_DISPOSE_DEV_ARRAY_2_BODY; \
+	__VA_ARGS__ inline bool TypeTools<ClassType>::disposeDevArray(ClassType *arr, int count) { \
+		for(int i = 0; i < count; i++) { \
+			if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_0) return false; \
+			if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_1) return false; \
+		} \
+		return true; \
 	}
 #undef TYPE_TOOLS_IMPLEMENT_2_PART_TEMPLATE
 #define TYPE_TOOLS_IMPLEMENT_2_PART_TEMPLATE(ClassType, ...) \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::init(ClassType<__VA_ARGS__> &variable) { \
-		TYPE_TOOLS_INIT_2_BODY; \
-	} \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::dispose(ClassType<__VA_ARGS__> &variable) { \
-		TYPE_TOOLS_DISPOSE_2_BODY; \
-	} \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::swap(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
-		TYPE_TOOLS_SWAP_2_BODY; \
-	} \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::transfer(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
-		TYPE_TOOLS_TRANSFER_2_BODY; \
-	} \
-	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::prepareForCpyLoad(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
-		TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_2_BODY; \
-	} \
-	template<__VA_ARGS__> inline void TypeTools<ClassType<__VA_ARGS__> >::undoCpyLoadPreparations(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_2_BODY; \
-	} \
-	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::devArrayNeedsToBeDisposed() { \
-		TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_2_BODY; \
-	} \
-	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::disposeDevArray(ClassType<__VA_ARGS__> *arr, int count) { \
-		TYPE_TOOLS_DISPOSE_DEV_ARRAY_2_BODY; \
-	}
+	TYPE_TOOLS_IMPLEMENT_2_PART(ClassType<__VA_ARGS__>, template<__VA_ARGS__>)
 
 
 
@@ -447,253 +337,151 @@
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-
-/** ========================================================== **/
-#define TYPE_TOOLS_INIT_3_BODY \
-	TYPE_TOOLS_INIT_CALL_0(variable); \
-	TYPE_TOOLS_INIT_CALL_1(variable); \
-	TYPE_TOOLS_INIT_CALL_2(variable)
-
-#define TYPE_TOOLS_DISPOSE_3_BODY \
-	TYPE_TOOLS_DISPOSE_CALL_0(variable); \
-	TYPE_TOOLS_DISPOSE_CALL_1(variable); \
-	TYPE_TOOLS_DISPOSE_CALL_2(variable);
-
-#define TYPE_TOOLS_SWAP_3_BODY \
-		TYPE_TOOLS_SWAP_CALL_0(a, b); \
-		TYPE_TOOLS_SWAP_CALL_1(a, b); \
-		TYPE_TOOLS_SWAP_CALL_2(a, b);
-
-#define TYPE_TOOLS_TRANSFER_3_BODY \
-		TYPE_TOOLS_TRANSFER_CALL_0(a, b); \
-		TYPE_TOOLS_TRANSFER_CALL_1(a, b); \
-		TYPE_TOOLS_TRANSFER_CALL_2(a, b);
-
-#define TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_3_BODY \
-	int i = 0; \
-	for (i = 0; i < count; i++) { \
-		if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_0) break; \
-		if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_1) { \
-			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
-			break; \
-		} \
-		if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_2) { \
-			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
-			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_1; \
-			break; \
-		} \
-	} \
-	if (i < count) { \
-		undoCpyLoadPreparations(source, hosClone, devTarget, i); \
-		return false; \
-	} \
-	return true
-
-#define TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_3_BODY \
-	for(int i = 0; i < count; i++) { \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_1; \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_2; \
-	}
-
-#define TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_3_BODY \
-	return (TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_0 || TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_1 || TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_2)
-
-#define TYPE_TOOLS_DISPOSE_DEV_ARRAY_3_BODY \
-	for(int i = 0; i < count; i++) { \
-		if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_0) return false; \
-		if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_1) return false; \
-		if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_2) return false; \
-	} \
-	return true
-
-
-/** ========================================================== **/
 #undef TYPE_TOOLS_IMPLEMENT_3_PART
-#define TYPE_TOOLS_IMPLEMENT_3_PART(ClassType) \
-	__device__ __host__ inline void TypeTools<ClassType>::init(ClassType &variable) { \
-		TYPE_TOOLS_INIT_3_BODY; \
+#define TYPE_TOOLS_IMPLEMENT_3_PART(ClassType, ...) \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::init(ClassType &variable) { \
+		TYPE_TOOLS_INIT_CALL_0(variable); \
+		TYPE_TOOLS_INIT_CALL_1(variable); \
+		TYPE_TOOLS_INIT_CALL_2(variable); \
 	} \
-	__device__ __host__ inline void TypeTools<ClassType>::dispose(ClassType &variable) { \
-		TYPE_TOOLS_DISPOSE_3_BODY; \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::dispose(ClassType &variable) { \
+		TYPE_TOOLS_DISPOSE_CALL_0(variable); \
+		TYPE_TOOLS_DISPOSE_CALL_1(variable); \
+		TYPE_TOOLS_DISPOSE_CALL_2(variable); \
 	} \
-	__device__ __host__ inline void TypeTools<ClassType>::swap(ClassType &a, ClassType &b) { \
-		TYPE_TOOLS_SWAP_3_BODY; \
-	} \
-	__device__ __host__ inline void TypeTools<ClassType>::transfer(ClassType &a, ClassType &b) { \
-		TYPE_TOOLS_TRANSFER_3_BODY; \
-	} \
-	inline bool TypeTools<ClassType>::prepareForCpyLoad(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
-		TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_3_BODY; \
-	} \
-	inline void TypeTools<ClassType>::undoCpyLoadPreparations(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_3_BODY; \
-	} \
-	inline bool TypeTools<ClassType>::devArrayNeedsToBeDisposed() { \
-		TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_3_BODY; \
-	} \
-	inline bool TypeTools<ClassType>::disposeDevArray(ClassType *arr, int count) { \
-		TYPE_TOOLS_DISPOSE_DEV_ARRAY_3_BODY; \
-	}
-#undef TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE
-#define TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE(ClassType, ...) \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::init(ClassType<__VA_ARGS__> &variable) { \
-		TYPE_TOOLS_INIT_3_BODY; \
-	} \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::dispose(ClassType<__VA_ARGS__> &variable) { \
-		TYPE_TOOLS_DISPOSE_3_BODY; \
-	} \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::swap(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
-		TYPE_TOOLS_SWAP_3_BODY; \
-	} \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::transfer(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
-		TYPE_TOOLS_TRANSFER_3_BODY; \
-	} \
-	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::prepareForCpyLoad(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
-		TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_3_BODY; \
-	} \
-	template<__VA_ARGS__> inline void TypeTools<ClassType<__VA_ARGS__> >::undoCpyLoadPreparations(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_3_BODY; \
-	} \
-	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::devArrayNeedsToBeDisposed() { \
-		TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_3_BODY; \
-	} \
-	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::disposeDevArray(ClassType<__VA_ARGS__> *arr, int count) { \
-		TYPE_TOOLS_DISPOSE_DEV_ARRAY_3_BODY; \
-	}
-
-
-
-
-
-/** ########################################################################## **/
-/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
-/** ########################################################################## **/
-
-/** ========================================================== **/
-#define TYPE_TOOLS_INIT_4_BODY \
-	TYPE_TOOLS_INIT_CALL_0(variable); \
-	TYPE_TOOLS_INIT_CALL_1(variable); \
-	TYPE_TOOLS_INIT_CALL_2(variable); \
-	TYPE_TOOLS_INIT_CALL_3(variable)
-
-#define TYPE_TOOLS_DISPOSE_4_BODY \
-	TYPE_TOOLS_DISPOSE_CALL_0(variable); \
-	TYPE_TOOLS_DISPOSE_CALL_1(variable); \
-	TYPE_TOOLS_DISPOSE_CALL_2(variable); \
-	TYPE_TOOLS_DISPOSE_CALL_3(variable);
-
-#define TYPE_TOOLS_SWAP_4_BODY \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::swap(ClassType &a, ClassType &b) { \
 		TYPE_TOOLS_SWAP_CALL_0(a, b); \
 		TYPE_TOOLS_SWAP_CALL_1(a, b); \
 		TYPE_TOOLS_SWAP_CALL_2(a, b); \
-		TYPE_TOOLS_SWAP_CALL_3(a, b);
-
-#define TYPE_TOOLS_TRANSFER_4_BODY \
+	} \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::transfer(ClassType &a, ClassType &b) { \
 		TYPE_TOOLS_TRANSFER_CALL_0(a, b); \
 		TYPE_TOOLS_TRANSFER_CALL_1(a, b); \
 		TYPE_TOOLS_TRANSFER_CALL_2(a, b); \
-		TYPE_TOOLS_TRANSFER_CALL_3(a, b);
-
-#define TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_4_BODY \
-	int i = 0; \
-	for (i = 0; i < count; i++) { \
-		if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_0) break; \
-		if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_1) { \
-			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
-			break; \
+	} \
+	__VA_ARGS__ inline bool TypeTools<ClassType>::prepareForCpyLoad(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
+		int i = 0; \
+		for (i = 0; i < count; i++) { \
+			if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_0) break; \
+			if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_1) { \
+				TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
+				break; \
+			} \
+			if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_2) { \
+				TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
+				TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_1; \
+				break; \
+			} \
 		} \
-		if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_2) { \
-			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
-			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_1; \
-			break; \
+		if (i < count) { \
+			undoCpyLoadPreparations(source, hosClone, devTarget, i); \
+			return false; \
 		} \
-		if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_3) { \
+		return true; \
+	} \
+	__VA_ARGS__ inline void TypeTools<ClassType>::undoCpyLoadPreparations(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
+		for(int i = 0; i < count; i++) { \
 			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
 			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_1; \
 			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_2; \
-			break; \
 		} \
 	} \
-	if (i < count) { \
-		undoCpyLoadPreparations(source, hosClone, devTarget, i); \
-		return false; \
+	__VA_ARGS__ inline bool TypeTools<ClassType>::devArrayNeedsToBeDisposed() { \
+		return (TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_0 || TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_1 || TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_2); \
 	} \
-	return true
-
-#define TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_4_BODY \
-	for(int i = 0; i < count; i++) { \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_1; \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_2; \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_3; \
+	__VA_ARGS__ inline bool TypeTools<ClassType>::disposeDevArray(ClassType *arr, int count) { \
+		for(int i = 0; i < count; i++) { \
+			if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_0) return false; \
+			if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_1) return false; \
+			if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_2) return false; \
+		} \
+		return true; \
 	}
-
-#define TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_4_BODY \
-	return (TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_0 || TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_1 || TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_2 || TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_3)
-
-#define TYPE_TOOLS_DISPOSE_DEV_ARRAY_4_BODY \
-	for(int i = 0; i < count; i++) { \
-		if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_0) return false; \
-		if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_1) return false; \
-		if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_2) return false; \
-		if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_3) return false; \
-	} \
-	return true
+#undef TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE
+#define TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE(ClassType, ...) \
+	TYPE_TOOLS_IMPLEMENT_3_PART(ClassType<__VA_ARGS__>, template<__VA_ARGS__>)
 
 
-/** ========================================================== **/
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
 #undef TYPE_TOOLS_IMPLEMENT_4_PART
-#define TYPE_TOOLS_IMPLEMENT_4_PART(ClassType) \
-	__device__ __host__ inline void TypeTools<ClassType>::init(ClassType &variable) { \
-		TYPE_TOOLS_INIT_4_BODY; \
+#define TYPE_TOOLS_IMPLEMENT_4_PART(ClassType, ...) \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::init(ClassType &variable) { \
+		TYPE_TOOLS_INIT_CALL_0(variable); \
+		TYPE_TOOLS_INIT_CALL_1(variable); \
+		TYPE_TOOLS_INIT_CALL_2(variable); \
+		TYPE_TOOLS_INIT_CALL_3(variable); \
 	} \
-	__device__ __host__ inline void TypeTools<ClassType>::dispose(ClassType &variable) { \
-		TYPE_TOOLS_DISPOSE_4_BODY; \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::dispose(ClassType &variable) { \
+		TYPE_TOOLS_DISPOSE_CALL_0(variable); \
+		TYPE_TOOLS_DISPOSE_CALL_1(variable); \
+		TYPE_TOOLS_DISPOSE_CALL_2(variable); \
+		TYPE_TOOLS_DISPOSE_CALL_3(variable); \
 	} \
-	__device__ __host__ inline void TypeTools<ClassType>::swap(ClassType &a, ClassType &b) { \
-		TYPE_TOOLS_SWAP_4_BODY; \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::swap(ClassType &a, ClassType &b) { \
+		TYPE_TOOLS_SWAP_CALL_0(a, b); \
+		TYPE_TOOLS_SWAP_CALL_1(a, b); \
+		TYPE_TOOLS_SWAP_CALL_2(a, b); \
+		TYPE_TOOLS_SWAP_CALL_3(a, b); \
 	} \
-	__device__ __host__ inline void TypeTools<ClassType>::transfer(ClassType &a, ClassType &b) { \
-		TYPE_TOOLS_TRANSFER_4_BODY; \
+	__VA_ARGS__ __device__ __host__ inline void TypeTools<ClassType>::transfer(ClassType &a, ClassType &b) { \
+		TYPE_TOOLS_TRANSFER_CALL_0(a, b); \
+		TYPE_TOOLS_TRANSFER_CALL_1(a, b); \
+		TYPE_TOOLS_TRANSFER_CALL_2(a, b); \
+		TYPE_TOOLS_TRANSFER_CALL_3(a, b); \
 	} \
-	inline bool TypeTools<ClassType>::prepareForCpyLoad(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
-		TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_4_BODY; \
+	__VA_ARGS__ inline bool TypeTools<ClassType>::prepareForCpyLoad(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
+		int i = 0; \
+		for (i = 0; i < count; i++) { \
+			if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_0) break; \
+			if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_1) { \
+				TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
+				break; \
+			} \
+			if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_2) { \
+				TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
+				TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_1; \
+				break; \
+			} \
+			if(!TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_CALL_3) { \
+				TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
+				TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_1; \
+				TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_2; \
+				break; \
+			} \
+		} \
+		if (i < count) { \
+			undoCpyLoadPreparations(source, hosClone, devTarget, i); \
+			return false; \
+		} \
+		return true; \
 	} \
-	inline void TypeTools<ClassType>::undoCpyLoadPreparations(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_4_BODY; \
+	__VA_ARGS__ inline void TypeTools<ClassType>::undoCpyLoadPreparations(const ClassType *source, ClassType *hosClone, ClassType *devTarget, int count) { \
+		for(int i = 0; i < count; i++) { \
+			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_0; \
+			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_1; \
+			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_2; \
+			TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_CALL_3; \
+		}; \
 	} \
-	inline bool TypeTools<ClassType>::devArrayNeedsToBeDisposed() { \
-		TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_4_BODY; \
+	__VA_ARGS__ inline bool TypeTools<ClassType>::devArrayNeedsToBeDisposed() { \
+		return (TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_0 || TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_1 || TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_2 || TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_CALL_3); \
 	} \
-	inline bool TypeTools<ClassType>::disposeDevArray(ClassType *arr, int count) { \
-		TYPE_TOOLS_DISPOSE_DEV_ARRAY_4_BODY; \
+	__VA_ARGS__ inline bool TypeTools<ClassType>::disposeDevArray(ClassType *arr, int count) { \
+		for(int i = 0; i < count; i++) { \
+			if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_0) return false; \
+			if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_1) return false; \
+			if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_2) return false; \
+			if(!TYPE_TOOLS_DISPOSE_DEV_ARRAY_CALL_3) return false; \
+		} \
+		return true; \
 	}
 #undef TYPE_TOOLS_IMPLEMENT_4_PART_TEMPLATE
 #define TYPE_TOOLS_IMPLEMENT_4_PART_TEMPLATE(ClassType, ...) \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::init(ClassType<__VA_ARGS__> &variable) { \
-		TYPE_TOOLS_INIT_4_BODY; \
-	} \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::dispose(ClassType<__VA_ARGS__> &variable) { \
-		TYPE_TOOLS_DISPOSE_4_BODY; \
-	} \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::swap(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
-		TYPE_TOOLS_SWAP_4_BODY; \
-	} \
-	template<__VA_ARGS__> __device__ __host__ inline void TypeTools<ClassType<__VA_ARGS__> >::transfer(ClassType<__VA_ARGS__> &a, ClassType<__VA_ARGS__> &b) { \
-		TYPE_TOOLS_TRANSFER_4_BODY; \
-	} \
-	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::prepareForCpyLoad(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
-		TYPE_TOOLS_PREPARE_FOR_CPY_LOAD_4_BODY; \
-	} \
-	template<__VA_ARGS__> inline void TypeTools<ClassType<__VA_ARGS__> >::undoCpyLoadPreparations(const ClassType<__VA_ARGS__> *source, ClassType<__VA_ARGS__> *hosClone, ClassType<__VA_ARGS__> *devTarget, int count) { \
-		TYPE_TOOLS_UNDO_CPY_LOAD_PREPARATIONS_4_BODY; \
-	} \
-	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::devArrayNeedsToBeDisposed() { \
-		TYPE_TOOLS_DEV_ARRAY_NEEDS_TO_BE_DISPOSED_4_BODY; \
-	} \
-	template<__VA_ARGS__> inline bool TypeTools<ClassType<__VA_ARGS__> >::disposeDevArray(ClassType<__VA_ARGS__> *arr, int count) { \
-		TYPE_TOOLS_DISPOSE_DEV_ARRAY_4_BODY; \
-	}
+	TYPE_TOOLS_IMPLEMENT_4_PART(ClassType<__VA_ARGS__>, template<__VA_ARGS__>)
 
 
