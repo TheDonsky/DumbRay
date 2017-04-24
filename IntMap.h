@@ -5,7 +5,7 @@
 
 
 
-template<typename Type = int, unsigned int base = 32>
+template<typename Type, unsigned int base = 32>
 class IntMap{
 public:
 	__device__ __host__ inline IntMap();
@@ -15,6 +15,7 @@ public:
 	__device__ __host__ inline const Type& operator[](int key)const;
 	__device__ __host__ inline void put(int key, Type value);
 	__device__ __host__ inline void remove(int key);
+	__device__ __host__ inline void clear();
 
 
 private:

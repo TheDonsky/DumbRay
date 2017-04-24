@@ -4,8 +4,7 @@
 
 template<typename Type, unsigned int base>
 __device__ __host__ inline IntMap<Type, base>::IntMap(){
-	nodes.push(Node());
-	nodes.push(Node());
+	clear();
 }
 
 
@@ -29,6 +28,12 @@ template<typename Type, unsigned int base>
 __device__ __host__ inline void IntMap<Type, base>::remove(int key){
 	int index = find(key);
 	if (index >= 0) nodes[index].containsValue = false;
+}
+template<typename Type, unsigned int base>
+__device__ __host__ inline void IntMap<Type, base>::clear() {
+	nodes.clear(); 
+	nodes.push(Node());
+	nodes.push(Node());
 }
 
 
