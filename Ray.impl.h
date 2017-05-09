@@ -29,10 +29,10 @@ __device__ __host__ inline Ray& Ray::operator()(const Vector3 &org, const Vector
 
 /** -------------------------------------------------------------------------- **/
 /** Stream operators: **/
-std::istream& operator>>(std::istream &stream, Ray &r){
+inline static std::istream& operator>>(std::istream &stream, Ray &r){
 	return(stream >> r.origin >> r.direction);
 }
-std::ostream& operator<<(std::ostream &stream, const Ray &r){
+inline static std::ostream& operator<<(std::ostream &stream, const Ray &r){
 	return(stream << "(Origin: " << r.origin << "; Direction: " << r.direction << ")");
 }
 

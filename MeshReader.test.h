@@ -11,7 +11,7 @@ namespace MeshReaderTest {
 		Stacktor<String> names;
 		while (true) {
 			std::string line;
-			std::cout << "ENTER .obj FILE TO READ(ENTER TO RENDER): ";
+			std::cout << "ENTER .obj FILE TO READ(EMPTY LINE TO MOVE ON): ";
 			std::getline(std::cin, line);
 			int start = meshes.size();
 			if (line == "") break;

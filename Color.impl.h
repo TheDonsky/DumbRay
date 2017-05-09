@@ -28,10 +28,10 @@ __device__ __host__ inline Color& Color::operator()(float R, float G, float B, f
 
 /** -------------------------------------------------------------------------- **/
 /** Stream operators: **/
-std::istream& operator>>(std::istream &stream, Color &c){
+inline static std::istream& operator>>(std::istream &stream, Color &c){
 	return(stream >> c.r >> c.g >> c.b >> c.a);
 }
-std::ostream& operator<<(std::ostream &stream, const Color &c){
+inline static std::ostream& operator<<(std::ostream &stream, const Color &c){
 	stream << "(Red: " << (int)(c.r * 1000) / 1000.0 << "; Green: " << (int)(c.g * 1000) / 1000.0;
 	return(stream << "; Blue: " << (int)(c.b * 1000) / 1000.0 << "; Alpha: " << (int)(c.a * 1000) / 1000.0 << ")");
 }

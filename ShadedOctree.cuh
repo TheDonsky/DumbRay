@@ -179,7 +179,7 @@ private:
 	Octree<Shaded<HitType> > octree;
 	Stacktor<Material<HitType> > materials;
 
-	__device__ __host__ inline void fixMaterialPointers(Material<HitType> *falseRoot);
+	__device__ __host__ inline void fixMaterialPointers(const Material<HitType> *falseRoot);
 
 	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(ShadedOctree);
 };

@@ -120,10 +120,10 @@ __dumb__ ColorRGB& ColorRGB::operator/=(float f) {
 
 /** -------------------------------------------------------------------------- **/
 /** Stream operators: **/
-std::istream& operator >> (std::istream &stream, ColorRGB &c) {
+inline static std::istream& operator >> (std::istream &stream, ColorRGB &c) {
 	return(stream >> c.r >> c.g >> c.b);
 }
-std::ostream& operator<<(std::ostream &stream, const ColorRGB &c) {
+inline static std::ostream& operator<<(std::ostream &stream, const ColorRGB &c) {
 	stream << "(Red: " << (int)(c.r * 1000) / 1000.0 << "; Green: " << (int)(c.g * 1000) / 1000.0;
 	return(stream << "; Blue: " << (int)(c.b * 1000) / 1000.0 << ")");
 }

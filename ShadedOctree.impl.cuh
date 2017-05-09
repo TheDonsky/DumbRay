@@ -517,7 +517,7 @@ __device__ __host__ inline const Material<HitType> &ShadedOctree<HitType>::mater
 
 
 template<typename HitType>
-__device__ __host__ inline void ShadedOctree<HitType>::fixMaterialPointers(Material<HitType> *falseRoot){
+__device__ __host__ inline void ShadedOctree<HitType>::fixMaterialPointers(const Material<HitType> *falseRoot){
 	Material<HitType> *realRoot = (materials + 0);
 	if (realRoot != falseRoot) {
 		Stacktor<Shaded<HitType> > &data = getData();

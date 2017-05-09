@@ -28,8 +28,8 @@ struct Ray{
 
 /** -------------------------------------------------------------------------- **/
 /** Stream operators: **/
-std::istream& operator>>(std::istream &stream, Ray &r);
-std::ostream& operator<<(std::ostream &stream, const Ray &r);
+inline static std::istream& operator>>(std::istream &stream, Ray &r);
+inline static std::ostream& operator<<(std::ostream &stream, const Ray &r);
 
 
 #include"Ray.impl.h"

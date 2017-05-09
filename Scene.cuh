@@ -19,6 +19,7 @@ struct Scene {
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
 	DEFINE_CUDA_LOAD_INTERFACE_FOR(Scene);
+	TYPE_TOOLS_ADD_COMPONENT_GETTERS_3(Scene, geometry, lights, cameras);
 };
 
 

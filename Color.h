@@ -28,8 +28,8 @@ struct Color{
 
 /** -------------------------------------------------------------------------- **/
 /** Stream operators: **/
-std::istream& operator>>(std::istream &stream, Color &r);
-std::ostream& operator<<(std::ostream &stream, const Color &r);
+inline static std::istream& operator>>(std::istream &stream, Color &r);
+inline static std::ostream& operator<<(std::ostream &stream, const Color &r);
 
 
 #include"Color.impl.h"

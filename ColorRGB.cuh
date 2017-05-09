@@ -63,8 +63,8 @@ struct ColorRGB {
 
 /** -------------------------------------------------------------------------- **/
 /** Stream operators: **/
-std::istream& operator >> (std::istream &stream, ColorRGB &r);
-std::ostream& operator<<(std::ostream &stream, const ColorRGB &r);
+inline static std::istream& operator >> (std::istream &stream, ColorRGB &r);
+inline static std::ostream& operator<<(std::ostream &stream, const ColorRGB &r);
 
 
 
