@@ -1,8 +1,8 @@
 #include"TypeTools.test.cuh"
 #include"TypeTools.cuh"
-#include"Stacktor.cuh"
-#include"Vector3.h"
-#include"Tests.h"
+#include"../Stacktor/Stacktor.cuh"
+#include"../../Primitives/Pure/Vector3/Vector3.h"
+#include"../../../Namespaces/Tests/Tests.h"
 
 
 namespace TypeToolsTest {
