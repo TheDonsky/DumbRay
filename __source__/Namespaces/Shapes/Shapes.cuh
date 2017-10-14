@@ -1,10 +1,11 @@
 #pragma once
 
-#include"Vector3.h"
-#include"AABB.h"
-#include"Triangle.h"
-#include"BakedTriMesh.h"
-#include"Ray.h"
+#include"../../DataStructures/Primitives/Pure/Vector3/Vector3.h"
+#include"../../DataStructures/Primitives/Compound/AABB/AABB.h"
+#include"../../DataStructures/Primitives/Compound/Triangle/Triangle.h"
+#include"../../DataStructures/Objects/Meshes/BakedTriMesh/BakedTriMesh.h"
+#include"../../DataStructures/Primitives/Compound/Ray/Ray.h"
+#include"../../DataStructures/GeneralPurpose/Stacktor/Stacktor.cuh"
 
 
 
@@ -34,9 +35,16 @@ namespace Shapes{
 	/** ########################################################################## **/
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
+	//*
 	template<typename Type, typename BoundType>
 	__dumb__ bool sharePoint(const Type &a, const Type &b, const BoundType &commonPointBounds);
-
+	//*/
+	template<typename Type1, typename Type2>
+	// Returns mass center of intersection, if it exists, or some undefined value.
+	__dumb__ Vertex intersectionCenter(const Type1 &a, const Type2 &b);
+	template<typename Type1, typename Type2>
+	// Returns bounding box of intersection, if it exists, or some undefined value.
+	__dumb__ AABB intersectionBounds(const Type1 &a, const Type2 &b);
 
 	/** ########################################################################## **/
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
