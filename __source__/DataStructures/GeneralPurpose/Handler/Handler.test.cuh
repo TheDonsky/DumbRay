@@ -1,7 +1,7 @@
 #pragma once
 #include "Handler.cuh"
-#include "Stacktor.cuh"
-#include "Tests.h"
+#include "../Stacktor/Stacktor.cuh"
+#include "../../../Namespaces/Tests/Tests.h"
 
 
 

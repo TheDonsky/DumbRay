@@ -1,6 +1,6 @@
 #pragma once
-#include "Managedhandler.cuh"
-#include "Scene.cuh"
+#include "../../../GeneralPurpose/ManagedHandler/ManagedHandler.cuh"
+#include "../Scene.cuh"
 #include <mutex>
 
 

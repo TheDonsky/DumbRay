@@ -1,21 +1,21 @@
 #include "SceneHandler.test.cuh"
 #include "SceneHandler.cuh"
-#include "MeshReader.test.h"
-#include "SimpleDirectionalLight.cuh"
-#include "DefaultPerspectiveLense.cuh"
-#include "Tests.h"
+#include "../../../../Namespaces/MeshReader/MeshReader.test.h"
+#include "../Lights/SimpleDirectionalLight/SimpleDirectionalLight.cuh"
+#include "../../Components/Lenses/DefaultPerspectiveLense/DefaultPerspectiveLense.cuh"
+#include "../../../../Namespaces/Tests/Tests.h"
 #include <iostream>
 #include <thread>
 #include <mutex>
-#include "Semaphore.h"
-
-
+#include "../../../GeneralPurpose/Semaphore/Semaphore.h"
 
 namespace SceneHandlerTest {
 	namespace Private{
 		__global__ void kernel(const Scene<BakedTriFace> *scene) {
 			Vector2 screenPoint = ((Vector2(threadIdx.x, blockIdx.x) / Vector2(blockDim.x, gridDim.x)) - Vector2(0.5f, 0.0f));
-			scene->geometry.cast(scene->cameras[0].lense.getScreenPhoton(screenPoint).ray);
+			PhotonPack pack;
+			scene->cameras[0].lense.getScreenPhoton(screenPoint, pack);
+			scene->geometry.cast(pack[0].ray);
 		}
 
 		static void runKernels(const volatile bool *quit, const SceneHandler<BakedTriFace> *scene, int index, std::mutex *ioLock, Semaphore *initSem, std::mutex *exitLock) {
