@@ -1,14 +1,11 @@
-*
-
+/*
+/*/
 !*.cu
-
 !*.cuh
-
 !*.c
 !*.cpp
 !*.h
 !.gitignore
-
 !makefile
-
 !README.md
+!/__source__
