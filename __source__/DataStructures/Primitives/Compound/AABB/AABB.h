@@ -1,6 +1,6 @@
 #pragma once
-#include"Ray.h"
-#include"Triangle.h"
+#include"../Ray/Ray.h"
+#include"../Triangle/Triangle.h"
 
 
 

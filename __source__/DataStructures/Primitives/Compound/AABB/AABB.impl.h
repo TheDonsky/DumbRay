@@ -1,5 +1,5 @@
 #include"AABB.h"
-#include"MemManip.cuh"
+#include"../../../../Namespaces/MemManip/MemManip.cuh"
 
 
 /** ########################################################################## **/
