@@ -14,8 +14,9 @@ __dumb__ DefaultShaderGeneric<HitType>::DefaultShaderGeneric(ColorRGB color, flo
 template<typename HitType>
 __dumb__ ShaderReport DefaultShaderGeneric<HitType>::cast(const ShaderHitInfo<HitType> &input)const {
 	ShaderReport report;
-	register Vector3 massCenter = input.object.vert.getMases(input.hitPoint);
-	register Vector3 normal = input.object.norm.massCenter(massCenter);
+	const HitType &object = (*input.object);
+	register Vector3 massCenter = object.vert.getMases(input.hitPoint);
+	register Vector3 normal = object.norm.massCenter(massCenter);
 
 	register Vector3 camDirection = (input.observer - input.hitPoint);
 	register Vector3 reflectDirection = input.photon.ray.direction.reflection(normal);
@@ -30,12 +31,10 @@ __dumb__ ShaderReport DefaultShaderGeneric<HitType>::cast(const ShaderHitInfo<Hi
 	return report;
 }
 template<typename HitType>
-__dumb__ void DefaultShaderGeneric<HitType>::bounce(const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce)const {
-	if (bounce == NULL) return;
+__dumb__ void DefaultShaderGeneric<HitType>::bounce(const ShaderBounceInfo<HitType> &info, PhotonPack &result)const {
 	ShaderHitInfo<HitType> castInfo = { info.object, info.photon, info.hitPoint, info.hitPoint - info.photon.ray.direction };
 	ShaderReport report = cast(castInfo);
-	bounce->samples[0] = report.bounce;
-	bounce->count = 1;
+	result.push(report.bounce);
 }
 template<typename HitType>
 __dumb__ Photon DefaultShaderGeneric<HitType>::illuminate(const ShaderHitInfo<HitType>& info)const {

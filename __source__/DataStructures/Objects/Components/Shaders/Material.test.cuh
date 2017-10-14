@@ -1,13 +1,13 @@
 #pragma once
 #include "Material.cuh"
-#include "DummyShader.cuh"
-#include "Tests.h"
+#include "DummyShader/DummyShader.cuh"
+#include "../../../../Namespaces/Tests/Tests.h"
 
 
 namespace MaterialTest {
 	namespace Private {
 		__dumb__ void makeMaterialShout(const Material<BakedTriFace> &material) {
-			material.cast(ShaderHitInfo<BakedTriFace>());
+			material.illuminate(ShaderHitInfo<BakedTriFace>());
 		}
 		__global__ void materialShoutFromKernel(const Material<BakedTriFace> *material) {
 			makeMaterialShout(*material);

@@ -10,5 +10,5 @@ __dumb__ ShaderReport DummyShader::cast(const ShaderHitInfo<BakedTriFace> &input
 #endif
 	return ShaderReport();
 }
-__dumb__ void DummyShader::bounce(const ShaderBounceInfo<BakedTriFace> &info, ShaderBounce *bounce)const { if(bounce != NULL) bounce->count  = 0; }
+__dumb__ void DummyShader::bounce(const ShaderBounceInfo<BakedTriFace> &info, PhotonPack &result)const { }
 __dumb__ Photon DummyShader::illuminate(const ShaderHitInfo<BakedTriFace>& info)const { return Photon(); }

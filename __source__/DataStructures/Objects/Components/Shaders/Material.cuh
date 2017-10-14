@@ -1,7 +1,7 @@
 #pragma once
-
-#include"Photon.cuh"
-#include"Generic.cuh"
+#include"../../../Primitives/Compound/Photon/Photon.cuh"
+#include"../../../GeneralPurpose/Generic/Generic.cuh"
+#include"../../Components/DumbStructs.cuh"
 
 
 
@@ -10,19 +10,14 @@
 /** ########################################################################## **/
 template<typename HitType>
 struct ShaderBounceInfo {
-	HitType object;
+	const HitType *object;
 	Photon photon;
 	Vector3 hitPoint;
-};
-#define SHADER_BOUNCE_MAX_SAMPLES 64
-struct ShaderBounce {
-	Photon samples[SHADER_BOUNCE_MAX_SAMPLES];
-	int count;
 };
 
 template<typename HitType>
 struct ShaderHitInfo {
-	HitType object;
+	const HitType *object;
 	Photon photon;
 	Vector3 hitPoint;
 	Vector3 observer;
@@ -46,19 +41,21 @@ public:
 	template<typename ShaderType>
 	__dumb__ void use();
 
-	__dumb__ ShaderReport cast(const void *shader, const ShaderHitInfo<HitType>& info)const;
-	__dumb__ void bounce(const void *shader, const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce)const;
+	//__dumb__ ShaderReport cast(const void *shader, const ShaderHitInfo<HitType>& info)const;
+	__dumb__ void bounce(const void *shader, const ShaderBounceInfo<HitType> &info, PhotonPack &result)const;
 	__dumb__ Photon illuminate(const void *shader, const ShaderHitInfo<HitType>& info)const;
 
 
 private:
-	ShaderReport(*castFunction)(const void *shader, const ShaderHitInfo<HitType>&info);
-	void(*bounceFunction)(const void *shader, const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce);
+	//ShaderReport(*castFunction)(const void *shader, const ShaderHitInfo<HitType>&info);
+	void(*bounceFunction)(const void *shader, const ShaderBounceInfo<HitType> &info, PhotonPack &result);
 	Photon(*illuminateFunction)(const void *shader, const ShaderHitInfo<HitType>&info);
+	/*
 	template<typename ShaderType>
 	__dumb__ static ShaderReport castGeneric(const void *shader, const ShaderHitInfo<HitType>& info);
+	//*/
 	template<typename ShaderType>
-	__dumb__ static void bounceGeneric(const void *shader, const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce);
+	__dumb__ static void bounceGeneric(const void *shader, const ShaderBounceInfo<HitType> &info, PhotonPack &result);
 	template<typename ShaderType>
 	__dumb__ static Photon illuminateGeneric(const void *shader, const ShaderHitInfo<HitType>& info);
 };
@@ -82,8 +79,8 @@ public:
 template<typename HitType>
 class Material : public Generic<Shader<HitType> > {
 public:
-	__dumb__ ShaderReport cast(const ShaderHitInfo<HitType>& info)const;
-	__dumb__ void bounce(const ShaderBounceInfo<HitType> &info, ShaderBounce *bounce)const;
+	//__dumb__ ShaderReport cast(const ShaderHitInfo<HitType>& info)const;
+	__dumb__ void bounce(const ShaderBounceInfo<HitType> &info, PhotonPack &result)const;
 	__dumb__ Photon illuminate(const ShaderHitInfo<HitType>& info)const;
 
 
