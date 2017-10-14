@@ -1,5 +1,6 @@
 #include"Stacktor.cuh"
 
+#define USE_PINNED_MEMORY
 
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
@@ -426,8 +427,12 @@ inline bool Stacktor<Type, localCapacity>::upload(const Stacktor *source, Stackt
 	char *garbage = NULL; // Bigger chunk
 	Stacktor *hostCopy; // Pointer to whatever gets to play the role of the host clone (will be RAW data).
 	if (count > 1){ // Size is greater than what the program can allocate on stack.
+#ifndef USE_PINNED_MEMORY
 		garbage = new char[sizeof(Stacktor<Type, localCapacity>) * count];
 		if (garbage == NULL) return(false);
+#else
+		if (cudaHostAlloc((void**)&garbage, sizeof(Stacktor<Type, localCapacity>) * count, cudaHostAllocDefault) != cudaSuccess) return false;
+#endif
 		hostCopy = (Stacktor*)garbage;
 	}
 	else hostCopy = ((Stacktor*)stackGarbage); // Can be on stack, is the size is small enough.
@@ -439,8 +444,13 @@ inline bool Stacktor<Type, localCapacity>::upload(const Stacktor *source, Stackt
 
 	/* /////////////////////////////////////////////// */
 	/* Cleaning up and returning: */
-	if (garbage != NULL) // External data needs to be disposed.
+	if (garbage != NULL) { // External data needs to be disposed.
+#ifndef USE_PINNED_MEMORY
 		delete[] garbage;
+#else
+		cudaFreeHost(garbage);
+#endif
+	}
 
 	return(success);
 }
@@ -577,7 +587,11 @@ inline bool Stacktor<Type, localCapacity>::upload(const Stacktor *source, Stackt
 	Type *exAlloc = NULL;
 	int exCap = getExternalCapacity(source, count);
 	if (exCap > 0){
+#ifndef USE_PINNED_MEMORY
 		exJunk = new char[sizeof(Type) * exCap]; if (exJunk == NULL) return(false);
+#else
+		if (cudaHostAlloc((void**)&exJunk, sizeof(Type) * exCap, cudaHostAllocDefault) != cudaSuccess) return false;
+#endif
 		if (cudaMalloc((void**)&exAlloc, sizeof(Type) * exCap) != cudaSuccess){ delete[] exJunk; return(false); }
 	}
 	Type *exHosAlloc = (Type*)exJunk;
@@ -600,8 +614,13 @@ inline bool Stacktor<Type, localCapacity>::upload(const Stacktor *source, Stackt
 
 	/* /////////////////////////////////////////////// */
 	/* Cleanup and return: */
-	if (exJunk != NULL)
+	if (exJunk != NULL) {
+#ifndef USE_PINNED_MEMORY
 		delete[] exJunk;
+#else
+		cudaFreeHost(exJunk);
+#endif
+	}
 	return(success); 
 }
 template<typename Type, unsigned int localCapacity>
@@ -703,8 +722,12 @@ inline bool Stacktor<Type, localCapacity>::disposeOfExternalData(Stacktor *arr, 
 	bool success = true;
 	char *junk = NULL;
 	if (hosClone == NULL){
+#ifndef USE_PINNED_MEMORY
 		junk = new char[sizeof(Stacktor<Type, localCapacity>) * count];
 		if (junk == NULL) return(false);
+#else
+		if (cudaHostAlloc((void**)&junk, sizeof(Stacktor<Type, localCapacity>) * count, cudaHostAllocDefault) != cudaSuccess) return false;
+#endif
 		hosClone = (Stacktor*)junk;
 		success = (cudaMemcpyAsync(hosClone, arr, sizeof(Stacktor<Type, localCapacity>) * count, cudaMemcpyDeviceToHost, stream) == cudaSuccess);
 		if (cudaStreamSynchronize(stream) != cudaSuccess) success = false;
@@ -715,7 +738,15 @@ inline bool Stacktor<Type, localCapacity>::disposeOfExternalData(Stacktor *arr, 
 				success = false;
 				break;
 			}
-	if (junk != NULL) delete[] junk;
+	if (junk != NULL) {
+#ifndef USE_PINNED_MEMORY
+		delete[] junk;
+#else
+		cudaFreeHost(junk);
+#endif
+	}
 	return(success);
 }
 
+
+#undef USE_PINNED_MEMORY

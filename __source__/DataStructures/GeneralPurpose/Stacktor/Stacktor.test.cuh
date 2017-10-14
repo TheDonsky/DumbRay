@@ -4,21 +4,21 @@
 #include<iostream>
 #include<string>
 #include<time.h>
-#include"Tests.h"
+#include"Namespaces/Tests/Tests.h"
 
 
 namespace StacktorTest{
 	namespace Local{
 		namespace Private{
 			static void pushPerformance(){
-				const int n = 50000000;
+				const int n = 10000000;
 				std::cout << "Calling push() " << n << " times" << std::endl;
 				Stacktor<Stacktor<int, 16>, 1> s;
 				for (int i = 0; i < n; i++)
 					s.push(Stacktor<int, 16>(i, i + 1, i + 2, i + 3));
 			}
 			static void operatorTest(){
-				const int n = 500000000;
+				const int n = 100000000;
 				std::cout << "Calling push() " << n << " times" << std::endl;
 
 				Tests::logLine();

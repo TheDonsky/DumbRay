@@ -2,7 +2,7 @@
 
 #include"cuda_runtime.h"
 #include"device_launch_parameters.h"
-#include"TypeTools.cuh"
+#include"../TypeTools/TypeTools.cuh"
 #include<iostream>
 #include<string>
 #include<thread>
