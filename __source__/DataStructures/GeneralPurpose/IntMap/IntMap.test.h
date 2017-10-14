@@ -1,7 +1,7 @@
 #pragma once
 
 #include"IntMap.h"
-#include"Tests.h"
+#include"Namespaces/Tests/Tests.h"
 
 
 
