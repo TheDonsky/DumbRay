@@ -1,8 +1,5 @@
 DumbRay
 
-This will be a CUDA accelerated ray tracer.
-
-
-Classes/Structs:
-
-struct Vector3 - represents a 3-dimensional vector/point in space. (Read through Vector3.h to see provided functionality)
+One day, this will be a CUDA accelerated ray tracer (software renderer). Now it's just a proof of concept.
+(Wait for that day for any legitimate description...)
+The only ways to run this for now are to compile it as visual studio CUDA project, or just use nvcc for windows (Window class is not yet implemented for linux, so...).
