@@ -1,7 +1,7 @@
 #pragma once
 
-#include"Vector3.h"
-#include"Color.h"
+#include"../Vector3/Vector3.h"
+#include"../Color/Color.h"
 
 
 struct ColorRGB {
