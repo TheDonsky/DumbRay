@@ -1,8 +1,8 @@
 #pragma once
-#include"Transform.h"
-#include"Photon.cuh"
-#include"Vector2.h"
-#include"Lense.cuh"
+#include"../../Components/Transform/Transform.h"
+#include"../../../Primitives/Compound/Photon/Photon.cuh"
+#include"../../../Primitives/Pure/Vector2/Vector2.h"
+#include"../../Components/Lenses/Lense.cuh"
 
 
 class Camera;
@@ -14,7 +14,7 @@ public:
 	Transform transform;
 	Lense lense;
 
-	__dumb__ Photon getPhoton(const Vector2 &screenSpacePosition)const;
+	__dumb__ void getPhoton(const Vector2 &screenSpacePosition, PhotonPack &result)const;
 
 	// For upload:
 	DEFINE_CUDA_LOAD_INTERFACE_FOR(Camera);

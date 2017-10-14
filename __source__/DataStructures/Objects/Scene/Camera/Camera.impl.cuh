@@ -4,8 +4,13 @@
 
 
 
-__dumb__ Photon Camera::getPhoton(const Vector2 &screenSpacePosition)const {
-	return (lense.getScreenPhoton(screenSpacePosition) >> transform);
+__dumb__ void Camera::getPhoton(const Vector2 &screenSpacePosition, PhotonPack &result)const {
+	int i = result.size();
+	lense.getScreenPhoton(screenSpacePosition, result);
+	while (i < result.size()) {
+		result[i] >>= transform;
+		i++;
+	}
 }
 
 
