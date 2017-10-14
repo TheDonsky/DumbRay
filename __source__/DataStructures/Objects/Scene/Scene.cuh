@@ -1,9 +1,9 @@
 #pragma once
-#include"ShadedOctree.cuh"
-#include"Light.cuh"
-#include"Camera.cuh"
-#include"Handler.cuh"
-#include"Matrix.h"
+#include"Raycasters/ShadedOctree/ShadedOctree.cuh"
+#include"Lights/Light.cuh"
+#include"Camera/Camera.cuh"
+#include"../../GeneralPurpose/Handler/Handler.cuh"
+#include"../../GeneralPurpose/Matrix/Matrix.h"
 
 
 template<typename HitType> struct Scene;
