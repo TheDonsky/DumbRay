@@ -1,8 +1,8 @@
 #pragma once
 
-#include"Triangle.h"
-#include"Transform.h"
-#include"Stacktor.cuh"
+#include"../../../Primitives/Compound/Triangle/Triangle.h"
+#include"../../Components/Transform/Transform.h"
+#include"../../../GeneralPurpose/Stacktor/Stacktor.cuh"
 
 struct BakedTriFace{
 	Triangle vert, norm, tex;

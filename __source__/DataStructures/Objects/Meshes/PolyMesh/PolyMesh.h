@@ -1,8 +1,8 @@
 #pragma once
 
-#include"Vector3.h"
-#include"Stacktor.cuh"
-#include"BakedTriMesh.h"
+#include"../../../Primitives/Pure/Vector3/Vector3.h"
+#include"../../../GeneralPurpose/Stacktor/Stacktor.cuh"
+#include"../BakedTriMesh/BakedTriMesh.h"
 
 
 class PolyMesh;

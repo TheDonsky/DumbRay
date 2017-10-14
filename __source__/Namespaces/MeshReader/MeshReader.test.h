@@ -1,6 +1,6 @@
 #pragma once
 #include "MeshReader.h"
-#include "Primitives.cuh"
+#include "../Primitives/Primitives.cuh"
 
 
 namespace MeshReaderTest {

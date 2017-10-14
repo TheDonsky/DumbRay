@@ -1,7 +1,7 @@
 #pragma once
-#include"PolyMesh.h"
-#include"Pair.cuh"
-#include"IntMap.h"
+#include"../../DataStructures/Objects/Meshes/PolyMesh/PolyMesh.h"
+#include"../../DataStructures/Primitives/Compound/Pair/Pair.cuh"
+#include"../../DataStructures/GeneralPurpose/IntMap/IntMap.h"
 #include<fstream>
 #include<map>
 
