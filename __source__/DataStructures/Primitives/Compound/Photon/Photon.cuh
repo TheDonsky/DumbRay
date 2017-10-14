@@ -1,8 +1,8 @@
 #pragma once
 
-#include"Ray.h"
-#include"ColorRGB.cuh"
-#include"Transform.h"
+#include"../Ray/Ray.h"
+#include"../../Pure/ColorRGB/ColorRGB.cuh"
+#include"../../../Objects/Components/Transform/Transform.h"
 
 
 
