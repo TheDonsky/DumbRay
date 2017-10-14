@@ -1,5 +1,5 @@
 #include"Primitives.cuh"
-#include"Vector3.h"
+#include"../../DataStructures/Primitives/Pure/Vector3/Vector3.h"
 
 
 
