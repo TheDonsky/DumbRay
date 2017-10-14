@@ -1,6 +1,6 @@
 #pragma once
 
-#include"Vector3.h"
+#include"../../Pure/Vector3/Vector3.h"
 
 //#define INFINITY 999999999.9f
 
