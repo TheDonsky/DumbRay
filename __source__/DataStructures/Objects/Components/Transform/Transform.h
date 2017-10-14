@@ -1,7 +1,7 @@
 #pragma once
 
-#include"Vector3.h"
-#include"Ray.h"
+#include"../../../Primitives/Pure/Vector3/Vector3.h"
+#include"../../../Primitives/Compound/Ray/Ray.h"
 
 class Transform{
 public:
