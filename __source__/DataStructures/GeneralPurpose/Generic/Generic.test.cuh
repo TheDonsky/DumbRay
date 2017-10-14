@@ -1,7 +1,7 @@
 #pragma once
 #include"Generic.cuh"
-#include"Vector3.h"
-#include"Tests.h"
+#include"DataStructures/Primitives/Pure/Vector3/Vector3.h"
+#include"Namespaces/Tests/Tests.h"
 
 
 

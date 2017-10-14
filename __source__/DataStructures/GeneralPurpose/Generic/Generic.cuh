@@ -1,5 +1,5 @@
 #pragma once
-#include"Stacktor.cuh"
+#include"../Stacktor/Stacktor.cuh"
 
 
 
