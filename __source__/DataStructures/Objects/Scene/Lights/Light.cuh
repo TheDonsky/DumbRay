@@ -1,7 +1,7 @@
 #pragma once
-#include"Generic.cuh"
-#include"Photon.cuh"
-#include"Vector3.h"
+#include"../../../GeneralPurpose/Generic/Generic.cuh"
+#include"../../../Primitives/Compound/Photon/Photon.cuh"
+#include"../../../Primitives/Pure/Vector3/Vector3.h"
 
 
 
@@ -16,15 +16,15 @@ public:
 	template<typename LightType>
 	__dumb__ void use();
 
-	__dumb__ Photon getPhoton(const void *lightSource, const Vertex &targetPoint, bool *noShadows)const;
+	__dumb__ void getPhoton(const void *lightSource, const Vertex &targetPoint, bool *noShadows, PhotonPack &result)const;
 	__dumb__ ColorRGB ambient(const void *lightSource, const Vertex &targetPoint)const;
 
 private:
-	Photon(*getPhotonFunction)(const void *lightSource, const Vertex &targetPoint, bool *noShadows);
+	void(*getPhotonFunction)(const void *lightSource, const Vertex &targetPoint, bool *noShadows, PhotonPack &result);
 	ColorRGB(*ambientFunction)(const void *lightSource, const Vertex &targetPoint);
 
 	template<typename LightType>
-	__dumb__ static Photon getPhotonAbstract(const void *lightSource, const Vertex &targetPoint, bool *noShadows);
+	__dumb__ static void getPhotonAbstract(const void *lightSource, const Vertex &targetPoint, bool *noShadows, PhotonPack &result);
 	template<typename LightType>
 	__dumb__ static ColorRGB ambientAbstract(const void *lightSource, const Vertex &targetPoint);
 };
@@ -38,7 +38,7 @@ private:
 /** ########################################################################## **/
 class Light : public Generic<LightInterface> {
 public:
-	__dumb__ Photon getPhoton(const Vertex &targetPoint, bool *noShadows)const;
+	__dumb__ void getPhoton(const Vertex &targetPoint, bool *noShadows, PhotonPack &result)const;
 	__dumb__ ColorRGB ambient(const Vertex &targetPoint)const;
 
 	inline Light *upload()const;

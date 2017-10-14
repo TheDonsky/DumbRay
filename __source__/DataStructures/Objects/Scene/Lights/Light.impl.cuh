@@ -17,16 +17,16 @@ __dumb__ void LightInterface::use() {
 	ambientFunction = ambientAbstract<LightType>;
 }
 
-__dumb__ Photon LightInterface::getPhoton(const void *lightSource, const Vertex &targetPoint, bool *noShadows) const {
-	return getPhotonFunction(lightSource, targetPoint, noShadows);
+__dumb__ void LightInterface::getPhoton(const void *lightSource, const Vertex &targetPoint, bool *noShadows, PhotonPack &result) const {
+	getPhotonFunction(lightSource, targetPoint, noShadows, result);
 }
 __dumb__ ColorRGB LightInterface::ambient(const void *lightSource, const Vertex &targetPoint) const {
 	return ambientFunction(lightSource, targetPoint);
 }
 
 template<typename LightType>
-__dumb__ Photon LightInterface::getPhotonAbstract(const void *lightSource, const Vertex &targetPoint, bool *noShadows) {
-	return ((LightType*)lightSource)->getPhoton(targetPoint, noShadows);
+__dumb__ void LightInterface::getPhotonAbstract(const void *lightSource, const Vertex &targetPoint, bool *noShadows, PhotonPack &result) {
+	((LightType*)lightSource)->getPhoton(targetPoint, noShadows, result);
 }
 template<typename LightType>
 __dumb__ ColorRGB LightInterface::ambientAbstract(const void *lightSource, const Vertex &targetPoint) {
@@ -40,8 +40,8 @@ __dumb__ ColorRGB LightInterface::ambientAbstract(const void *lightSource, const
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-__dumb__ Photon Light::getPhoton(const Vertex &targetPoint, bool *noShadows) const {
-	return functions().getPhoton(object(), targetPoint, noShadows);
+__dumb__ void Light::getPhoton(const Vertex &targetPoint, bool *noShadows, PhotonPack &result) const {
+	functions().getPhoton(object(), targetPoint, noShadows, result);
 }
 __dumb__ ColorRGB Light::ambient(const Vertex &targetPoint) const {
 	return functions().ambient(object(), targetPoint);
