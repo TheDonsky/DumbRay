@@ -1,7 +1,7 @@
 #pragma once
 
 #include"Cutex.cuh"
-#include"Tests.h"
+#include"Namespaces/Tests/Tests.h"
 #include<thread>
 
 
