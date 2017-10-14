@@ -1,6 +1,6 @@
 #pragma once
 
-#include"TypeTools.cuh"
+#include"../../../GeneralPurpose/TypeTools/TypeTools.cuh"
 
 template<typename Type1, typename Type2> struct Pair;
 TYPE_TOOLS_REDEFINE_2_PART_TEMPLATE(Pair, Type1, Type2, typename Type1, typename Type2);
