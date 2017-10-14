@@ -1,6 +1,6 @@
 #pragma once
-#include "Stacktor.cuh"
-#include "Semaphore.h"
+#include "../../GeneralPurpose/Stacktor/Stacktor.cuh"
+#include "../../GeneralPurpose/Semaphore/Semaphore.h"
 #include <thread>
 
 
@@ -82,17 +82,10 @@ public:
 	/*
 	Makes a single iteration.
 	*/
-	void iterate();
+	bool iterate();
 
 
 protected:
-	/*
-	This is something the overloaded constructor HAS TO call, in order to invoke threads;
-	By default, all of them will be waiting for this thing to be called, so that they all know, 
-	the overloaded virtual functions exist;
-	If this function is not called, a deadlock is pretty much GUARANTEED upon destruction.
-	*/
-	void startRenderThreads();
 	
 	/*
 	This is effectively THE destructor and it should be called from the concrete object's destructor 
@@ -109,14 +102,18 @@ protected:
 		int globalThreadId;
 		bool manageSharedData;
 		bool isGPU()const;
+		void *sharedData;
+		void *data;
 	};
 
-	virtual bool setupSharedData(const Info &info) = 0;
-	virtual bool setupData(const Info &info) = 0;
-	virtual bool iterateCPU(const Info &info) = 0;
-	virtual bool iterateGPU(const Info &info) = 0;
-	virtual bool clearData(const Info &info) = 0;
-	virtual bool clearSharedData(const Info &info) = 0;
+	virtual bool setupSharedData(const Info &info, void *& sharedData) = 0;
+	virtual bool setupData(const Info &info, void *& data) = 0;
+	virtual bool prepareIteration() = 0;
+	virtual void iterateCPU(const Info &info) = 0;
+	virtual void iterateGPU(const Info &info) = 0;
+	virtual bool completeIteration() = 0;
+	virtual bool clearData(const Info &info, void *& data) = 0;
+	virtual bool clearSharedData(const Info &info, void *& sharedData) = 0;
 
 
 private:
@@ -134,7 +131,6 @@ private:
 	};
 	struct ThreadAttributes {
 		Info info;
-		Semaphore invokeLock;
 		Semaphore startLock;
 		Semaphore endLock;
 		Device *device;
@@ -161,6 +157,7 @@ private:
 	Renderer(const Renderer &other);
 	Renderer& operator=(const Renderer &other);
 
+	void startRenderThreads();
 	void threadCPU(ThreadAttributes *attributes);
 	void threadGPU(ThreadAttributes *attributes);
 	static void thread(Renderer *renderer, ThreadAttributes *attributes);

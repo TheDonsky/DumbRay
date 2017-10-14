@@ -53,6 +53,8 @@ Renderer::Renderer(const ThreadConfiguration &config) {
 		threads[i].properties.info.globalThreadId = i;
 		threads[i].properties.info.manageSharedData = (i == 0);
 		threads[i].properties.device = (&cpuLocks);
+		threads[i].properties.info.data = NULL;
+		threads[i].properties.info.sharedData = NULL;
 	}
 	int pointer = cpuThreads;
 	for (int i = 0; i < config.threadsPerGPU.size(); i++) {
@@ -65,6 +67,8 @@ Renderer::Renderer(const ThreadConfiguration &config) {
 			threads[pointer].properties.info.globalThreadId = pointer;
 			threads[pointer].properties.info.manageSharedData = (j == 0);
 			threads[pointer].properties.device = (gpuLocks + i);
+			threads[pointer].properties.info.data = NULL;
+			threads[pointer].properties.info.sharedData = NULL;
 			pointer++;
 		}
 	}
@@ -89,21 +93,16 @@ int Renderer::iteration()const {
 void Renderer::resetIterations() {
 	iterationId = 0;
 }
-void Renderer::iterate() {
-	if ((!configured()) || (!threadsStarted)) return;
+bool Renderer::iterate() {
+	startRenderThreads();
+	if (!threadsStarted) return false;
+	if (!prepareIteration()) return false;
 	iterationId++;
 	for (int i = 0; i < totalThreadCount; i++)
 		threads[i].properties.startLock.post();
 	for (int i = 0; i < totalThreadCount; i++)
 		threads[i].properties.endLock.wait();
-}
-
-void Renderer::startRenderThreads() {
-	if (configured() && (!threadsStarted)) {
-		threadsStarted = true;
-		for (int i = 0; i < totalThreadCount; i++)
-			threads[i].properties.invokeLock.post();
-	}
+	return completeIteration();
 }
 
 void Renderer::killRenderThreads() {
@@ -134,6 +133,16 @@ bool Renderer::Info::isGPU()const {
 Renderer::Renderer(const Renderer &other) { }
 Renderer& Renderer::operator=(const Renderer &other) { return (*this); }
 
+void Renderer::startRenderThreads() {
+	if ((!threadsStarted) && configured()) {
+		threadsStarted = true;
+		for (int i = 0; i < totalThreadCount; i++)
+			threads[i].properties.startLock.post();
+		for (int i = 0; i < totalThreadCount; i++)
+			threads[i].properties.endLock.wait();
+	}
+}
+
 void Renderer::threadCPU(ThreadAttributes *attributes) {
 	bool canIterate = (!attributes->setupFailed);
 	while (true) {
@@ -153,18 +162,23 @@ void Renderer::threadGPU(ThreadAttributes *attributes) {
 	}
 }
 void Renderer::thread(Renderer *renderer, ThreadAttributes *attributes) {
-	attributes->invokeLock.wait();
+	attributes->startLock.wait();
 	if (attributes->info.manageSharedData) {
 		if (!renderer->destructorCalled)
-			attributes->device->setupFailed = (!renderer->setupSharedData(attributes->info));
+			attributes->device->setupFailed = (!renderer->setupSharedData(attributes->info, attributes->info.sharedData));
 		else attributes->device->setupFailed = true;
+		if (!attributes->device->setupFailed)
+			for (int i = 1; i < attributes->device->threadCount; i++)
+				renderer->threads[i + attributes->device->firstThread].properties.info.sharedData = attributes->info.sharedData;
 		for (int i = 0; i < attributes->info.numDeviceThreads; i++)
 			attributes->device->setup.post();
 	}
 	attributes->device->setup.wait();
 	if ((!attributes->device->setupFailed) && (!renderer->destructorCalled))
-		attributes->setupFailed = (!renderer->setupData(attributes->info));
+		attributes->setupFailed = (!renderer->setupData(attributes->info, attributes->info.data));
 	else attributes->setupFailed = true;
+
+	attributes->endLock.post();
 
 	if (!attributes->device->setupFailed) {
 		if (attributes->info.device == DEVICE_CPU) renderer->threadCPU(attributes);
@@ -172,14 +186,17 @@ void Renderer::thread(Renderer *renderer, ThreadAttributes *attributes) {
 	}
 	
 	if ((!attributes->device->setupFailed) && (!attributes->setupFailed) && (!renderer->destructorCalled))
-		attributes->cleanFailed = (!renderer->clearData(attributes->info));
+		attributes->cleanFailed = (!renderer->clearData(attributes->info, attributes->info.data));
 	else attributes->cleanFailed = false;
 	attributes->device->clear.post();
 	if (attributes->info.manageSharedData) {
 		for (int i = 0; i < attributes->info.numDeviceThreads; i++)
 			attributes->device->clear.wait();
 		if (!attributes->device->setupFailed && (!renderer->destructorCalled))
-			attributes->device->cleanFailed = (!renderer->clearSharedData(attributes->info));
+			attributes->device->cleanFailed = (!renderer->clearSharedData(attributes->info, attributes->info.sharedData));
 		else attributes->device->cleanFailed = false;
+		if (!attributes->device->cleanFailed)
+			for (int i = 1; i < attributes->device->threadCount; i++)
+				renderer->threads[i + attributes->device->firstThread].properties.info.sharedData = attributes->info.sharedData;
 	}
 }

@@ -1,6 +1,6 @@
 #include "Renderer.test.cuh"
 #include "Renderer.cuh"
-#include "Tests.h"
+#include "../../../Namespaces/Tests/Tests.h"
 #include <time.h>
 
 
@@ -13,12 +13,14 @@ namespace RendererTest {
 			virtual ~DummyRenderer();
 
 		protected:
-			virtual bool setupSharedData(const Info &info);
-			virtual bool setupData(const Info &info);
-			virtual bool iterateCPU(const Info &info);
-			virtual bool iterateGPU(const Info &info);
-			virtual bool clearData(const Info &info);
-			virtual bool clearSharedData(const Info &info);
+			virtual bool setupSharedData(const Info &info, void *& sharedData);
+			virtual bool setupData(const Info &info, void *& data);
+			virtual bool prepareIteration();
+			virtual void iterateCPU(const Info &info);
+			virtual void iterateGPU(const Info &info);
+			virtual bool completeIteration();
+			virtual bool clearData(const Info &info, void *& data);
+			virtual bool clearSharedData(const Info &info, void *& sharedData);
 
 		private:
 			std::mutex printLock;
@@ -32,12 +34,11 @@ namespace RendererTest {
 			dumpCalls = verbose;
 			cnt = counter;
 			for (int i = 0; i < 128; i++) total[i] = NULL;
-			startRenderThreads();
 		}
 		DummyRenderer::~DummyRenderer() { 
 			killRenderThreads(); 
 		}
-		bool DummyRenderer::setupSharedData(const Info &info) {
+		bool DummyRenderer::setupSharedData(const Info &info, void *& sharedData) {
 			if (dumpCalls) {
 				printLock.lock();
 				std::cout << "setupSharedData - ";
@@ -46,9 +47,12 @@ namespace RendererTest {
 				std::cout << info.deviceThreadId << std::endl;
 				printLock.unlock();
 			}
+			sharedData = (void*)(&info.device);
 			return true; 
 		}
-		bool DummyRenderer::setupData(const Info &info) { 
+		bool DummyRenderer::setupData(const Info &info, void *& data) {
+			if (*(((int*)info.sharedData)) != info.device) std::cout << "ERROR: sharedData VALUE INCORRECT" << std::endl;
+			data = (void*)(&info.deviceThreadId);
 			if (dumpCalls) {
 				printLock.lock(); 
 				std::cout << "setupData - ";
@@ -60,7 +64,17 @@ namespace RendererTest {
 			total[info.globalThreadId] = new int;
 			return true; 
 		}
-		bool DummyRenderer::iterateCPU(const Info &info) { 
+		bool DummyRenderer::prepareIteration() {
+			if (dumpCalls) {
+				printLock.lock();
+				std::cout << "prepareIteration..." << std::endl;
+				printLock.unlock();
+			}
+			return true;
+		}
+		void DummyRenderer::iterateCPU(const Info &info) {
+			if (*(((int*)info.sharedData)) != info.device) std::cout << "ERROR: sharedData VALUE INCORRECT" << std::endl;
+			if (*(((int*)info.data)) != info.deviceThreadId) std::cout << "ERROR: data VALUE INCORRECT" << std::endl;
 			if (dumpCalls) {
 				printLock.lock();
 				std::cout << "iterateCPU - ";
@@ -71,9 +85,10 @@ namespace RendererTest {
 			}
 			int &v = (*total[info.globalThreadId]);
 			for (int i = 0; i < cnt; i++) v++;
-			return true; 
 		}
-		bool DummyRenderer::iterateGPU(const Info &info) { 
+		void DummyRenderer::iterateGPU(const Info &info) {
+			if (*(((int*)info.sharedData)) != info.device) std::cout << "ERROR: sharedData VALUE INCORRECT" << std::endl;
+			if (*(((int*)info.data)) != info.deviceThreadId) std::cout << "ERROR: data VALUE INCORRECT" << std::endl;
 			if (dumpCalls) {
 				printLock.lock();
 				std::cout << "iterateGPU - ";
@@ -84,9 +99,18 @@ namespace RendererTest {
 			}
 			int &v = (*total[info.globalThreadId]);
 			for (int i = 0; i < cnt; i++) v++;
-			return true; 
 		}
-		bool DummyRenderer::clearData(const Info &info) { 
+		bool DummyRenderer::completeIteration() {
+			if (dumpCalls) {
+				printLock.lock();
+				std::cout << "completeIteration..." << std::endl;
+				printLock.unlock();
+			}
+			return true;
+		}
+		bool DummyRenderer::clearData(const Info &info, void *& data) {
+			if (*(((int*)info.sharedData)) != info.device) std::cout << "ERROR: sharedData VALUE INCORRECT" << std::endl;
+			data = NULL;
 			if (dumpCalls) {
 				printLock.lock();
 				std::cout << "clearData - ";
@@ -98,7 +122,10 @@ namespace RendererTest {
 			delete total[info.globalThreadId];
 			return true; 
 		}
-		bool DummyRenderer::clearSharedData(const Info &info) {
+		bool DummyRenderer::clearSharedData(const Info &info, void *& sharedData) {
+			if (*(((int*)info.sharedData)) != info.device) std::cout << "ERROR: sharedData VALUE INCORRECT" << std::endl;
+			sharedData = NULL;
+			if (info.data != NULL) std::cout << "ERROR: data NOT NULL";
 			if (dumpCalls) {
 				printLock.lock();
 				std::cout << "clearSharedData - ";
