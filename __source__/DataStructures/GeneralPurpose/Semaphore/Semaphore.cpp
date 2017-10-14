@@ -17,3 +17,8 @@ void Semaphore::post() {
 	value++;
 	condition.notify_one();
 }
+void Semaphore::set(unsigned int count) {
+	std::lock_guard<std::mutex> guard(lock);
+	value = count;
+	condition.notify_all();
+}

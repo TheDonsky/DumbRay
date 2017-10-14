@@ -7,7 +7,7 @@ public:
 	Semaphore(unsigned int count = 0);
 	void wait();
 	void post();
-
+	void set(unsigned int count);
 
 
 
