@@ -6,8 +6,8 @@
 #include<tchar.h>
 #include<mutex>
 #include<condition_variable>
-#include"Color.h"
-#include"Matrix.h"
+#include"../../DataStructures/Primitives/Pure/Color/Color.h"
+#include"../../DataStructures/GeneralPurpose/Matrix/Matrix.h"
 
 
 

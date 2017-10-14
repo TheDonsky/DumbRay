@@ -270,7 +270,6 @@ inline void Windows::Window::display(){
 	DeleteDC(src);	// Deleting temp HDC
 
 	ReleaseDC(hwnd, hdc);	// Release the DC
-	DeleteDC(hdc);			// Delete the DC
 	UpdateWindow(hwnd);		// Update
 }
 
