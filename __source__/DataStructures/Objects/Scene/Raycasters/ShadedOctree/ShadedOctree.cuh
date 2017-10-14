@@ -1,7 +1,7 @@
 #pragma once
-#include "Octree.cuh"
-#include "Material.cuh"
-#include "DefaultShader.cuh"
+#include "../Octree/Octree.cuh"
+#include "../../../Components/Shaders/Material.cuh"
+#include "../../../Components/Shaders/DefaultShader/DefaultShader.cuh"
 
 
 template<typename HitType> struct Shaded;
@@ -35,6 +35,10 @@ struct Shaded {
 	__dumb__ bool cast(const Ray& ray, float &hitDistance, Vertex& hitPoint, bool clipBackface)const;
 	template<typename BoundType>
 	__dumb__ bool sharesPoint(const Shaded& b, const BoundType& commonPointBounds)const;
+	template<typename Shape>
+	__dumb__ Vertex intersectionCenter(const Shape &shape)const;
+	template<typename Shape>
+	__dumb__ AABB intersectionBounds(const Shape &shape)const;
 	__dumb__ Vertex massCenter()const;
 	__dumb__ AABB boundingBox()const;
 	__dumb__ void dump()const;

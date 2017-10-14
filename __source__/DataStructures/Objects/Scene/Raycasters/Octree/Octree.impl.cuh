@@ -282,7 +282,7 @@ __device__ __host__ inline RaycastHit<ElemType>& RaycastHit<ElemType>::RaycastHi
 template<typename ElemType>
 // Constructs RaycastHit from the given parameters
 __device__ __host__ inline void RaycastHit<ElemType>::set(const ElemType &elem, const float d, const Vector3 &p){
-	object = elem;
+	object = &elem;
 	hitDistance = d;
 	hitPoint = p;
 }
@@ -336,17 +336,29 @@ __device__ __host__ __noinline__ void Octree<ElemType>::split(int index, int dep
 	if (depth >= OCTREE_MAX_DEPTH) return;
 	int nodeCount = nodeData[index].size();
 	if (nodeCount < OCTREE_POLYCOUNT_TO_SPLIT_NODE) return;
-	if (!splittingMakesSence(index)) return;
-
+	
 	Vector3 center(0, 0, 0);
+	const AABB& bounds = tree[index].bounds;
+	const Vertex bndStart = bounds.getMin() + OCTREE_AABB_EPSILON_VECTOR;
+	const Vertex bndEnd = bounds.getMax() - OCTREE_AABB_EPSILON_VECTOR;
 	for (int i = 0; i < nodeData[index].size(); i++)
-		center += Shapes::massCenter<ElemType>(*nodeData[index][i]);
+		center += Shapes::intersectionCenter<AABB, ElemType>(bounds, *nodeData[index][i]);
 	center /= ((float)nodeData[index].size());
-	const Vertex bndStart = tree[index].bounds.getMin() + OCTREE_AABB_EPSILON_VECTOR;
-	const Vertex bndEnd = tree[index].bounds.getMax() - OCTREE_AABB_EPSILON_VECTOR;
 	if ((center.x < bndStart.x || center.y < bndStart.y || center.z < bndStart.z) || (center.x > bndEnd.x || center.y > bndEnd.y || center.z > bndEnd.z))
 		center = (bndStart + bndEnd) / 2;
-	splitNode(index, center);
+	AABB sub[8];
+	splitAABB(tree[index].bounds, center, sub);
+	if (!splittingMakesSence(index, sub)) return; /*{
+		center = Vector3(0, 0, 0);
+		for (int i = 0; i < nodeData[index].size(); i++)
+			center += Shapes::massCenter<ElemType>(*nodeData[index][i]);
+		center /= ((float)nodeData[index].size());
+		if ((center.x < bndStart.x || center.y < bndStart.y || center.z < bndStart.z) || (center.x > bndEnd.x || center.y > bndEnd.y || center.z > bndEnd.z))
+			center = (bndStart + bndEnd) / 2;
+		splitAABB(tree[index].bounds, center, sub);
+		if (!splittingMakesSence(index, sub)) return;
+	} //*/
+	splitNode(index, sub);
 	for (int i = 0; i < nodeData[index].size(); i++){
 		const ElemType* dataPtr = nodeData[index][i];
 		for (int j = 0; j < 8; j++){
@@ -360,32 +372,60 @@ __device__ __host__ __noinline__ void Octree<ElemType>::split(int index, int dep
 		split((int)(tree[index].children + i - (tree + 0)), depth + 1);
 }
 template<typename ElemType>
-__device__ __host__ inline bool Octree<ElemType>::splittingMakesSence(int index){
+__device__ __host__ inline void Octree<ElemType>::splitAABB(const AABB &aabb, const Vertex &center, AABB *result) {
+	const Vertex start = aabb.getMin();
+	const Vertex end = aabb.getMax();
+	result[0] = AABB(start, center + OCTREE_AABB_EPSILON_VECTOR);
+	result[1] = AABB(Vertex(start.x, start.y, center.z - OCTREE_AABB_EPSILON), Vertex(center.x + OCTREE_AABB_EPSILON, center.y + OCTREE_AABB_EPSILON, end.z));
+	result[2] = AABB(Vertex(start.x, center.y - OCTREE_AABB_EPSILON, start.z), Vertex(center.x + OCTREE_AABB_EPSILON, end.y, center.z + OCTREE_AABB_EPSILON));
+	result[3] = AABB(Vertex(start.x, center.y - OCTREE_AABB_EPSILON, center.z - OCTREE_AABB_EPSILON), Vertex(center.x + OCTREE_AABB_EPSILON, end.y, end.z));
+	result[4] = AABB(Vertex(center.x - OCTREE_AABB_EPSILON, start.y, start.z), Vertex(end.x, center.y + OCTREE_AABB_EPSILON, center.z + OCTREE_AABB_EPSILON));
+	result[5] = AABB(Vertex(center.x - OCTREE_AABB_EPSILON, start.y, center.z - OCTREE_AABB_EPSILON), Vertex(end.x, center.y + OCTREE_AABB_EPSILON, end.z));
+	result[6] = AABB(Vertex(center.x - OCTREE_AABB_EPSILON, center.y - OCTREE_AABB_EPSILON, start.z), Vertex(end.x, end.y, center.z + OCTREE_AABB_EPSILON));
+	result[7] = AABB(center - OCTREE_AABB_EPSILON_VECTOR, end);
+}
+template<typename ElemType>
+__device__ __host__ inline bool Octree<ElemType>::splittingMakesSence(int index, const AABB *sub){
 	const AABB &boundingBox = tree[index].bounds;
+	/*
 	const int nodeCount = (nodeData[index].size() - 1);
 	const ElemType &elem = (*nodeData[index].top());
 	for (int i = 0; i < nodeCount; i++)
 		if (!Shapes::sharePoint<ElemType, AABB>(elem, *nodeData[index][i], boundingBox))
 			return true;
 	return false;
+	/*/
+	const int nodeCount = nodeData[index].size();
+	Vertex start = boundingBox.getMin();
+	Vertex extents = boundingBox.getExtents();
+	int full = 0;
+	int empty = 0;
+	float load = 0.0f;
+	for (int i = 0; i < 8; i++) {
+		const AABB &subBox = sub[i];
+		int insiders = 0;
+		for (int j = 0; j < nodeCount; j++) {
+			if (Shapes::intersect<AABB, ElemType>(subBox, *(nodeData[index][j])))
+				insiders++;
+			else break;
+		}
+		if (insiders >= nodeCount) full++;
+		else if (insiders == 0) empty++;
+		load += ((float)insiders) / ((float)nodeCount);
+	}
+	if (empty >= 7) return true;
+	if (full >= 1) return false;
+	return (load < 4.0f);
+	//*/
 }
 template<typename ElemType>
-__device__ __host__ inline void Octree<ElemType>::splitNode(int index, Vertex center){
+__device__ __host__ inline void Octree<ElemType>::splitNode(int index, const AABB *sub){
 	int startChildId = tree.size();
 	flushTree();
 	TreeNode *startChild = (tree + startChildId);
-	const Vertex start = tree[index].bounds.getMin();
-	const Vertex end = tree[index].bounds.getMax();
-	startChild->bounds = AABB(start, center + OCTREE_AABB_EPSILON_VECTOR);
-	(startChild + 1)->bounds = AABB(Vertex(start.x, start.y, center.z - OCTREE_AABB_EPSILON), Vertex(center.x + OCTREE_AABB_EPSILON, center.y + OCTREE_AABB_EPSILON, end.z));
-	(startChild + 2)->bounds = AABB(Vertex(start.x, center.y - OCTREE_AABB_EPSILON, start.z), Vertex(center.x + OCTREE_AABB_EPSILON, end.y, center.z + OCTREE_AABB_EPSILON));
-	(startChild + 3)->bounds = AABB(Vertex(start.x, center.y - OCTREE_AABB_EPSILON, center.z - OCTREE_AABB_EPSILON), Vertex(center.x + OCTREE_AABB_EPSILON, end.y, end.z));
-	(startChild + 4)->bounds = AABB(Vertex(center.x - OCTREE_AABB_EPSILON, start.y, start.z), Vertex(end.x, center.y + OCTREE_AABB_EPSILON, center.z + OCTREE_AABB_EPSILON));
-	(startChild + 5)->bounds = AABB(Vertex(center.x - OCTREE_AABB_EPSILON, start.y, center.z - OCTREE_AABB_EPSILON), Vertex(end.x, center.y + OCTREE_AABB_EPSILON, end.z));
-	(startChild + 6)->bounds = AABB(Vertex(center.x - OCTREE_AABB_EPSILON, center.y - OCTREE_AABB_EPSILON, start.z), Vertex(end.x, end.y, center.z + OCTREE_AABB_EPSILON));
-	(startChild + 7)->bounds = AABB(center - OCTREE_AABB_EPSILON_VECTOR, end);
 	tree[index].children = startChild;
 	for (int i = 0; i < 8; i++){
+		(startChild + i)->bounds = sub[i];
 		nodeData[(int)((startChild + i) - (tree + 0))].clear();
 	}
 }
@@ -405,7 +445,11 @@ __device__ __host__ inline void Octree<ElemType>::reduceNode(int index){
 		}
 	}
 	else for (int i = 0; i < nodeData[index].size(); i++) {
+		/*
 		AABB objectBounds = Shapes::boundingBox<ElemType>(*nodeData[index][i]);
+		/*/
+		AABB objectBounds = Shapes::intersectionBounds<AABB, ElemType>(tree[index].bounds, *nodeData[index][i]);
+		//*/
 		const Vertex bStart = objectBounds.getMin();
 		const Vertex bEnd = objectBounds.getMax();
 		start(min(start.x, bStart.x), min(start.y, bStart.y), min(start.z, bStart.z));
@@ -432,8 +476,10 @@ __device__ __host__ __noinline__ void Octree<ElemType>::put(const ElemType *elem
 			int nodeCount = nodeData[nodeIndex].size();
 			if (nodeCount < OCTREE_POLYCOUNT_TO_SPLIT_NODE) return;
 
-			if (splittingMakesSence(nodeIndex)){
-				splitNode(nodeIndex, tree[nodeIndex].bounds.getCenter());
+			AABB sub[8];
+			splitAABB(tree[nodeIndex].bounds, tree[nodeIndex].bounds.getCenter(), sub);
+			if (splittingMakesSence(nodeIndex, sub)){
+				splitNode(nodeIndex, sub);
 				for (int i = 0; i < nodeData[nodeIndex].size(); i++){
 					for (int j = 0; j < 8; j++) put(nodeData[nodeIndex][i], (int)(tree[nodeIndex].children + j - (tree + 0)), depth + 1);
 				}
@@ -480,11 +526,17 @@ __device__ __host__ inline bool Octree<ElemType>::castInLeaf(const Ray &r, Rayca
 			bestHit = object;
 		}
 	}
+
 	if (bestDistance != FLT_MAX){
 		hit.set(*bestHit, bestDistance, bestHitPoint);
 		return true;
 	}
+	/*
+	hit.set(*nodeTris[0], bestDistance, bestHitPoint);
+	return true;
+	/*/
 	else return false;
+	//*/
 }
 
 

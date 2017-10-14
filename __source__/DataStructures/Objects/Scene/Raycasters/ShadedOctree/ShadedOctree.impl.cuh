@@ -1,5 +1,5 @@
 #include "ShadedOctree.cuh"
-#include "Shapes.cuh"
+#include "../../../../../Namespaces/Shapes/Shapes.cuh"
 
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
@@ -222,6 +222,16 @@ template<typename HitType>
 template<typename BoundType>
 __dumb__ bool Shaded<HitType>::sharesPoint(const Shaded& b, const BoundType& commonPointBounds)const {
 	return Shapes::sharePoint<HitType, BoundType>(object, b.object, commonPointBounds);
+}
+template<typename HitType>
+template<typename Shape>
+__dumb__ Vertex Shaded<HitType>::intersectionCenter(const Shape &shape)const {
+	return Shapes::intersectionCenter<Shape, HitType>(shape, object);
+}
+template<typename HitType>
+template<typename Shape>
+__dumb__ AABB Shaded<HitType>::intersectionBounds(const Shape &shape)const {
+	return Shapes::intersectionBounds<Shape, HitType>(shape, object);
 }
 template<typename HitType>
 __dumb__ Vertex Shaded<HitType>::massCenter()const {

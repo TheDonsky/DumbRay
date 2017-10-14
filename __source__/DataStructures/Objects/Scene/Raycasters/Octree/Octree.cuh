@@ -1,15 +1,15 @@
 #pragma once
-#include"PolyMesh.h"
-#include"Material.cuh"
-#include"AABB.h"
-#include"MemManip.cuh"
-#include"Shapes.cuh"
+#include"../../../Meshes/PolyMesh/PolyMesh.h"
+#include"../../../Components/Shaders/Material.cuh"
+#include"../../../../Primitives/Compound/AABB/AABB.h"
+#include"../../../../../Namespaces/MemManip/MemManip.cuh"
+#include"../../../../../Namespaces/Shapes/Shapes.cuh"
 
 
 #define OCTREE_DEFAULT_SIZE Vector3(100000, 100000, 100000)
-#define OCTREE_POLYCOUNT_TO_SPLIT_NODE 24
-#define OCTREE_VOXEL_LOCAL_CAPACITY 24
-#define OCTREE_MAX_DEPTH 16
+#define OCTREE_POLYCOUNT_TO_SPLIT_NODE 32
+#define OCTREE_VOXEL_LOCAL_CAPACITY OCTREE_POLYCOUNT_TO_SPLIT_NODE
+#define OCTREE_MAX_DEPTH 24
 
 
 template<typename ElemType>
@@ -29,7 +29,7 @@ Output of Octree::cast
 */
 struct RaycastHit {
 	// Object, the ray hit
-	ElemType object;
+	const ElemType *object;
 	// Distance, the ray traveled before hitting the object
 	float hitDistance;
 	// Collision point
@@ -196,8 +196,9 @@ private:
 
 	/** ========================================================== **/
 	__device__ __host__ __noinline__ void split(int index, int depth);
-	__device__ __host__ inline bool splittingMakesSence(int index);
-	__device__ __host__ inline void splitNode(int index, Vertex center);
+	__device__ __host__ inline static void splitAABB(const AABB &aabb, const Vertex &center, AABB *result);
+	__device__ __host__ inline bool splittingMakesSence(int index, const AABB *sub);
+	__device__ __host__ inline void splitNode(int index, const AABB *sub);
 	__device__ __host__ inline void reduceNode(int index);
 
 	/** ========================================================== **/
