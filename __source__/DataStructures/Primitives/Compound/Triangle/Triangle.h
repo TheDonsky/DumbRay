@@ -1,8 +1,8 @@
 #pragma once
 #include<math.h>
-#include"Vector3.h"
-#include"Transform.h"
-#include"Ray.h"
+#include"../../Pure/Vector3/Vector3.h"
+#include"../../../Objects/Components/Transform/Transform.h"
+#include"../Ray/Ray.h"
 
 
 
