@@ -9,8 +9,11 @@ __dumb__ DefaultPerspectiveLense::DefaultPerspectiveLense(float angle) {
 	x = 0.5f / tan(radian);
 }
 
-__dumb__ Photon DefaultPerspectiveLense::getScreenPhoton(const Vector2 &screenSpacePosition)const {
-	return Photon(Ray(Vector3(0.0f, 0.0f, 0.0f), Vector3(screenSpacePosition.x, screenSpacePosition.y, x).normalized()), ColorRGB(1.0f, 1.0f, 1.0f));
+__dumb__ void DefaultPerspectiveLense::getScreenPhoton(const Vector2 &screenSpacePosition, PhotonPack &result)const {
+	result.push(Photon(
+		Ray(Vector3(0.0f, 0.0f, 0.0f), 
+			Vector3(screenSpacePosition.x, screenSpacePosition.y, x).normalized()), 
+		ColorRGB(1.0f, 1.0f, 1.0f)));
 }
 __dumb__ Photon DefaultPerspectiveLense::toScreenSpace(const Photon &photon)const {
 	register Vector3 delta = photon.ray.origin;

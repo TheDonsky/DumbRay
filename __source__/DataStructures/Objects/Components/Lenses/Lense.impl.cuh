@@ -21,8 +21,8 @@ __dumb__ void LenseFunctionPack::use() {
 }
 
 
-__dumb__ Photon LenseFunctionPack::getScreenPhoton(const void *lense, const Vector2 &screenSpacePosition)const {
-	return getScreenPhotonFunction(lense, screenSpacePosition);
+__dumb__ void LenseFunctionPack::getScreenPhoton(const void *lense, const Vector2 &screenSpacePosition, PhotonPack &result)const {
+	getScreenPhotonFunction(lense, screenSpacePosition, result);
 }
 __dumb__ Photon LenseFunctionPack::toScreenSpace(const void *lense, const Photon &photon)const {
 	return toScreenSpaceFunction(lense, photon);
@@ -30,8 +30,8 @@ __dumb__ Photon LenseFunctionPack::toScreenSpace(const void *lense, const Photon
 
 
 template<typename LenseType>
-__dumb__ Photon LenseFunctionPack::getScreenPhotonGeneric(const void* lense, const Vector2 &screenSpacePosition) {
-	return ((LenseType*)lense)->getScreenPhoton(screenSpacePosition);
+__dumb__ void LenseFunctionPack::getScreenPhotonGeneric(const void* lense, const Vector2 &screenSpacePosition, PhotonPack &result) {
+	((LenseType*)lense)->getScreenPhoton(screenSpacePosition, result);
 }
 template<typename LenseType>
 __dumb__ Photon LenseFunctionPack::toScreenSpaceGeneric(const void* lense, const Photon &photon) {
@@ -45,8 +45,8 @@ __dumb__ Photon LenseFunctionPack::toScreenSpaceGeneric(const void* lense, const
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-__dumb__ Photon Lense::getScreenPhoton(const Vector2 &screenSpacePosition)const {
-	return functions().getScreenPhoton(object(), screenSpacePosition);
+__dumb__ void Lense::getScreenPhoton(const Vector2 &screenSpacePosition, PhotonPack &result)const {
+	functions().getScreenPhoton(object(), screenSpacePosition, result);
 }
 __dumb__ Photon Lense::toScreenSpace(const Photon &photon)const {
 	return functions().toScreenSpace(object(), photon);

@@ -1,7 +1,7 @@
 #pragma once
 #include"Lense.cuh"
-#include"Tests.h"
-#include"Stacktor.cuh"
+#include"Namespaces/Tests/Tests.h"
+#include"DataStructures/GeneralPurpose/Stacktor/Stacktor.cuh"
 
 
 namespace LenseTest {
@@ -12,9 +12,7 @@ namespace LenseTest {
 				flush(77773000);
 			}
 
-			__dumb__ Photon getScreenPhoton(const Vector2 &screenSpacePosition)const {
-				return Photon();
-			}
+			__dumb__ void getScreenPhoton(const Vector2 &screenSpacePosition, PhotonPack &pack)const { }
 			__dumb__ Photon toScreenSpace(const Photon &photon)const {
 				return Photon();
 			}

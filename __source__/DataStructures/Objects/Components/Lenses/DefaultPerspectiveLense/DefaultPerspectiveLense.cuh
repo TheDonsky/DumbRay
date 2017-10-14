@@ -1,5 +1,5 @@
 #pragma once
-#include "Lense.cuh"
+#include "../Lense.cuh"
 
 
 #define DEFAULT_PERSPECTIVE_LENSE_MIN_ANGLE 1.0f
@@ -14,7 +14,7 @@ class DefaultPerspectiveLense {
 public:
 	__dumb__ DefaultPerspectiveLense(float angle = 60.0f);
 
-	__dumb__ Photon getScreenPhoton(const Vector2 &screenSpacePosition)const;
+	__dumb__ void getScreenPhoton(const Vector2 &screenSpacePosition, PhotonPack &result)const;
 	__dumb__ Photon toScreenSpace(const Photon &photon)const;
 
 private:
