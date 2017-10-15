@@ -162,11 +162,6 @@ namespace RendererTest {
 			std::cout << "TOTAL: " << total << std::endl;
 		}
 
-		void runTest() {
-			makeAndDestroy();
-			testIterationsSpeed();
-		}
-
 		void testRenderer(){
 			makeAndDestroy();
 			testIterationsSpeed();
