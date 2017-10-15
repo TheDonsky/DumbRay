@@ -268,11 +268,12 @@ namespace TypeToolsTest {
 			success &= testType<FourElemTemplate<FourElem> >("FourElemTemplate<FourElem>");
 			success &= testType<SomethingTerriblyHuge>("SomethingTerriblyHuge");
 			const int n = 8;
-			std::cout << std::endl << std::endl << std::endl << "PRESS ENTER TO RE-RUN THE TEST FOR SomethingTerriblyHuge " << n << " MORE TIMES... ";
+			std::cout << std::endl << std::endl << std::endl << "ENTER ANYTHING TO RE-RUN THE TEST FOR SomethingTerriblyHuge " << n << " MORE TIMES... ";
 			std::string s;
 			std::getline(std::cin, s);
-			for (int i = 0; i < n; i++)
-				success &= testType<SomethingTerriblyHuge>("SomethingTerriblyHuge", false);
+			if (s.length() > 0)
+				for (int i = 0; i < n; i++)
+					success &= testType<SomethingTerriblyHuge>("SomethingTerriblyHuge", false);
 			std::cout << std::endl << std::endl << std::endl << "============================================================" << std::endl;
 			std::cout << "DONE; FULL TEST RESULT: " << (success ? "PASS" : "FAIL") << std::endl;
 			std::cout << "MAKE SURE, RAM AND VRAM USAGES ARE UNDER CONTROLL..." << std::endl;
@@ -280,13 +281,7 @@ namespace TypeToolsTest {
 		else std::cout << "NO ACTIVE CUDA DEVICE FOUND TO RUN THE TEST..." << std::endl;
 	}
 	void test() {
-		while (true) {
-			std::cout << "Enter anthing to run TypeTools test: ";
-			std::string s;
-			std::getline(std::cin, s);
-			if (s.length() <= 0) break;
-			Tests::runTest(testFunction, "RUNNING TESTS FOR DEFAULT IMPLEMENTATIONS OF TYPE_TOOLS");
-		}
+		Tests::runTest(testFunction, "RUNNING TESTS FOR DEFAULT IMPLEMENTATIONS OF TYPE_TOOLS");
 	}
 }
 
