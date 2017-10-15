@@ -277,7 +277,7 @@ namespace OctreeTest {
 				/*
 				const int width = image->width();
 				const int height = image->height();
-				const int chunkWidth = 16;
+				const int chunkWidth = 32;
 				const int chunkHeight = 16;
 				const int horChunks = ((width + chunkWidth - 1) / chunkWidth);
 				const int verChunks = ((height + chunkHeight - 1) / chunkHeight);

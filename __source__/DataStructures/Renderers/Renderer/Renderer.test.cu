@@ -168,13 +168,8 @@ namespace RendererTest {
 		}
 
 		void testRenderer(){
-			while (true) {
-				std::cout << "Enter anthing to run basic Renderer template test: ";
-				std::string s;
-				std::getline(std::cin, s);
-				if (s.length() <= 0) break;
-				runTest();
-			}
+			makeAndDestroy();
+			testIterationsSpeed();
 		}
 	}
 
