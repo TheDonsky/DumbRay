@@ -259,7 +259,6 @@ namespace OctreeTest {
 				color << <numBlocks(devColWidth, devColHeight), numThreads(), 0, stream >> >(devOctree, devColor, trans, devColWidth, devColHeight, frame);
 				bool success = (cudaStreamSynchronize(stream) == cudaSuccess);
 				if (!success) { std::cout << "STREAM JOIN ERROR" << std::endl; return false; }
-				//window().updateFrameDevice(devColor, width, height);
 				if (colorLock.try_lock()) {
 					Color *tmp = devColor;
 					devColor = devColorBack;
@@ -304,7 +303,6 @@ namespace OctreeTest {
 				std::thread threads[32];
 				for (int i = 0; i < numThreads; i++) threads[i] = std::thread(cpuRenderThread, &octree, image, trans, numThreads, i, frame);
 				for (int i = 0; i < numThreads; i++) threads[i].join();
-				//window().updateFrameHost(*image);
 				if (colorLock.try_lock()) {
 					Matrix<Color> *tmp = image;
 					image = imageBack;

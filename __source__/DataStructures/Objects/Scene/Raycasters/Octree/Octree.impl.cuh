@@ -500,8 +500,7 @@ __device__ __host__ __noinline__ void Octree<ElemType>::put(const ElemType *elem
 template<typename ElemType>
 __device__ __host__ inline void Octree<ElemType>::configureCastFrame(CastFrame &frame, const TreeNode *children, const Ray &r) {
 	frame.node = children;
-	if (r.direction.z < 0) frame.priorityChild = 1;
-	else frame.priorityChild = 0;
+	frame.priorityChild = ((r.direction.z < 0) ? 1 : 0);
 	if (r.direction.y < 0) frame.priorityChild += 2;
 	if (r.direction.x < 0) frame.priorityChild += 4;
 	frame.curChild = 0;
