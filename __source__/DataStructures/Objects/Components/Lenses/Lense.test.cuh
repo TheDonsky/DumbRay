@@ -1,7 +1,7 @@
 #pragma once
 #include"Lense.cuh"
-#include"Namespaces/Tests/Tests.h"
-#include"DataStructures/GeneralPurpose/Stacktor/Stacktor.cuh"
+#include"../../../../Namespaces/Tests/Tests.h"
+#include"../../../GeneralPurpose/Stacktor/Stacktor.cuh"
 
 
 namespace LenseTest {

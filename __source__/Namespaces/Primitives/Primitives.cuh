@@ -11,4 +11,4 @@ namespace Primitives {
 
 
 
-#include"primitives.impl.cuh"
+#include"Primitives.impl.cuh"

@@ -301,7 +301,7 @@ __dumb__ bool Triangle::containsVertex(const Vertex &point)const{
 		&& (bc * bx) / bx.magnitude() + 32 * VECTOR_EPSILON >= -(bc * ab) / ab.magnitude()
 		&& (ca * cx) / cx.magnitude() + 32 * VECTOR_EPSILON >= -(ca * bc) / bc.magnitude());
 	/*/
-	/*
+	
 	register Vector3 center = massCenter();
 	if (point == center) return true;
 	register Vector3 p = point + (center - point).normalize() * (64 * VECTOR_EPSILON);

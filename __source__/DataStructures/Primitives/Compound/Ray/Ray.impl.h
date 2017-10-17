@@ -2,7 +2,7 @@
 
 /* -------------------------------------------------------------------------- */
 // Macros:
-#define SetAndReturnThis(or, dir) origin = or; direction = dir; return(*this)
+#define SetAndReturnThis(orgn, dir) origin = orgn; direction = dir; return(*this)
 
 
 

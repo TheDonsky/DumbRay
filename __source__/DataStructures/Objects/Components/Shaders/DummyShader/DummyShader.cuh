@@ -1,6 +1,6 @@
 #pragma once
-#include"DataStructures/Objects/Components/Shaders/Material.cuh"
-#include"DataStructures/Objects/Meshes/BakedTriMesh/BakedTriMesh.h"
+#include"../Material.cuh"
+#include"../../../Meshes/BakedTriMesh/BakedTriMesh.h"
 
 
 
