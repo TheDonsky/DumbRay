@@ -1,9 +1,10 @@
 #pragma once
-
+#ifdef _WIN32
 #include<windows.h>
+#include<tchar.h>
+#endif
 #include<stdlib.h>
 #include<string.h>
-#include<tchar.h>
 #include<mutex>
 #include<condition_variable>
 #include"../../DataStructures/Primitives/Pure/Color/Color.h"
@@ -73,6 +74,7 @@ namespace Windows{
 		/** ########################################################################## **/
 		/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 		/** ########################################################################## **/
+#ifdef _WIN32
 		HINSTANCE hInstance;
 		HWND hwnd;
 		volatile bool windowDead;
@@ -101,6 +103,9 @@ namespace Windows{
 		inline static LRESULT CALLBACK windowProcedure(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 		inline static void createWindow(Window *thisWindow, const char *windowName, const char *className, volatile bool *status, std::condition_variable *statusCondition);
 		inline void display();
+#else
+		int width, height;
+#endif
 	};
 }
 

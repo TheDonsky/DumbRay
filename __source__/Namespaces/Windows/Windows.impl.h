@@ -2,7 +2,7 @@
 
 
 
-
+#ifdef _WIN32
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
@@ -331,4 +331,29 @@ inline bool Windows::Window::Content::loadFromDevice(const Color *image, int wid
 	if (!success) return false;
 	return (SetBitmapBits(bitmap, sizeof(COLORREF) * width * height, colorHost) != 0);
 }
+#else
 
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+inline Windows::Window::Window(const char *windowName, const char *className) { width = 1280; height = 512; }
+inline Windows::Window::~Window() {}
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+inline int Windows::Window::getWidth()const { return width; }
+inline int Windows::Window::hetHeight()const { return height; }
+inline bool Windows::Window::getDimensions(int &width, int &height)const { width = this->width; height = this->height; return true; }
+inline bool Windows::Window::setWidth(int newWidth) { width = newWidth; return true; }
+inline bool Windows::Window::setHeight(int newHeight) { height = newHeight; return true; }
+inline bool Windows::Window::setDimensions(int width, int height) { this->width = width; this->height = height; return true; }
+inline bool Windows::Window::dead()const { return false; }
+inline bool Windows::Window::inFocus()const { return false; }
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+inline void Windows::Window::updateFrameHost(const Matrix<Color> &image) {}
+inline void Windows::Window::updateFrameHost(const Color *devImage, int width, int height) {}
+inline void Windows::Window::updateFrameDevice(const Matrix<Color> *devImage) {}
+inline void Windows::Window::updateFrameDevice(const Color *devImage, int width, int height) {}
+#endif
