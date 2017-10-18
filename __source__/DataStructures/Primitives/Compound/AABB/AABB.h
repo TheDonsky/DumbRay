@@ -1,6 +1,7 @@
 #pragma once
 #include"../Ray/Ray.h"
 #include"../Triangle/Triangle.h"
+#include<float.h>
 
 
 

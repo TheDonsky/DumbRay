@@ -146,7 +146,7 @@ struct Triangle{
 	/*| Triangle space convertion |*/
 
 	// Projects the vertex on the triangle plane
-	__dumb__ Vector3 Triangle::projectVertex(const Vertex &v)const;
+	__dumb__ Vector3 projectVertex(const Vertex &v)const;
 	// Calculates the mases of the vertexes, given the mass center (rv.x for a, rv.y for b, rv.z for c)
 	// Notes:	This assumes, the vertex provided is on the same plane as the triangle itself;
 	//			Sum of the returned value's components will allways be 1.

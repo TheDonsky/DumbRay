@@ -1,11 +1,11 @@
 #include"Shapes.cuh"
 
-
+namespace Shapes {
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<typename Type1, typename Type2>
-__dumb__ bool Shapes::intersect(const Type1 &first, const Type2 &second) {
+__dumb__ bool intersect(const Type1 &first, const Type2 &second) {
 	return(first.intersects(second));
 }
 
@@ -14,17 +14,17 @@ __dumb__ bool Shapes::intersect(const Type1 &first, const Type2 &second) {
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<typename Type>
-__dumb__ bool Shapes::cast(const Ray &ray, const Type &object, bool clipBackface) {
+__dumb__ bool cast(const Ray &ray, const Type &object, bool clipBackface) {
 	return object.cast(ray, clipBackface);
 }
 
 template<typename Type>
-__dumb__ bool Shapes::castPreInversed(const Ray &inversedRay, const Type &object, bool clipBackface) {
+__dumb__ bool castPreInversed(const Ray &inversedRay, const Type &object, bool clipBackface) {
 	return object.castPreInversed(inversedRay, clipBackface);
 }
 
 template<typename Type>
-__dumb__ bool Shapes::cast(const Ray &ray, const Type &object, float &hitDistance, Vertex &hitPoint, bool clipBackface) {
+__dumb__ bool cast(const Ray &ray, const Type &object, float &hitDistance, Vertex &hitPoint, bool clipBackface) {
 	return object.cast(ray, hitDistance, hitPoint, clipBackface);
 }
 
@@ -34,17 +34,17 @@ __dumb__ bool Shapes::cast(const Ray &ray, const Type &object, float &hitDistanc
 /** ########################################################################## **/
 //*
 template<typename Type, typename BoundType>
-__dumb__ bool Shapes::sharePoint(const Type &a, const Type &b, const BoundType &commonPointBounds) {
+__dumb__ bool sharePoint(const Type &a, const Type &b, const BoundType &commonPointBounds) {
 	return a.sharesPoint(b, commonPointBounds);
 }
 //*/
 template<typename Type1, typename Type2>
-__dumb__ Vertex Shapes::intersectionCenter(const Type1 &a, const Type2 &b) {
+__dumb__ Vertex intersectionCenter(const Type1 &a, const Type2 &b) {
 	return b.intersectionCenter(a);
 }
 template<typename Type1, typename Type2>
 // Returns bounding box of intersection, if it exists, or some undefined value.
-__dumb__ AABB Shapes::intersectionBounds(const Type1 &a, const Type2 &b) {
+__dumb__ AABB intersectionBounds(const Type1 &a, const Type2 &b) {
 	return b.intersectionBounds(a);
 }
 
@@ -53,11 +53,11 @@ __dumb__ AABB Shapes::intersectionBounds(const Type1 &a, const Type2 &b) {
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<typename Type>
-__dumb__ Vertex Shapes::massCenter(const Type &shape) {
+__dumb__ Vertex massCenter(const Type &shape) {
 	return shape.massCenter();
 }
 template<typename Type>
-__dumb__ AABB Shapes::boundingBox(const Type &shape) {
+__dumb__ AABB boundingBox(const Type &shape) {
 	return shape.boundingBox();
 }
 
@@ -66,7 +66,7 @@ __dumb__ AABB Shapes::boundingBox(const Type &shape) {
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<typename Type>
-__dumb__ void Shapes::dump(const Type &shape) {
+__dumb__ void dump(const Type &shape) {
 	shape.dump();
 }
 
@@ -83,38 +83,38 @@ __dumb__ void Shapes::dump(const Type &shape) {
 /** \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\ **/
 /** ########################################################################## **/
 template<>
-__dumb__ bool Shapes::intersect<AABB, Triangle>(const AABB &box, const Triangle &tri){
+__dumb__ bool intersect<AABB, Triangle>(const AABB &box, const Triangle &tri){
 	return box.intersects(tri);
 }
 template<>
-__dumb__ bool Shapes::intersect<Triangle, AABB>(const Triangle &tri, const AABB &box){
+__dumb__ bool intersect<Triangle, AABB>(const Triangle &tri, const AABB &box){
 	return box.intersects(tri);
 }
 
 template<>
-__dumb__ bool Shapes::intersect<AABB, BakedTriFace>(const AABB &box, const BakedTriFace &tri){
+__dumb__ bool intersect<AABB, BakedTriFace>(const AABB &box, const BakedTriFace &tri){
 	return box.intersects(tri.vert);
 }
 template<>
-__dumb__ bool Shapes::intersect<BakedTriFace, AABB>(const BakedTriFace &tri, const AABB &box){
+__dumb__ bool intersect<BakedTriFace, AABB>(const BakedTriFace &tri, const AABB &box){
 	return box.intersects(tri.vert);
 }
 
 template<>
-__dumb__ bool Shapes::intersect<AABB, Vector3>(const AABB &box, const Vector3 &v){
+__dumb__ bool intersect<AABB, Vector3>(const AABB &box, const Vector3 &v){
 	return box.contains(v);
 }
 template<>
-__dumb__ bool Shapes::intersect<Vector3, AABB>(const Vector3 &v, const AABB &box){
+__dumb__ bool intersect<Vector3, AABB>(const Vector3 &v, const AABB &box){
 	return box.contains(v);
 }
 
 template<>
-__dumb__ bool Shapes::intersect<Triangle, Vector3>(const Triangle &tri, const Vector3 &v){
+__dumb__ bool intersect<Triangle, Vector3>(const Triangle &tri, const Vector3 &v){
 	return tri.containsVertex(v);
 }
 template<>
-__dumb__ bool Shapes::intersect<Vector3, Triangle>(const Vector3 &v, const Triangle &tri){
+__dumb__ bool intersect<Vector3, Triangle>(const Vector3 &v, const Triangle &tri){
 	return tri.containsVertex(v);
 }
 
@@ -123,31 +123,31 @@ __dumb__ bool Shapes::intersect<Vector3, Triangle>(const Vector3 &v, const Trian
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<>
-__dumb__ bool Shapes::cast<AABB>(const Ray &ray, const AABB &box, bool clipBackface){
+__dumb__ bool cast<AABB>(const Ray &ray, const AABB &box, bool clipBackface){
 	register float castRes = box.cast(ray);
 	return (castRes != FLT_MAX && ((!clipBackface) || (castRes > 0)));
 }
 template<>
-__dumb__ bool Shapes::cast<Triangle>(const Ray &ray, const Triangle &tri, bool clipBackface){
+__dumb__ bool cast<Triangle>(const Ray &ray, const Triangle &tri, bool clipBackface){
 	float dist;
 	Vector3 hitPoint;
 	return tri.cast(ray, dist, hitPoint, clipBackface);
 }
 template<>
-__dumb__ bool Shapes::cast<BakedTriFace>(const Ray &ray, const BakedTriFace &tri, bool clipBackface){
+__dumb__ bool cast<BakedTriFace>(const Ray &ray, const BakedTriFace &tri, bool clipBackface){
 	float dist;
 	Vector3 hitPoint;
 	return tri.vert.cast(ray, dist, hitPoint, clipBackface);
 }
 
 template<>
-__dumb__ bool Shapes::castPreInversed<AABB>(const Ray &inversedRay, const AABB &box, bool clipBackface){
+__dumb__ bool castPreInversed<AABB>(const Ray &inversedRay, const AABB &box, bool clipBackface){
 	register float castRes = box.castPreInversed(inversedRay);
 	return (castRes != FLT_MAX && ((!clipBackface) || (castRes > 0)));
 }
 
 template<>
-__dumb__ bool Shapes::cast<AABB>(const Ray &ray, const AABB &box, float &hitDistance, Vertex &hitPoint, bool clipBackface){
+__dumb__ bool cast<AABB>(const Ray &ray, const AABB &box, float &hitDistance, Vertex &hitPoint, bool clipBackface){
 	register float castRes = box.cast(ray);
 	if (castRes == FLT_MAX || (clipBackface && (castRes <= 0))) return false;
 	hitDistance = castRes;
@@ -155,15 +155,15 @@ __dumb__ bool Shapes::cast<AABB>(const Ray &ray, const AABB &box, float &hitDist
 	return true;
 }
 template<>
-__dumb__ bool Shapes::cast<Triangle>(const Ray &ray, const Triangle &tri, float &hitDistance, Vertex &hitPoint, bool clipBackface){
+__dumb__ bool cast<Triangle>(const Ray &ray, const Triangle &tri, float &hitDistance, Vertex &hitPoint, bool clipBackface){
 	return tri.cast(ray, hitDistance, hitPoint, clipBackface);
 }
 template<>
-__dumb__ bool Shapes::cast<BakedTriFace>(const Ray &ray, const BakedTriFace &tri, float &hitDistance, Vertex &hitPoint, bool clipBackface){
+__dumb__ bool cast<BakedTriFace>(const Ray &ray, const BakedTriFace &tri, float &hitDistance, Vertex &hitPoint, bool clipBackface){
 	return tri.vert.cast(ray, hitDistance, hitPoint, clipBackface);
 }
 template<>
-__dumb__ bool Shapes::cast<Vertex>(const Ray &ray, const Vertex &vert, float &hitDistance, Vertex &hitPoint, bool clipBackface){
+__dumb__ bool cast<Vertex>(const Ray &ray, const Vertex &vert, float &hitDistance, Vertex &hitPoint, bool clipBackface){
 	Vector3 delta = (vert - ray.origin);
 	if ((delta * ray.direction) < -VECTOR_EPSILON) return false;
 	if (delta.angleSin(ray.direction) < -VECTOR_EPSILON){
@@ -180,19 +180,19 @@ __dumb__ bool Shapes::cast<Vertex>(const Ray &ray, const Vertex &vert, float &hi
 /** ########################################################################## **/
 //*
 template<>
-__dumb__ bool Shapes::sharePoint<Triangle, AABB>(const Triangle &a, const Triangle &b, const AABB &commonPointBounds){
+__dumb__ bool sharePoint<Triangle, AABB>(const Triangle &a, const Triangle &b, const AABB &commonPointBounds){
 	if (commonPointBounds.contains(a.a) && (a.a == b.a || a.a == b.b || a.a == b.c)) return true;
 	else if (commonPointBounds.contains(a.b) && (a.b == b.a || a.b == b.b || a.b == b.c)) return true;
 	else return (commonPointBounds.contains(a.c) && (a.c == b.a || a.c == b.b || a.c == b.c));
 }
 template<>
-__dumb__ bool Shapes::sharePoint<BakedTriFace, AABB>(const BakedTriFace &a, const BakedTriFace &b, const AABB &commonPointBounds){
+__dumb__ bool sharePoint<BakedTriFace, AABB>(const BakedTriFace &a, const BakedTriFace &b, const AABB &commonPointBounds){
 	if (commonPointBounds.contains(a.vert.a) && (a.vert.a == b.vert.a || a.vert.a == b.vert.b || a.vert.a == b.vert.c)) return true;
 	else if (commonPointBounds.contains(a.vert.b) && (a.vert.b == b.vert.a || a.vert.b == b.vert.b || a.vert.b == b.vert.c)) return true;
 	else return (commonPointBounds.contains(a.vert.c) && (a.vert.c == b.vert.a || a.vert.c == b.vert.b || a.vert.c == b.vert.c));
 }
 template<>
-__dumb__ bool Shapes::sharePoint<Vertex, AABB>(const Vertex &a, const Vertex &b, const AABB &commonPointBounds){
+__dumb__ bool sharePoint<Vertex, AABB>(const Vertex &a, const Vertex &b, const AABB &commonPointBounds){
 	return (commonPointBounds.contains(a) && a.isNearTo(b, VECTOR_EPSILON));
 }
 //*/
@@ -269,7 +269,7 @@ __dumb__ bool Shapes::sharePoint<Vertex, AABB>(const Vertex &a, const Vertex &b,
 		SHAPES_PUSH_INTERSECTIONS(theListYouAreNotSupposedToNameYourResult, name, t.sortOnZaxis, t.a.z, t.b.z, t.c.z, start.z, end.z); \
 	}
 template<>
-__dumb__ AABB Shapes::intersectionBounds<AABB, Triangle>(const AABB &aabb, const Triangle &triangle) {
+__dumb__ AABB intersectionBounds<AABB, Triangle>(const AABB &aabb, const Triangle &triangle) {
 	SHAPES_GET_INTERSECTING_TRIANGLES(list, aabb, triangle);
 	if (list.size() > 0) {
 		Vertex minimal = aabb.getMax();
@@ -290,7 +290,7 @@ __dumb__ AABB Shapes::intersectionBounds<AABB, Triangle>(const AABB &aabb, const
 	else return aabb;
 }
 template<>
-__dumb__ Vertex Shapes::intersectionCenter<AABB, Triangle>(const AABB &aabb, const Triangle &triangle) {
+__dumb__ Vertex intersectionCenter<AABB, Triangle>(const AABB &aabb, const Triangle &triangle) {
 	//*
 	SHAPES_GET_INTERSECTING_TRIANGLES(list, aabb, triangle);
 	if (list.size() > 0) {
@@ -307,22 +307,22 @@ __dumb__ Vertex Shapes::intersectionCenter<AABB, Triangle>(const AABB &aabb, con
 	}
 	else return (aabb.getMin() - aabb.getMax());
 	/*/
-	return Shapes::intersectionBounds<AABB, Triangle>(aabb, triangle).getCenter();
+	return intersectionBounds<AABB, Triangle>(aabb, triangle).getCenter();
 	//*/
 }
 #undef SHAPES_GET_INTERSECTING_TRIANGLES
 #undef SHAPES_PUSH_INTERSECTIONS
 #undef CROSS_POINT
 template<>
-__dumb__ Vertex Shapes::intersectionCenter<AABB, BakedTriFace>(const AABB &aabb, const BakedTriFace &triangle) {
-	return Shapes::intersectionCenter<AABB, Triangle>(aabb, triangle.vert);
+__dumb__ Vertex intersectionCenter<AABB, BakedTriFace>(const AABB &aabb, const BakedTriFace &triangle) {
+	return intersectionCenter<AABB, Triangle>(aabb, triangle.vert);
 }
 template<>
-__dumb__ AABB Shapes::intersectionBounds<AABB, BakedTriFace>(const AABB &aabb, const BakedTriFace &triangle) {
-	return Shapes::intersectionBounds<AABB, Triangle>(aabb, triangle.vert);
+__dumb__ AABB intersectionBounds<AABB, BakedTriFace>(const AABB &aabb, const BakedTriFace &triangle) {
+	return intersectionBounds<AABB, Triangle>(aabb, triangle.vert);
 }
 template<>
-__dumb__ Vertex Shapes::intersectionCenter<AABB, Vertex>(const AABB &aabb, const Vertex &vertex) {
+__dumb__ Vertex intersectionCenter<AABB, Vertex>(const AABB &aabb, const Vertex &vertex) {
 	/*const Vertex start = aabb.getMin();
 	const Vertex end = aabb.getMax();
 	const Vertex vertStart = (vertex - EPSILON_VECTOR);
@@ -339,7 +339,7 @@ __dumb__ Vertex Shapes::intersectionCenter<AABB, Vertex>(const AABB &aabb, const
 	return vertex;
 }
 template<>
-__dumb__ AABB Shapes::intersectionBounds<AABB, Vertex>(const AABB &aabb, const Vertex &vertex) {
+__dumb__ AABB intersectionBounds<AABB, Vertex>(const AABB &aabb, const Vertex &vertex) {
 	return AABB(vertex - EPSILON_VECTOR, vertex + EPSILON_VECTOR);
 }
 
@@ -348,27 +348,27 @@ __dumb__ AABB Shapes::intersectionBounds<AABB, Vertex>(const AABB &aabb, const V
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<>
-__dumb__ Vertex Shapes::massCenter<Vertex>(const Vertex &shape){
+__dumb__ Vertex massCenter<Vertex>(const Vertex &shape){
 	return shape;
 }
 template<>
-__dumb__ AABB Shapes::boundingBox<Vertex>(const Vertex &shape){
+__dumb__ AABB boundingBox<Vertex>(const Vertex &shape){
 	return AABB(shape - EPSILON_VECTOR, shape + EPSILON_VECTOR);
 }
 template<>
-__dumb__ Vertex Shapes::massCenter<AABB>(const AABB &shape){
+__dumb__ Vertex massCenter<AABB>(const AABB &shape){
 	return shape.getCenter();
 }
 template<>
-__dumb__ AABB Shapes::boundingBox<AABB>(const AABB &shape){
+__dumb__ AABB boundingBox<AABB>(const AABB &shape){
 	return shape;
 }
 template<>
-__dumb__ Vertex Shapes::massCenter<Triangle>(const Triangle &shape){
+__dumb__ Vertex massCenter<Triangle>(const Triangle &shape){
 	return shape.massCenter();
 }
 template<>
-__dumb__ AABB Shapes::boundingBox<Triangle>(const Triangle &shape){
+__dumb__ AABB boundingBox<Triangle>(const Triangle &shape){
 	const Vertex start = Vector3(
 		SHAPES_MIN(SHAPES_MIN(shape.a.x, shape.b.x), shape.c.x),
 		SHAPES_MIN(SHAPES_MIN(shape.a.y, shape.b.y), shape.c.y),
@@ -382,11 +382,11 @@ __dumb__ AABB Shapes::boundingBox<Triangle>(const Triangle &shape){
 #undef SHAPES_MIN
 #undef SHAPES_MAX
 template<>
-__dumb__ Vertex Shapes::massCenter<BakedTriFace>(const BakedTriFace &shape){
+__dumb__ Vertex massCenter<BakedTriFace>(const BakedTriFace &shape){
 	return shape.vert.massCenter();
 }
 template<>
-__dumb__ AABB Shapes::boundingBox<BakedTriFace>(const BakedTriFace &shape){
+__dumb__ AABB boundingBox<BakedTriFace>(const BakedTriFace &shape){
 	return boundingBox<Triangle>(shape.vert);
 }
 
@@ -395,19 +395,22 @@ __dumb__ AABB Shapes::boundingBox<BakedTriFace>(const BakedTriFace &shape){
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<>
-__dumb__ void Shapes::dump<Vertex>(const Vertex &v){
+__dumb__ void dump<Vertex>(const Vertex &v){
 	printf("(%.1f, %.1f, %.1f)", v.x, v.y, v.z);
 }
 template<>
-__dumb__ void Shapes::dump<Triangle>(const Triangle &tri){
-	Shapes::dump<Vertex>(tri.a);
-	Shapes::dump<Vertex>(tri.b);
-	Shapes::dump<Vertex>(tri.c);
+__dumb__ void dump<Triangle>(const Triangle &tri){
+	dump<Vertex>(tri.a);
+	dump<Vertex>(tri.b);
+	dump<Vertex>(tri.c);
 }
 template<>
-__dumb__ void Shapes::dump<BakedTriFace>(const BakedTriFace &face){
+__dumb__ void dump<BakedTriFace>(const BakedTriFace &face){
 	printf("FACE:\n");
-	printf("   VERTS: <"); Shapes::dump<Triangle>(face.vert); printf(">\n");
-	printf("   NORMS: <"); Shapes::dump<Triangle>(face.norm); printf(">\n");
-	printf("   TEXS:  <"); Shapes::dump<Triangle>(face.tex); printf(">\n");
+	printf("   VERTS: <"); dump<Triangle>(face.vert); printf(">\n");
+	printf("   NORMS: <"); dump<Triangle>(face.norm); printf(">\n");
+	printf("   TEXS:  <"); dump<Triangle>(face.tex); printf(">\n");
 }
+
+}
+

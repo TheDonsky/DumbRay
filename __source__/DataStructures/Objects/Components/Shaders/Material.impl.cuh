@@ -64,16 +64,16 @@ __dumb__ Photon Shader<HitType>::illuminateGeneric(const void *shader, const Sha
 /*
 template<typename HitType>
 __dumb__ ShaderReport Material<HitType>::cast(const ShaderHitInfo<HitType>& info)const {
-	return functions().cast(object(), info);
+	return Generic<Shader<HitType> >::functions().cast(Generic<Shader<HitType> >::object(), info);
 }
 */
 template<typename HitType>
 __dumb__ void Material<HitType>::bounce(const ShaderBounceInfo<HitType> &info, PhotonPack &result)const {
-	return functions().bounce(object(), info, result);
+	return Generic<Shader<HitType> >::functions().bounce(Generic<Shader<HitType> >::object(), info, result);
 }
 template<typename HitType>
 __dumb__ Photon Material<HitType>::illuminate(const ShaderHitInfo<HitType>& info)const {
-	return functions().illuminate(object(), info);
+	return Generic<Shader<HitType> >::functions().illuminate(Generic<Shader<HitType> >::object(), info);
 }
 
 template<typename HitType>

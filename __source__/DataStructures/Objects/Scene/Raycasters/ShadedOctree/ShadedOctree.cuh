@@ -122,9 +122,9 @@ public:
 	/** ========================================================== **/
 	/*| cast |*/
 	// Function, that lets the cast terminate
-	typedef Octree<Shaded<HitType> >::CastBreaker CastBreaker;
+	typedef typename Octree<Shaded<HitType> >::CastBreaker CastBreaker;
 	// Raycast output
-	typedef Octree<Shaded<HitType> >::RaycastHit RaycastHit;
+	typedef typename Octree<Shaded<HitType> >::RaycastHit RaycastHit;
 	// Casts a ray and returns RaycastHit (if ray hits nothing, hitDistance will be set to FLT_MAX)
 	__device__ __host__ inline RaycastHit cast(const Ray &r, bool clipBackfaces = true, CastBreaker castBreaker = NULL)const;
 	// Casts a ray (returns true if the ray hits something; result is written in hit)
