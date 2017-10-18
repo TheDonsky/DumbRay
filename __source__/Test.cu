@@ -4,7 +4,7 @@
 #include"DataStructures/Objects/Scene/Raycasters/Octree/Octree.test.cuh"
 #include"DataStructures/GeneralPurpose/Generic/Generic.test.cuh"
 #include"DataStructures/Objects/Components/Lenses/Lense.test.cuh"
-#include"DataStructures/Renderers/BackwardTracer/BackwardTracer.test.cuh"
+//#include"DataStructures/Renderers/BackwardTracer/BackwardTracer.test.cuh"
 #include"DataStructures/GeneralPurpose/Handler/Handler.test.cuh"
 #include"DataStructures/Objects/Components/Shaders/Material.test.cuh"
 #include"DataStructures/GeneralPurpose/TypeTools/TypeTools.test.cuh"
@@ -27,8 +27,8 @@ namespace {
 		tests["scene_handler"] = { "Basic test for SceneHandler structure", SceneHandlerTest::test };
 		tests["renderer"] = { "Basic test for standrad Renderer pipeline", RendererTest::test };
 		tests["type_tools"] = { "General tests for TypeTools and it's default implementations", TypeToolsTest::test };
-		tests["backward_tracer"] = { std::string("Test for BackwardTracer\n") 
-			+ "    (legacy; can and most likely, will cause freeze and/or a crash)", BackwardTracerTest::test };
+		//tests["backward_tracer"] = { std::string("Test for BackwardTracer\n") 
+		//	+ "    (legacy; can and most likely, will cause freeze and/or a crash)", BackwardTracerTest::test };
 		tests["handler"] = { "General test for generic Handler type", HandlerTest::test };
 		tests["generic"] = { "General test for Generic interface", GenericTest::test };
 		tests["lense_test_memory"] = { "Simple test for Lense", LenseTest::testMemory };
