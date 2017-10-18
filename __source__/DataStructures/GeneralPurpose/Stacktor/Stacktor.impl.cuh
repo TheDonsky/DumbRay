@@ -470,7 +470,7 @@ Notes:
 */
 inline Stacktor<Type, localCapacity>* Stacktor<Type, localCapacity>::upload(const Stacktor *source, int count){
 	if (count < 1) count = 1;
-	Stacktor *clone; if (cudaMalloc(&clone, sizeof(Stacktor<Type, localCapacity>) * count) != cudaSuccess) return false;
+	Stacktor *clone; if (cudaMalloc(&clone, sizeof(Stacktor<Type, localCapacity>) * count) != cudaSuccess) return NULL;
 	if (upload(source, clone, count)) return clone;
 	else{
 		cudaFree(clone);
