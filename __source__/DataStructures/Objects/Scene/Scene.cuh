@@ -7,11 +7,11 @@
 
 
 template<typename HitType> struct Scene;
-TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(Scene, ShadedOctree<HitType>, Stacktor<Light>, Stacktor<Camera>, typename HitType);
+TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(Scene, Raycaster<Shaded<HitType> >, Stacktor<Light>, Stacktor<Camera>, typename HitType);
 
 template<typename HitType>
 struct Scene {
-	ShadedOctree<HitType> geometry;
+	Raycaster<Shaded<HitType> > geometry;
 	Stacktor<Light> lights;
 	Stacktor<Camera> cameras;
 
