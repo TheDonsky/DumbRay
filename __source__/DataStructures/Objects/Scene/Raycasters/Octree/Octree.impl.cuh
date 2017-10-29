@@ -264,30 +264,6 @@ __device__ __host__ inline Octree<ElemType>::TreeNode::TreeNode(AABB boundingBox
 }
 
 
-/** ========================================================== **/
-template<typename ElemType>
-// Default constructor (does nothing)
-__device__ __host__ inline RaycastHit<ElemType>::RaycastHit(){ }
-template<typename ElemType>
-// Constructs RaycastHit from the given parameters
-__device__ __host__ inline RaycastHit<ElemType>::RaycastHit(const ElemType &elem, const float d, const Vector3 &p){
-	set(elem, d, p);
-}
-template<typename ElemType>
-// Constructs RaycastHit from the given parameters
-__device__ __host__ inline RaycastHit<ElemType>& RaycastHit<ElemType>::RaycastHit::operator()(const ElemType &elem, const float d, const Vector3 &p){
-	set(elem, d, p);
-	return (*this);
-}
-template<typename ElemType>
-// Constructs RaycastHit from the given parameters
-__device__ __host__ inline void RaycastHit<ElemType>::set(const ElemType &elem, const float d, const Vector3 &p){
-	object = &elem;
-	hitDistance = d;
-	hitPoint = p;
-}
-
-
 
 
 

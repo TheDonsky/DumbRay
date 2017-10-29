@@ -4,6 +4,7 @@
 #include"../../../../Primitives/Compound/AABB/AABB.h"
 #include"../../../../../Namespaces/MemManip/MemManip.cuh"
 #include"../../../../../Namespaces/Shapes/Shapes.cuh"
+#include"../Raycaster.cuh"
 
 
 #define OCTREE_DEFAULT_SIZE Vector3(100000, 100000, 100000)
@@ -20,31 +21,6 @@ public:
 	typedef Octree<ElemType> ElementType;
 	DEFINE_TYPE_TOOLS_CONTENT_FOR(ElementType);
 };
-
-
-template<typename ElemType>
-/** ========================================================== **/
-/*
-Output of Octree::cast
-*/
-struct RaycastHit {
-	// Object, the ray hit
-	const ElemType *object;
-	// Distance, the ray traveled before hitting the object
-	float hitDistance;
-	// Collision point
-	Vector3 hitPoint;
-
-	// Default constructor (does nothing)
-	__device__ __host__ inline RaycastHit();
-	// Constructs RaycastHit from the given parameters
-	__device__ __host__ inline RaycastHit(const ElemType &elem, const float d, const Vector3 &p);
-	// Constructs RaycastHit from the given parameters
-	__device__ __host__ inline RaycastHit& operator()(const ElemType &elem, const float d, const Vector3 &p);
-	// Constructs RaycastHit from the given parameters
-	__device__ __host__ inline void set(const ElemType &elem, const float d, const Vector3 &p);
-};
-
 
 
 template<typename ElemType  = BakedTriFace>
