@@ -1,9 +1,10 @@
 #pragma once
-#include "Renderer.cuh"
-#include "SceneHandler.cuh"
+#include "../../GeneralPurpose/Stacktor/Stacktor.cuh"
+#include "../Renderer/Renderer.cuh"
+#include "../../Objects/Scene/SceneHandler/SceneHandler.cuh"
 
 
-#define BACKWARD_RENDERER_MAX_BOUNCES 128;
+#define BACKWARD_RENDERER_MAX_BOUNCES 64
 
 
 
@@ -26,21 +27,68 @@ protected:
 	inline virtual bool clearSharedData(const Info &info, void *&sharedData);
 
 public:
-	struct PixelState {
-		struct Frame {
-			Photon photon;
-			typename ShadedOctree<HitType>::RaycastHit hit;
-			ShaderBounce bounce;
+	struct PixelRenderProcess {
+		enum BoxingType {
+			VERTICAL,	// Causes the horizontal viewing angle to be dependent on vertical resolution
+			HORIZONTAL,	// Causes the vertical viewing angle to be dependent on horizontal resolution
+			MINIMAL,	// Viewing angle will be dependent on the smaller resolution
+			MAXIMAL,	// Viewing angle will be dependent on the bigger resolution
+			NONE		// No scaling, whatsoever... I don't know... May be useful for something down the line
 		};
-		PixelState stack[BACKWARD_RENDERER_MAX_BOUNCES];
-		PixelState *ptr;
-		PixelState *end;
-		__dumb__ void reset();
-		__dumb__ void cast(Photon photon);
+		struct BounceObject {
+			RaycastHit<HitType> hit;
+			Photon bounce;
+			ColorRGB color;
+			PhotonPack bounces;
+		};
+		Stacktor<BounceObject, BACKWARD_RENDERER_MAX_BOUNCES + 1> bounces;
+		PhotonPack lightIllumination;
+		Color pixelColor;
+		const Scene<HitType> *scene;
+		int posX, posY;
+		int maxBounces;
+
+		__dumb__ void init(const Scene<HitType> &scn, const Camera &cmr, int x, int y, int w, int h, BoxingType boxing, int maxBnc);
+		__dumb__ bool render(int &raycastBudget, int &lightCallBudget);
 	};
 
+
 private:
-	SceneHandler<HitType> *data;
+	struct DeviceThreadData {
+		PixelRenderProcess *pixels;
+		int blockCount;
+		int raycastBudget;
+		int lightCallBudget;
+		bool *renderEnded;
+		cudaStream_t stream;
+		int blockWidth, blockHeight;
+
+		inline DeviceThreadData(int blkWidth, int blkHeight);
+		inline ~DeviceThreadData();
+
+		inline int pixelCount()const;
+	};
+	
+	struct HostThreadData {
+		PixelRenderProcess *pixels;
+		int pixelCount, usedPixelCount;
+
+		inline HostThreadData(int blkWidth, int blkHeight);
+		inline ~HostThreadData();
+	};
+
+	struct SegmentBank {
+		int blockCount;
+		int counter;
+		std::mutex lock;
+
+		inline void reset(int totalBlocks);
+		inline bool get(int count, int &start, int &end);
+	}
+
+private:
+	SceneHandler<HitType> *sceneData;
+	SegmentBank segmentBank;
 	int selectedCamera;
 };
 
@@ -53,3 +101,5 @@ private:
 
 
 #include "BackwardRenderer.impl.cuh"
+
+
