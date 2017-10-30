@@ -83,33 +83,10 @@ namespace {
 }
 #include"DataStructures/Objects/Scene/Scene.cuh"
 #include"DataStructures/Objects/Scene/Raycasters/ShadedOctree/ShadedOctree.cuh"
-struct MockRaycaster {
-	ShadedOctree<BakedTriFace> *object;
 
-	typedef bool(*CastBreaker)(RaycastHit<Shaded<BakedTriFace> > &hit, const Ray &ray, bool &rv);
-	__dumb__ bool cast(const Ray &r, RaycastHit<Shaded<BakedTriFace> > &out, bool ignored, CastBreaker castBreaker)const {
-		//return true;
-		return object->cast(r, out, ignored, castBreaker);
-	}
-}; 
-__global__ void mdaa(ShadedOctree<BakedTriFace> *object, mutable RaycastFunctionPack<Shaded<BakedTriFace> > *functionPack) {
-	//functionPack->use<ShadedOctree<BakedTriFace> >();
-	RaycastFunctionPack<Shaded<BakedTriFace> > fn;
-	fn.use<ShadedOctree<BakedTriFace> >();
-
-	(*functionPack).use<MockRaycaster>();
-	RaycastHit<Shaded<BakedTriFace> > hit;
-	functionPack->cast(object, Ray(Vector3(1, 1, 1), Vector3(1, 1 ,1)), hit, false, NULL);
-	fn.cast(object, Ray(Vector3(1, 1, 1), Vector3(1, 1, 1)), hit, false, NULL);
-	printf("HERE I AM...\n");
-}
 typedef Octree<BakedTriFace> OctreeType;
 int main(){
-	ShadedOctree<BakedTriFace> object;
-	RaycastFunctionPack<Shaded<BakedTriFace> > *fn;
-	cudaMalloc(&fn, sizeof(RaycastFunctionPack<Shaded<BakedTriFace> >));
-	mdaa << <1, 1 >> > (object.upload(), fn);
-	//Generic<RaycastFunctionPack<BakedTriFace> > raycaster;
+	Generic<RaycastFunctionPack<BakedTriFace> > raycaster;
 	//raycaster.use<OctreeType>();
 	cudaDeviceSynchronize();
 	test();

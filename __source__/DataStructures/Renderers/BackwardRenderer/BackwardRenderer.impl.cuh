@@ -171,11 +171,11 @@ namespace __DumbRay_BACKWARD_RENDERER_PRIVATE_NAMESPACE__ {
 		__device__ inline int index() { return ((blockIdx.x * blockDim.x) + threadIdx.x); }
 		template<typename HitType>
 		__global__ inline void callPixelRenderProcessConstructors(BackwardRenderer<HitType>::PixelRenderProcess *pixels, int count) {
-			//int id = index(); if (id < count) new(pixels + id) typename BackwardRenderer<HitType>::PixelRenderProcess();
+			int id = index(); if (id < count) new(pixels + id) typename BackwardRenderer<HitType>::PixelRenderProcess();
 		}
 		template<typename HitType>
-		__global__ inline void callPixelRenderProcessConstructors(BackwardRenderer<HitType>::PixelRenderProcess *pixels, int count) {
-			//int id = index(); if (id < count) (pixels + id)->~PixelRenderProcess();
+		__global__ inline void callPixelRenderProcessDestructors(BackwardRenderer<HitType>::PixelRenderProcess *pixels, int count) {
+			int id = index(); if (id < count) (pixels + id)->~PixelRenderProcess();
 		}
 	}
 }
@@ -192,23 +192,51 @@ inline BackwardRenderer<HitType>::DeviceThreadData::DeviceThreadData(int blkWidt
 		pixels = NULL;
 		return;
 	}
-	if (cudaMallocHost(&renderEnded, sizeof(bool), ) != cudaSuccess) {
+	if (cudaHostAlloc(&renderEnded, sizeof(bool), cudaHostAllocMapped) != cudaSuccess) {
 		cudaStreamDestroy(stream);
 		cudaFree(pixels);
 		pixels = NULL;
 		renderEnded = NULL;
 		return;
 	}
-	// INITIALIZE PIXELS HERE...
+	int threads = __DumbRay_BACKWARD_RENDERER_PRIVATE_NAMESPACE__
+		::DeviceDataManagementKernels::blockSize();
+	int blocks = ((pixelCount + threads - 1) / threads);
+	__DumbRay_BACKWARD_RENDERER_PRIVATE_NAMESPACE__
+		::DeviceDataManagementKernels
+		::callPixelRenderProcessConstructors<HitType><<<blocks, threads, 0, stream>>>(pixels, pixelCount);
+	if (cudaStreamSynchronize(stream) != cudaSuccess) {
+		cudaStreamDestroy(stream);
+		cudaFreeHost(renderEnded);
+		cudaFree(pixels);
+		pixels = NULL;
+		renderEnded = NULL;
+		return;
+	}
 	raycastBudget = 1;
 	lightCallBudget = 256;
 }
 template<typename HitType>
 inline BackwardRenderer<HitType>::DeviceThreadData::~DeviceThreadData() {
-	// __TODO__
-
-
-	cudaStreamDestroy(stream);
+	bool streamExists = false;
+	if (pixels != NULL) {
+		int threads = __DumbRay_BACKWARD_RENDERER_PRIVATE_NAMESPACE__
+			::DeviceDataManagementKernels::blockSize();
+		int blocks = ((pixelCount + threads - 1) / threads);
+		__DumbRay_BACKWARD_RENDERER_PRIVATE_NAMESPACE__
+			::DeviceDataManagementKernels
+			::callPixelRenderProcessDestructors<HitType><<<blocks, threads, 0, stream>>>(pixels, pixelCount);
+		cudaStreamSynchronize(stream);
+		cudaFree(pixels);
+		pixels = NULL;
+		streamExists = true;
+	}
+	if (renderEnded != NULL) {
+		cudaFreeHost(renderEnded);
+		renderEnded = NULL;
+		streamExists = true;
+	}
+	if (streamExists) cudaStreamDestroy(stream);
 }
 
 template<typename HitType>
@@ -222,11 +250,20 @@ inline int BackwardRenderer<HitType>::DeviceThreadData::pixelCount()const {
 
 template<typename HitType>
 inline BackwardRenderer<HitType>::HostThreadData::HostThreadData(int blkWidth, int blkHeight) {
-	// __TODO__
+	blockWidth = blkWidth;
+	blockHeight = blkHeight;
+	pixels = new PixelRenderProcess[pixelCount()];
 }
 template<typename HitType>
 inline BackwardRenderer<HitType>::HostThreadData::~HostThreadData() {
-	// __TODO__
+	if (pixels != NULL) {
+		delete[] pixels;
+		pixels = NULL;
+	}
+}
+template<typename HitType>
+inline int BackwardRenderer<HitType>::HostThreadData::pixelCount()const {
+	return (blockWidth * blockHeight);
 }
 
 

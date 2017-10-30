@@ -71,10 +71,12 @@ private:
 	
 	struct HostThreadData {
 		PixelRenderProcess *pixels;
-		int pixelCount, usedPixelCount;
+		int blockWidth, blockHeight;
 
 		inline HostThreadData(int blkWidth, int blkHeight);
 		inline ~HostThreadData();
+
+		inline int pixelCount()const;
 	};
 
 	struct SegmentBank {

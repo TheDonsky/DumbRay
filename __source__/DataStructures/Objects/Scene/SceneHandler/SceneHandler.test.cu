@@ -8,7 +8,7 @@
 #include <thread>
 #include <mutex>
 #include "../../../GeneralPurpose/Semaphore/Semaphore.h"
-//*
+
 namespace SceneHandlerTest {
 	namespace Private{
 		__global__ void kernel(const Scene<BakedTriFace> *scene) {
@@ -57,9 +57,12 @@ namespace SceneHandlerTest {
 		static void makeScene(Scene<BakedTriFace> &scene) {
 			Stacktor<PolyMesh> meshes; 
 			MeshReaderTest::readMeshes(meshes);
-			//scene.geometry.use<ShadedOctree<BakedTriFace> >();
-			/*
+#ifdef SCENE_USE_GENERIC_RAYCASTER
+			scene.geometry.use<ShadedOctree<BakedTriFace> >();
 			ShadedOctree<BakedTriFace> &sceneGeometry = (*scene.geometry.getObject<ShadedOctree<BakedTriFace> >());
+#else
+			ShadedOctree<BakedTriFace> &sceneGeometry = scene.geometry;
+#endif
 			for (int i = 0; i < meshes.size(); i++) {
 				sceneGeometry.push(meshes[i].bake());
 				std::cout << "\rPUSHED " << i;
@@ -67,7 +70,6 @@ namespace SceneHandlerTest {
 			std::cout <<
 			std::endl << "BUILDING. PLEASE WAIT..." << std::endl;
 			sceneGeometry.build();
-			*/
 			scene.lights.flush(1);
 			Vector3 direction = Vector3(0.2f, -0.4f, 0.7f).normalized();
 			scene.lights[0].use<SimpleDirectionalLight>(Photon(Ray(-direction * 10000.0f, direction), Color(1.0f, 1.0f, 1.0f)));
@@ -100,26 +102,11 @@ namespace SceneHandlerTest {
 			for (int i = 0; i < handler.gpuCount(); i++) threads[i].join();
 			delete[] threads;
 		}
-		static void test() {
-			while (true) {
-				std::cout << "Enter anthing to run SceneHandler test: ";
-				std::string s;
-				std::getline(std::cin, s);
-				if (s.length() <= 0) break;
-				runTest();
-			}
-		}
 	}
 
 	void test() {
-		Tests::runTest(Private::test, "Testing SceneHandler");
+		Tests::runTest(Private::runTest, "Testing SceneHandler");
 		cudaSetDevice(0);
 	}
 }
-/*/
-namespace SceneHandlerTest {
-	void test() {
-	}
-}
-//*/
 
