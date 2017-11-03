@@ -12,7 +12,13 @@ namespace LenseTest {
 				flush(77773000);
 			}
 
-			__dumb__ void getScreenPhoton(const Vector2 &screenSpacePosition, PhotonPack &pack)const { }
+			__dumb__ void getScreenPhoton(const Vector2 &screenSpacePosition, PhotonPack &pack)const { 
+#ifndef __CUDA_ARCH__
+				printf("LenseTest::Private::Garbage::getScreenPhoton() called on HOST\n");
+#else
+				printf("LenseTest::Private::Garbage::getScreenPhoton() called on DEVICE\n");
+#endif // !__CUDA_ARCH__
+			}
 			__dumb__ Photon toScreenSpace(const Photon &photon)const {
 				return Photon();
 			}
@@ -30,11 +36,15 @@ namespace LenseTest {
 			if (clone->getObject<Garbage>()->size() != 77773000)
 				printf("Error: expected size was %d, got %d\n", 77773000, clone->getObject<Garbage>()->size());
 			else printf("Correct data on kernel\n");
+			PhotonPack pack; 
+			clone->getScreenPhoton(Vector2(0, 0), pack);
 		}
 
 		static void testMemory() {
 			Lense lense;
 			lense.use<Garbage>();
+			PhotonPack pack;
+			lense.getScreenPhoton(Vector2(0, 0), pack);
 			Lense *clone = NULL;
 			clone = lense.upload();
 			if (clone == NULL) {

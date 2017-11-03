@@ -18,6 +18,12 @@ template<typename LenseType>
 __dumb__ void LenseFunctionPack::use() {
 	getScreenPhotonFunction = getScreenPhotonGeneric<LenseType>;
 	toScreenSpaceFunction = toScreenSpaceGeneric<LenseType>;
+	/*
+	printf("LENSE FUNCTION PACK(%p): ", this);
+	for (size_t i = 0; i < sizeof(LenseFunctionPack); i++)
+		printf(" %02X", ((char*)((void*)this))[i] & 0xFF);
+	printf("\n");
+	//*/
 }
 
 
