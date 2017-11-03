@@ -2,6 +2,7 @@
 #include"../../../GeneralPurpose/Generic/Generic.cuh"
 #include"../../../Primitives/Compound/Photon/Photon.cuh"
 #include"../../../Primitives/Pure/Vector3/Vector3.h"
+#include"../../Components/DumbStructs.cuh"
 
 
 
