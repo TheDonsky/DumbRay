@@ -43,4 +43,11 @@ namespace Device {
 		std::cout << "------------ TCC Driver:                  " << properties.tccDriver << std::endl;
 		std::cout << "####################################################################" << std::endl;
 	}
+	static int multiprocessorCount() {
+		int device;
+		if (cudaGetDevice(&device) != cudaSuccess) return -1;
+		cudaDeviceProp properties;
+		if (cudaGetDeviceProperties(&properties, device) != cudaSuccess) return -1;
+		return (properties.multiProcessorCount);
+	}
 }

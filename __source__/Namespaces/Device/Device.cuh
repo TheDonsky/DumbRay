@@ -7,6 +7,7 @@
 
 namespace Device {
 	static void dumpCurrentDevice();
+	static int multiprocessorCount();
 }
 
 
