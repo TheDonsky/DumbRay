@@ -27,6 +27,66 @@ __device__ __host__ inline Color& Color::operator()(float R, float G, float B, f
 
 
 /** -------------------------------------------------------------------------- **/
+/** Operators: **/
+__device__ __host__ inline Color Color::operator+()const {
+	return (*this);
+}
+__device__ __host__ inline Color Color::operator+(const Color &c)const {
+	return Color(r + c.r, g + c.g, b + c.b, a + c.a);
+}
+__device__ __host__ inline Color& Color::operator+=(const Color &c) {
+	SetThisColor(r + c.r, g + c.g, b + c.b, a + c.a);
+	return(*this);
+}
+
+__device__ __host__ inline Color Color::operator-()const {
+	return Color(-r, -g, -b, -a);
+}
+__device__ __host__ inline Color Color::operator-(const Color &c)const {
+	return Color(r - c.r, g - c.g, b - c.b, a - c.a);
+}
+__device__ __host__ inline Color& Color::operator-=(const Color &c){
+	SetThisColor(r - c.r, g - c.g, b - c.b, a - c.a);
+	return(*this);
+}
+
+__device__ __host__ inline Color Color::operator*(const Color &c)const {
+	return Color(r * c.r, g * c.g, b * c.b, a * c.a);
+}
+__device__ __host__ inline Color Color::operator*(float f)const {
+	return Color(r * f, g * f, b * f, a * f);
+}
+__device__ __host__ inline Color& Color::operator*=(const Color &c) {
+	SetThisColor(r * c.r, g * c.g, b * c.b, a * c.a);
+	return(*this);
+}
+__device__ __host__ inline Color& Color::operator*=(float f) {
+	SetThisColor(r * f, g * f, b * f, a * f);
+	return(*this);
+}
+
+__device__ __host__ inline Color Color::operator/(const Color &c)const {
+	return Color(r / c.r, g / c.g, b / c.b, a / c.a);
+}
+__device__ __host__ inline Color Color::operator/(float f)const {
+	register float fInv = 1.0f / f;
+	return Color(r * fInv, g * fInv, b * fInv, a * fInv);
+}
+__device__ __host__ inline Color& Color::operator/=(const Color &c) {
+	SetThisColor(r / c.r, g / c.g, b / c.b, a / c.a);
+	return(*this);
+}
+__device__ __host__ inline Color& Color::operator/=(float f) {
+	register float fInv = 1.0f / f;
+	SetThisColor(r * fInv, g * fInv, b * fInv, a * fInv);
+	return(*this);
+}
+
+
+
+
+
+/** -------------------------------------------------------------------------- **/
 /** Stream operators: **/
 inline static std::istream& operator>>(std::istream &stream, Color &c){
 	return(stream >> c.r >> c.g >> c.b >> c.a);
