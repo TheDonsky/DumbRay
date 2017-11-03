@@ -11,6 +11,7 @@ namespace GenericTest {
 				__dumb__ void clean() {
 					unused = NULL;
 				}
+				__dumb__ FuncPack() { clean(); }
 				template<typename Type>
 				__dumb__ void use() {
 					unused = NULL;
