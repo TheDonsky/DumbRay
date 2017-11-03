@@ -81,7 +81,7 @@ namespace CutexTest {
 		}
 	}
 
-	void test() {
+	__host__ void test() {
 		Tests::runTest(Private::test, "Running Cutex test");
 	}
 }

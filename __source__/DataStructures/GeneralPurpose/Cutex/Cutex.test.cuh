@@ -1,5 +1,6 @@
 #pragma once
+#include"cuda_runtime.h"
 
 namespace CutexTest {
-	void test();
+	__host__ void test();
 }
