@@ -82,12 +82,126 @@ namespace {
 	}
 }
 #include"DataStructures/Objects/Scene/Scene.cuh"
+#include"DataStructures/Objects/Components/Lenses/DefaultPerspectiveLense/DefaultPerspectiveLense.cuh"
 #include"DataStructures/Objects/Scene/Raycasters/ShadedOctree/ShadedOctree.cuh"
-
-typedef Octree<BakedTriFace> OctreeType;
+#include"DataStructures/Renderers/BackwardRenderer/BackwardRenderer.cuh"
+#include"DataStructures/Screen/FrameBuffer/MemoryMappedFrameBuffer/MemoryMappedFrameBuffer.cuh"
+#include"DataStructures/Screen/FrameBuffer/FrameBuffer.cuh"
+#include"Namespaces/Windows/Windows.h"
+#include"DataStructures/Objects/Scene/Lights/SimpleDirectionalLight/SimpleDirectionalLight.cuh"
+#include<time.h>
+#include<iomanip>
+__global__ void testSceneHandle(Scene<BakedTriFace> *scene) {
+	RaycastHit<Shaded<BakedTriFace> > hit;
+	if (scene->geometry.cast(Ray(Vertex::zero(), Vector3::one()), hit))
+		printf("Raycast hit something\n");
+	printf("Raycast hit nothing\n");
+	PhotonPack result;
+	bool noShadows;
+	printf("CALLING scene->lights[0].getPhoton()...\n");
+	scene->lights[0].getPhoton(Vertex::zero(), &noShadows, result);
+	printf("CALL FOR scene->lights[0].getPhoton() JUST ENDED\n");
+	printf("len(illuminationPhotons): %d\n", result.size());
+	result.clear();
+	scene->cameras[0].getPhoton(Vector2::zero(), result);
+	printf("len(screenPhotons): %d\n", result.size());
+	/*
+	LenseFunctionPack functions;
+	functions.use<DefaultPerspectiveLense>();
+	//*/
+}
+bool sanityCheck() {
+	if (cudaSetDevice(0) != cudaSuccess) {
+		std::cout << "SETTING DEVICE FAILED QUITE A BIT MISERABLY" << std::endl;
+		return false;
+	}
+	Scene<BakedTriFace> scene;
+	scene.lights.flush(1);
+	Vector3 direction = Vector3(0.2f, -0.4f, 0.7f).normalized();
+	scene.lights[0].use<SimpleDirectionalLight>(
+		Photon(Ray(-direction * 10000.0f, direction),
+			Color(1.0f, 1.0f, 1.0f)));
+	scene.cameras.flush(1);
+	scene.cameras[0].transform.setPosition(Vector3(0, 0, -128));
+	scene.cameras[0].lense.use<DefaultPerspectiveLense>(60.0f);
+	SceneHandler<BakedTriFace> sceneHandler(scene);
+	sceneHandler.uploadToEveryGPU();
+	
+	testSceneHandle<<<1, 1>>>(sceneHandler.getHandleGPU(0));
+	bool rv;
+	if (cudaDeviceSynchronize() != cudaSuccess) {
+		std::cout << "DEVICE FAILED..." << std::endl;
+		rv = false;
+	}
+	else rv = true;
+	
+	std::string line;
+	std::cout << "PRESS ENTER TO CONTINUE...";
+	std::getline(std::cin, line);
+	std::cout << std::endl << std::endl << std::endl;
+	return rv;
+}
+void testBackwardRenderer() {
+	if (!sanityCheck()) return;
+	std::cout << "Concurrent blocks: " << Device::multiprocessorCount() << std::endl;
+	while (true) {
+		FrameBufferManager frameBuffer;
+		frameBuffer.cpuHandle()->use<MemoryMappedFrameBuffer>();
+		frameBuffer.cpuHandle()->setResolution(1920, 1080);
+		{
+			Scene<BakedTriFace> scene;
+			scene.lights.flush(1);
+			Vector3 direction = Vector3(0.2f, -0.4f, 0.7f).normalized();
+			scene.lights[0].use<SimpleDirectionalLight>(
+				Photon(Ray(-direction * 10000.0f, direction), 
+					Color(1.0f, 1.0f, 1.0f)));
+			scene.cameras.flush(1);
+			scene.cameras[0].transform.setPosition(Vector3(0, 0, -128));
+			scene.cameras[0].lense.use<DefaultPerspectiveLense>(60.0f);
+			SceneHandler<BakedTriFace> sceneHandler(scene);
+			BackwardRenderer<BakedTriFace>::Configuration configuration(sceneHandler);
+			BackwardRenderer<BakedTriFace> renderer(configuration,
+				Renderer::ThreadConfiguration());
+			renderer.setFrameBuffer(frameBuffer);
+			Windows::Window window;
+			const int n = 256;
+			std::cout <<
+				"__________________________________________" << std::endl
+				<< "WAIT...";
+			clock_t start = clock();
+			for (int i = 0; i < n; i++) {
+				if (i > 0 && i % 32 == 0)
+					std::cout << ".";
+				//*
+				if (i % 4 == 0) {
+					window.updateFrameHost(
+						frameBuffer.cpuHandle()->getData(), 1920, 1080);
+					renderer.resetIterations();
+					memset(frameBuffer.cpuHandle()->getData(), 0, 1920 * 1080 * sizeof(Color));
+				}
+				//*/
+				renderer.iterate();
+			}
+			clock_t deltaTime = (clock() - start);
+			double time = (((double)deltaTime) / CLOCKS_PER_SEC);
+			double iterationClock = (((double)deltaTime) / n);
+			double iterationTime = (time / n);
+			std::cout << std::fixed << std::setprecision(8) << std::endl <<
+				"ITERATIONS:            " << n << std::endl <<
+				"TOTAL CLOCK:           " << deltaTime << std::endl <<
+				"TOTAL TIME:            " << time << "sec" << std::endl <<
+				"ITERATION CLOCK:       " << iterationClock << std::endl <<
+				"ITERATION TIME:        " << iterationTime << "sec" << std::endl <<
+				"ITERATIONS PER SECOND: " << (1.0 / iterationTime) << std::endl;
+		}
+		std::string s;
+		std::cout << "ENTER ANYTHING TO QUIT... ";
+		std::getline(std::cin, s);
+		if (s.length() > 0) break;
+	}
+}
 int main(){
-	Generic<RaycastFunctionPack<BakedTriFace> > raycaster;
-	//raycaster.use<OctreeType>();
-	cudaDeviceSynchronize();
+	testBackwardRenderer();
 	test();
+	return 0;
 }
