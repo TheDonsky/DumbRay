@@ -55,6 +55,11 @@ public:
 	/*
 	Returns GPU handle (no context selection here...).
 	*/
+	inline Type* getHandleGPU(int index);
+
+	/*
+	Returns GPU handle (no context selection here...).
+	*/
 	inline const Type* getHandleGPU(int index)const;
 
 

@@ -129,6 +129,14 @@ template <typename Type>
 /*
 Returns GPU handle (no context selection here...).
 */
+inline Type* ManagedHandler<Type>::getHandleGPU(int index) {
+	return deviceData[index];
+}
+
+template <typename Type>
+/*
+Returns GPU handle (no context selection here...).
+*/
 inline const Type* ManagedHandler<Type>::getHandleGPU(int index)const {
 	return deviceData[index];
 }
