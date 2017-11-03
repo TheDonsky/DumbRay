@@ -24,6 +24,9 @@ public:
 		(By default, allocates all CPU and GPU resources, using a single thread per GPU).
 		*/
 		ThreadConfiguration();
+		ThreadConfiguration(int cpuThreads, int threadsPerDevice);
+		static ThreadConfiguration cpuOnly(int threads = ALL);
+		static ThreadConfiguration gpuOnly(int threads = ONE);
 
 		/*
 		Sets the thread count for CPU.
@@ -102,8 +105,15 @@ protected:
 		int globalThreadId;
 		bool manageSharedData;
 		bool isGPU()const;
-		void *sharedData;
-		void *data;
+		void * sharedData;
+		void * data;
+
+		template<typename Type>
+		inline static Type* convert(void *address) { return ((Type*)address); }
+		template<typename Type>
+		inline Type *getSharedData()const { return convert<Type>(sharedData); }
+		template<typename Type>
+		inline Type *getData()const { return convert<Type>(data); }
 	};
 
 	virtual bool setupSharedData(const Info &info, void *& sharedData) = 0;

@@ -2,13 +2,20 @@
 
 
 
-Renderer::ThreadConfiguration::ThreadConfiguration() {
+Renderer::ThreadConfiguration::ThreadConfiguration() : ThreadConfiguration(ALL, ONE) { }
+Renderer::ThreadConfiguration::ThreadConfiguration(int cpuThreads, int threadsPerDevice) {
 	int deviceCount;
 	if (cudaGetDeviceCount(&deviceCount) == cudaSuccess)
 		for (int i = 0; i < deviceCount; i++)
 			threadsPerGPU.push(0);
-	configureCPU(ALL);
-	configureEveryGPU(ONE);
+	configureCPU(cpuThreads);
+	configureEveryGPU(threadsPerDevice);
+}
+Renderer::ThreadConfiguration Renderer::ThreadConfiguration::cpuOnly(int threads) {
+	return ThreadConfiguration(threads, NONE);
+}
+Renderer::ThreadConfiguration Renderer::ThreadConfiguration::gpuOnly(int threads) {
+	return ThreadConfiguration(NONE, threads);
 }
 void Renderer::ThreadConfiguration::configureCPU(int threads) {
 	threadsOnCPU = ((threads >= 0) ? threads : std::thread::hardware_concurrency());
@@ -96,8 +103,11 @@ void Renderer::resetIterations() {
 bool Renderer::iterate() {
 	startRenderThreads();
 	if (!threadsStarted) return false;
-	if (!prepareIteration()) return false;
 	iterationId++;
+	if (!prepareIteration()) {
+		iterationId--;
+		return false;
+	}
 	for (int i = 0; i < totalThreadCount; i++)
 		threads[i].properties.startLock.post();
 	for (int i = 0; i < totalThreadCount; i++)
@@ -153,7 +163,7 @@ void Renderer::threadCPU(ThreadAttributes *attributes) {
 	}
 }
 void Renderer::threadGPU(ThreadAttributes *attributes) {
-	bool canIterate = (!attributes->setupFailed);
+	bool canIterate = ((!attributes->setupFailed) && (!attributes->device->setupFailed));
 	while (true) {
 		attributes->startLock.wait(); 
 		if (command == QUIT) break;
@@ -180,10 +190,10 @@ void Renderer::thread(Renderer *renderer, ThreadAttributes *attributes) {
 
 	attributes->endLock.post();
 
-	if (!attributes->device->setupFailed) {
-		if (attributes->info.device == DEVICE_CPU) renderer->threadCPU(attributes);
-		else renderer->threadGPU(attributes);
-	}
+	
+	if (attributes->info.device == DEVICE_CPU) renderer->threadCPU(attributes);
+	else renderer->threadGPU(attributes);
+	
 	
 	if ((!attributes->device->setupFailed) && (!attributes->setupFailed) && (!renderer->destructorCalled))
 		attributes->cleanFailed = (!renderer->clearData(attributes->info, attributes->info.data));
