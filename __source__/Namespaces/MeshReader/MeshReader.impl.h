@@ -136,8 +136,8 @@ namespace MeshReaderPrivate{
 		printIndexFace(face, "", " ", "", "", "/", "", o);
 	}
 
-	inline static void addVertex(PolyMesh::VertexList &collection, const char *file, int &cursor, bool dump, const char *comment){
-		collection.push(getVertexFromThisLine(file, cursor));
+	inline static void addVertex(PolyMesh::VertexList &collection, const char *file, int &cursor, bool dump, const char *comment, const Vector3 &scale){
+		collection.push(getVertexFromThisLine(file, cursor) ^ scale);
 		if (dump) std::cout << "VERTEX: " << collection.top() << std::endl;
 	}
 
@@ -188,9 +188,9 @@ namespace MeshReaderPrivate{
 		while (file[cursor] != '\0'){
 			String s;
 			if (getToken(file, cursor, s)){
-				if (equals(s, "v")) addVertex(verts, file, cursor, dump, "VERTEX: ");
-				else if (equals(s, "vt")) addVertex(texs, file, cursor, dump, "TEXTURE: ");
-				else if (equals(s, "vn")) addVertex(norms, file, cursor, dump, "NORMAL: ");
+				if (equals(s, "v")) addVertex(verts, file, cursor, dump, "VERTEX: ", Vector3(-1, 1, 1));
+				else if (equals(s, "vt")) addVertex(texs, file, cursor, dump, "TEXTURE: ", Vector3(1, 1, 1));
+				else if (equals(s, "vn")) addVertex(norms, file, cursor, dump, "NORMAL: ", Vector3(-1, 1, 1));
 				else if (equals(s, "f")) addFace(faces, file, cursor, dump);
 				else if (equals(s, "g")) addObject(meshList, nameList, faces, objects, start, file, cursor, dump);
 				else if (dump) std::cout << "IGNORED TOKEN: " << (s + 0) << std::endl;
@@ -380,11 +380,11 @@ inline static bool MeshReader::writeObj(const Stacktor<PolyMesh> &meshList, cons
 		stream << "# OBJECT: " << objectName << std::endl << std::endl;
 		stream << "# -----------------------------" << std::endl;
 		for (int j = 0; j < meshList[i].vertextCount(); j++)
-			stream << "v " << meshList[i].vertex(j).x << " " << meshList[i].vertex(j).y << " " << meshList[i].vertex(j).z << std::endl;
+			stream << "v " << (-meshList[i].vertex(j).x) << " " << meshList[i].vertex(j).y << " " << meshList[i].vertex(j).z << std::endl;
 		stream << "# " << meshList[i].vertextCount() << " VERTICES" << std::endl << std::endl;
 		stream << "# -----------------------------" << std::endl;
 		for (int j = 0; j < meshList[i].normalCount(); j++)
-			stream << "vn " << meshList[i].normal(j).x << " " << meshList[i].normal(j).y << " " << meshList[i].normal(j).z << std::endl;
+			stream << "vn " << (-meshList[i].normal(j).x) << " " << meshList[i].normal(j).y << " " << meshList[i].normal(j).z << std::endl;
 		stream << "# " << meshList[i].normalCount() << " NORMALS" << std::endl << std::endl;
 		stream << "# -----------------------------" << std::endl;
 		for (int j = 0; j < meshList[i].textureCount(); j++)

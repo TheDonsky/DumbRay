@@ -332,7 +332,7 @@ __dumb__ Vertex Triangle::massCenter()const{
 
 // Casts the Ray on the Triangle and tells, if the hit occures or not (if yes, hitDistance and hitPoint will be set to whatever they are)
 __dumb__ bool Triangle::cast(const Ray &ray, float &hitDistance, Vertex &hitPoint, bool clipBackface)const{
-	register Vector3 normal = ((c - a) & (b - a));
+	register Vector3 normal = ((b - a) & (c - a));
 	register float deltaProjection = ((a - ray.origin) * normal);
 	if (clipBackface && (deltaProjection < -VECTOR_EPSILON)) return false;
 	register float dirProjection = (ray.direction * normal);
