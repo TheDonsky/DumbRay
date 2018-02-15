@@ -19,9 +19,8 @@ namespace LenseTest {
 				printf("LenseTest::Private::Garbage::getScreenPhoton() called on DEVICE\n");
 #endif // !__CUDA_ARCH__
 			}
-			__dumb__ Photon toScreenSpace(const Photon &photon)const {
-				return Photon();
-			}
+			__dumb__ Photon toScreenSpace(const Photon &photon)const { return Photon(); }
+			__dumb__ void getColor(const Vector2 &screenSpacePosition, Photon photon, Color &result)const { }
 		};
 	}
 }

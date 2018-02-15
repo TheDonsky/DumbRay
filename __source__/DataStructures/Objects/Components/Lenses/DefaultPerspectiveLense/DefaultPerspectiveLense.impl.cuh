@@ -20,3 +20,6 @@ __dumb__ Photon DefaultPerspectiveLense::toScreenSpace(const Photon &photon)cons
 	register Vector3 direction = delta * (x / delta.y);
 	return Photon(Ray(Vector3(0.0f, 0.0f, 0.0f), direction), photon.color);
 }
+__dumb__ void DefaultPerspectiveLense::getColor(const Vector2 &screenSpacePosition, const Photon &photon, Color &result)const {
+	result = photon.color;
+}
