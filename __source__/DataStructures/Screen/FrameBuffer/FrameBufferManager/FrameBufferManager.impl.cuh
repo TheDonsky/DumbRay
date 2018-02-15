@@ -42,12 +42,12 @@ inline const FrameBuffer* FrameBufferManager::cpuHandle()const {
 	return (&frameBuffer);
 }
 
-inline void FrameBufferManager::edit(EditFunction editFunction, bool blockedAlready) {
+inline void FrameBufferManager::edit(EditFunction editFunction, void *aux, bool blockedAlready) {
 	if (!blockedAlready) lock.lock();
-	editFunction(frameBuffer);
+	editFunction(frameBuffer, aux);
 	if (info != NULL) {
 		int count = handler.gpuCount();
-		for (int i = 0; count; i++) info[i] |= DIRTY;
+		for (int i = 0; i < count; i++) info[i] |= DIRTY;
 	}
 	if (!blockedAlready) lock.unlock();
 }

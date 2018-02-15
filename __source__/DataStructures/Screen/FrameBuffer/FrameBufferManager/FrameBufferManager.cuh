@@ -16,8 +16,8 @@ public:
 	inline FrameBuffer* cpuHandle();
 	inline const FrameBuffer* cpuHandle()const;
 
-	typedef void(*EditFunction)(FrameBuffer &buffer);
-	inline void edit(EditFunction editFunction, bool blockedAlready = false);
+	typedef void(*EditFunction)(FrameBuffer &buffer, void *aux);
+	inline void edit(EditFunction editFunction, void *aux, bool blockedAlready = false);
 	inline void lockEdit();
 	inline void unlockEdit();
 
