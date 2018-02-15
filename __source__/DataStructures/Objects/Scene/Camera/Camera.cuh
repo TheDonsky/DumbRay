@@ -14,7 +14,8 @@ public:
 	Transform transform;
 	Lense lense;
 
-	__dumb__ void getPhoton(const Vector2 &screenSpacePosition, PhotonPack &result)const;
+	__dumb__ void getPhotons(const Vector2 &screenSpacePosition, PhotonPack &result)const;
+	__dumb__ void getColor(const Vector2 &screenSpacePosition, Photon photon, Color &result)const;
 
 	// For upload:
 	DEFINE_CUDA_LOAD_INTERFACE_FOR(Camera);
