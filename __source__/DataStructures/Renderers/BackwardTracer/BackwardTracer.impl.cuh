@@ -161,7 +161,7 @@ namespace BackwardTracerPrivate {
 				else {
 					noShadows = false;
 					PhotonPack pack;
-					lights[i].getPhoton(frame.hit.hitPoint, &noShadows, pack);
+					lights[i].getPhotons(frame.hit.hitPoint, &noShadows, pack);
 					p = pack[0];
 					if (p.dead()) continue;
 				}
