@@ -98,7 +98,7 @@ inline bool MemoryMappedFrameBuffer::setResolution(int width, int height) {
 		else {
 			if (data != NULL) cudaFreeHost(data);
 			if (cudaHostAlloc(&data, sizeof(Color) * needed, 
-				cudaHostAllocMapped | cudaHostAllocPortable) != cudaSuccess) {
+				cudaHostAllocWriteCombined | cudaHostAllocMapped | cudaHostAllocPortable) != cudaSuccess) {
 				data = NULL;
 				flags |= CAN_NOT_USE_DEVICE;
 				return setResolution(width, height);
