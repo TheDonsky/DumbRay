@@ -9,6 +9,7 @@
 #include<condition_variable>
 #include"../../DataStructures/Primitives/Pure/Color/Color.h"
 #include"../../DataStructures/GeneralPurpose/Matrix/Matrix.h"
+#include"../../DataStructures/Screen/FrameBuffer/FrameBuffer.cuh"
 
 
 
@@ -61,8 +62,10 @@ namespace Windows{
 		/** ########################################################################## **/
 		/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 		/** ########################################################################## **/
+		inline void updateFromHost(const FrameBuffer &image);
 		inline void updateFrameHost(const Matrix<Color> &image);
 		inline void updateFrameHost(const Color *devImage, int width, int height);
+		inline void updateFromDevice(const FrameBuffer *image);
 		inline void updateFrameDevice(const Matrix<Color> *devImage);
 		inline void updateFrameDevice(const Color *devImage, int width, int height);
 

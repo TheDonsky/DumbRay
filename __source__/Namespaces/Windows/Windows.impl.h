@@ -155,6 +155,9 @@ inline bool Windows::Window::inFocus()const{
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
+inline void Windows::Window::updateFromHost(const FrameBuffer &image) {
+	
+}
 inline void Windows::Window::updateFrameHost(const Matrix<Color> &image){
 	updateFrameHost(image[0], image.width(), image.height());
 }
