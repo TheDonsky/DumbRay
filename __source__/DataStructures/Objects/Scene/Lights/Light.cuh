@@ -39,7 +39,7 @@ private:
 /** ########################################################################## **/
 class Light : public Generic<LightInterface> {
 public:
-	__dumb__ void getPhoton(const Vertex &targetPoint, bool *noShadows, PhotonPack &result)const;
+	__dumb__ void getPhotons(const Vertex &targetPoint, bool *noShadows, PhotonPack &result)const;
 	__dumb__ ColorRGB ambient(const Vertex &targetPoint)const;
 
 	inline Light *upload()const;

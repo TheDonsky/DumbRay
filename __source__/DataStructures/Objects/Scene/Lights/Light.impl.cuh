@@ -26,7 +26,7 @@ __dumb__ ColorRGB LightInterface::ambient(const void *lightSource, const Vertex 
 
 template<typename LightType>
 __dumb__ void LightInterface::getPhotonAbstract(const void *lightSource, const Vertex &targetPoint, bool *noShadows, PhotonPack &result) {
-	((LightType*)lightSource)->getPhoton(targetPoint, noShadows, result);
+	((LightType*)lightSource)->getPhotons(targetPoint, noShadows, result);
 }
 template<typename LightType>
 __dumb__ ColorRGB LightInterface::ambientAbstract(const void *lightSource, const Vertex &targetPoint) {
@@ -40,7 +40,7 @@ __dumb__ ColorRGB LightInterface::ambientAbstract(const void *lightSource, const
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-__dumb__ void Light::getPhoton(const Vertex &targetPoint, bool *noShadows, PhotonPack &result) const {
+__dumb__ void Light::getPhotons(const Vertex &targetPoint, bool *noShadows, PhotonPack &result) const {
 	functions().getPhoton(object(), targetPoint, noShadows, result);
 }
 __dumb__ ColorRGB Light::ambient(const Vertex &targetPoint) const {
