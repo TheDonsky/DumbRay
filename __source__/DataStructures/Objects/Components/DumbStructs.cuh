@@ -2,4 +2,4 @@
 #include"../../GeneralPurpose/Stacktor/Stacktor.cuh"
 
 
-typedef Stacktor<Photon, 32> PhotonPack;
+typedef Stacktor<Photon, 16> PhotonPack;
