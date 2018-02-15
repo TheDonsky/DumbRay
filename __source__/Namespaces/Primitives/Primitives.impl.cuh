@@ -83,9 +83,9 @@ namespace Primitives {
 		for (int i = 0; i < edges; i++) {
 			PolyMesh::IndexFace face;
 			face.flush(3);
-			face[0] = PolyMesh::IndexNode(0, 0, i);
+			face[0] = PolyMesh::IndexNode(1 + (i + 1) % edges, 1 + (i + 1) % edges, edges + i + 1);
 			face[1] = PolyMesh::IndexNode(i + 1, i + 1, edges + i);
-			face[2] = PolyMesh::IndexNode(1 + (i + 1) % edges, 1 + (i + 1) % edges, edges + i + 1);
+			face[2] = PolyMesh::IndexNode(0, 0, i);
 			mesh.addFace(face);
 		}
 
@@ -99,10 +99,10 @@ namespace Primitives {
 			for (int j = 0; j < edges; j++) {
 				PolyMesh::IndexFace face;
 				face.flush(4);
-				face[0] = PolyMesh::IndexNode(vertUp + j, vertUp + j, texUp + j);
-				face[1] = PolyMesh::IndexNode(vertDown + j, vertDown + j, texDown + j);
-				face[2] = PolyMesh::IndexNode(vertDown + (j + 1) % edges, vertDown + (j + 1) % edges, texDown + j + 1);
-				face[3] = PolyMesh::IndexNode(vertUp + (j + 1) % edges, vertUp + (j + 1) % edges, texUp + j + 1);
+				face[0] = PolyMesh::IndexNode(vertUp + (j + 1) % edges, vertUp + (j + 1) % edges, texUp + j + 1);
+				face[1] = PolyMesh::IndexNode(vertDown + (j + 1) % edges, vertDown + (j + 1) % edges, texDown + j + 1);
+				face[2] = PolyMesh::IndexNode(vertDown + j, vertDown + j, texDown + j);
+				face[3] = PolyMesh::IndexNode(vertUp + j, vertUp + j, texUp + j);
 				mesh.addFace(face);
 			}
 		}
@@ -113,9 +113,9 @@ namespace Primitives {
 		for (int i = 0; i < edges; i++) {
 			PolyMesh::IndexFace face;
 			face.flush(3);
-			face[0] = PolyMesh::IndexNode(vertDown + i, vertDown + i, texDown + i);
+			face[0] = PolyMesh::IndexNode(vertDown + (i + 1) % edges, vertDown + (i + 1) % edges, texDown + i + 1);
 			face[1] = PolyMesh::IndexNode(lastVert, lastVert, lowestTex + i);
-			face[2] = PolyMesh::IndexNode(vertDown + (i + 1) % edges, vertDown + (i + 1) % edges, texDown + i + 1);
+			face[2] = PolyMesh::IndexNode(vertDown + i, vertDown + i, texDown + i);
 			mesh.addFace(face);
 		}
 
