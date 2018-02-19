@@ -11,69 +11,99 @@
 /** ########################################################################## **/
 __device__ __host__ inline FrameBufferFunctionPack::FrameBufferFunctionPack() { clean(); }
 __device__ __host__ inline void FrameBufferFunctionPack::clean() {
-	getSizeFunction = NULL;
-	getColorFunction = NULL;
-	setColorFunction = NULL;
-	blendColorFunction = NULL;
-	getDataFunction = NULL;
-	getDataFunctionConst = NULL;
-	setResolutionFunction = NULL;
-	requiresBlockUpdateFunction = NULL;
-	updateBlocksFunction = NULL;
+	getSizeFn = NULL;
+	getColorFn = NULL;
+	setColorFn = NULL;
+	blendColorFn = NULL;
+
+	getBlockSizeFn = NULL;
+	getBlockCountFn = NULL;
+	blockPixelLocationFn = NULL;
+	getBlockPixelColorFn = NULL;
+	setBlockPixelColorFn = NULL;
+	blendBlockPixelColorFn = NULL;
+
+	setResolutionFn = NULL;
+	requiresBlockUpdateFn = NULL;
+	updateDeviceInstanceFn = NULL;
+	updateBlocksFn = NULL;
 }
 template<typename BufferType>
 __device__ __host__ inline void FrameBufferFunctionPack::use() {
-	getSizeFunction = getSizeGeneric<BufferType>;
-	getColorFunction = getColorGeneric<BufferType>;
-	setColorFunction = setColorGeneric<BufferType>;
-	blendColorFunction = blendColorGeneric<BufferType>;
-	getDataFunction = getDataGeneric<BufferType>;
-	getDataFunctionConst = getDataGenericConst<BufferType>;
+	getSizeFn = getSizeGeneric<BufferType>;
+	getColorFn = getColorGeneric<BufferType>;
+	setColorFn = setColorGeneric<BufferType>;
+	blendColorFn = blendColorGeneric<BufferType>;
+
+	getBlockSizeFn = getBlockSizeGeneric<BufferType>;
+	getBlockCountFn = getBlockCountGeneric<BufferType>;
+	blockPixelLocationFn = blockPixelLocationGeneric<BufferType>;
+	getBlockPixelColorFn = getBlockPixelColorGeneric<BufferType>;
+	setBlockPixelColorFn = setBlockPixelColorGeneric<BufferType>;
+	blendBlockPixelColorFn = blendBlockPixelColorGeneric<BufferType>;
+
 #ifndef __CUDA_ARCH__
-	setResolutionFunction = setResolutionGeneric<BufferType>;
-	requiresBlockUpdateFunction = requiresBlockUpdateGeneric<BufferType>;
-	updateBlocksFunction = updateBlocksGeneric<BufferType>;
+	setResolutionFn = setResolutionGeneric<BufferType>;
+	requiresBlockUpdateFn = requiresBlockUpdateGeneric<BufferType>;
+	updateDeviceInstanceFn = updateDeviceInstanceGeneric<BufferType>;
+	updateBlocksFn = updateBlocksGeneric<BufferType>;
 #else
-	setResolutionFunction = NULL;
-	requiresBlockUpdateFunction = NULL;
-	updateBlocksFunction = NULL;
+	setResolutionFn = NULL;
+	requiresBlockUpdateFn = NULL;
+	updateDeviceInstanceFn = NULL;
+	updateBlocksFn = NULL;
 #endif
 }
 
-__device__ __host__ inline void FrameBufferFunctionPack::getSize(const void *buffer, int &width, int &height)const {
-	getSizeFunction(buffer, width, height);
+__device__ __host__ inline void FrameBufferFunctionPack::getSize(const void *buffer, int *width, int *height)const {
+	getSizeFn(buffer, width, height);
 }
 __device__ __host__ inline Color FrameBufferFunctionPack::getColor(const void *buffer, int x, int y)const {
-	return getColorFunction(buffer, x, y);
+	return getColorFn(buffer, x, y);
 }
 __device__ __host__ inline void FrameBufferFunctionPack::setColor(void *buffer, int x, int y, const Color &color)const {
-	setColorFunction(buffer, x, y, color);
+	setColorFn(buffer, x, y, color);
 }
 __device__ __host__ inline void FrameBufferFunctionPack::blendColor(void *buffer, int x, int y, const Color &color, float amount)const {
-	blendColorFunction(buffer, x, y, color, amount);
+	blendColorFn(buffer, x, y, color, amount);
 }
-__device__ __host__ inline Color* FrameBufferFunctionPack::getData(void *buffer)const {
-	return getDataFunction(buffer);
+
+__device__ __host__ inline int FrameBufferFunctionPack::getBlockSize(const void *buffer)const {
+	return getBlockSizeFn(buffer);
 }
-__device__ __host__ inline const Color* FrameBufferFunctionPack::getData(const void *buffer)const {
-	return getDataFunctionConst(buffer);
+__device__ __host__ inline int FrameBufferFunctionPack::getBlockCount(const void *buffer)const {
+	return getBlockCountFn(buffer);
 }
-inline bool FrameBufferFunctionPack::setResolution(void *buffer, int width, int height) {
-	return setResolutionFunction(buffer, width, height);
+__device__ __host__ inline void FrameBufferFunctionPack::blockPixelLocation(const void *buffer, int blockId, int pixelId, int *x, int *y)const {
+	blockPixelLocationFn(buffer, blockId, pixelId, x, y);
 }
-inline bool FrameBufferFunctionPack::requiresBlockUpdate() {
-	return requiresBlockUpdateFunction();
+__device__ __host__ inline Color FrameBufferFunctionPack::getBlockPixelColor(const void *buffer, int blockId, int pixelId)const {
+	return getBlockPixelColorFn(buffer, blockId, pixelId);
 }
-inline bool FrameBufferFunctionPack::updateBlocks(
-	void *buffer, int startBlock, int endBlock,
-	int blockWidth, int blockHeight, const void *deviceObject) {
-	return updateBlocksFunction(buffer, startBlock, endBlock, 
-		blockWidth, blockHeight, deviceObject);
+__device__ __host__ inline void FrameBufferFunctionPack::setBlockPixelColor(void *buffer, int blockId, int pixelId, const Color &color)const {
+	setBlockPixelColorFn(buffer, blockId, pixelId, color);
+}
+__device__ __host__ inline void FrameBufferFunctionPack::blendBlockPixelColor(void *buffer, int blockId, int pixelId, const Color &color, float amount)const {
+	blendBlockPixelColorFn(buffer, blockId, pixelId, color, amount);
+}
+
+
+inline bool FrameBufferFunctionPack::setResolution(void *buffer, int width, int height)const {
+	return setResolutionFn(buffer, width, height);
+}
+inline bool FrameBufferFunctionPack::requiresBlockUpdate()const {
+	return requiresBlockUpdateFn();
+}
+inline bool FrameBufferFunctionPack::updateDeviceInstance(const void *buffer, void *deviceObject)const {
+	updateDeviceInstanceFn(buffer, deviceObject);
+}
+inline bool FrameBufferFunctionPack::updateBlocks(void *buffer, int startBlock, int endBlock, const void *deviceObject)const {
+	return updateBlocksFn(buffer, startBlock, endBlock, deviceObject);
 }
 
 
 template<typename BufferType>
-__device__ __host__ inline void FrameBufferFunctionPack::getSizeGeneric(const void *buffer, int &width, int &height) {
+__device__ __host__ inline void FrameBufferFunctionPack::getSizeGeneric(const void *buffer, int *width, int *height) {
 	((const BufferType*)buffer)->getSize(width, height);
 }
 template<typename BufferType>
@@ -88,14 +118,34 @@ template<typename BufferType>
 __device__ __host__ inline void FrameBufferFunctionPack::blendColorGeneric(void *buffer, int x, int y, const Color &color, float amount) {
 	((BufferType*)buffer)->blendColor(x, y, color, amount);
 }
+
+
 template<typename BufferType>
-__device__ __host__ inline Color* FrameBufferFunctionPack::getDataGeneric(void *buffer) {
-	return ((BufferType*)buffer)->getData();
+__device__ __host__ inline int FrameBufferFunctionPack::getBlockSizeGeneric(const void *buffer) {
+	return ((const BufferType*)buffer)->getBlockSize();
 }
 template<typename BufferType>
-__device__ __host__ inline const Color* FrameBufferFunctionPack::getDataGenericConst(const void *buffer) {
-	return ((const BufferType*)buffer)->getData();
+__device__ __host__ inline int FrameBufferFunctionPack::getBlockCountGeneric(const void *buffer) {
+	return ((const BufferType*)buffer)->getBlockCount();
 }
+template<typename BufferType>
+__device__ __host__ inline void FrameBufferFunctionPack::blockPixelLocationGeneric(const void *buffer, int blockId, int pixelId, int *x, int *y) {
+	((const BufferType*)buffer)->blockPixelLocation(buffer, blockId, pixelId, x, y);
+}
+template<typename BufferType>
+__device__ __host__ inline Color FrameBufferFunctionPack::getBlockPixelColorGeneric(const void *buffer, int blockId, int pixelId) {
+	return ((const BufferType*)buffer)->getBlockPixelColor(buffer, blockId, pixelId);
+}
+template<typename BufferType>
+__device__ __host__ inline void FrameBufferFunctionPack::setBlockPixelColorGeneric(void *buffer, int blockId, int pixelId, const Color &color) {
+	((BufferType*)buffer)->setBlockPixelColor(buffer, blockId, pixelId, color);
+}
+template<typename BufferType>
+__device__ __host__ inline void FrameBufferFunctionPack::blendBlockPixelColorGeneric(void *buffer, int blockId, int pixelId, const Color &color, float amount) {
+	((BufferType*)buffer)->setBlockPixelColor(buffer, blockId, pixelId, color, amount);
+}
+
+
 template<typename BufferType>
 inline bool FrameBufferFunctionPack::setResolutionGeneric(void *buffer, int width, int height) {
 	return ((BufferType*)buffer)->setResolution(width, height);
@@ -105,11 +155,12 @@ inline bool FrameBufferFunctionPack::requiresBlockUpdateGeneric() {
 	return BufferType::requiresBlockUpdate();
 }
 template<typename BufferType>
-inline bool FrameBufferFunctionPack::updateBlocksGeneric(
-	void *buffer, int startBlock, int endBlock,
-	int blockWidth, int blockHeight, const void *deviceObject) {
-	return ((BufferType*)buffer)->updateBlocks(startBlock, endBlock,
-		blockWidth, blockHeight, (const BufferType*)deviceObject);
+inline bool FrameBufferFunctionPack::updateDeviceInstanceGeneric(const void *buffer, void *deviceObject) {
+	return ((const BufferType*)buffer)->updateDeviceInstance(deviceObject);
+}
+template<typename BufferType>
+inline bool FrameBufferFunctionPack::updateBlocksGeneric(void *buffer, int startBlock, int endBlock, const void *deviceObject) {
+	return ((BufferType*)buffer)->updateBlocks(startBlock, endBlock, (const BufferType*)deviceObject);
 }
 
 
@@ -120,7 +171,7 @@ inline bool FrameBufferFunctionPack::updateBlocksGeneric(
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-__device__ __host__ inline void FrameBuffer::getSize(int &width, int &height)const {
+__device__ __host__ inline void FrameBuffer::getSize(int *width, int *height)const {
 	functions().getSize(object(), width, height);
 }
 __device__ __host__ inline Color FrameBuffer::getColor(int x, int y)const {
@@ -132,33 +183,57 @@ __device__ __host__ inline void FrameBuffer::setColor(int x, int y, const Color 
 __device__ __host__ inline void FrameBuffer::blendColor(int x, int y, const Color &color, float amount) {
 	functions().blendColor(object(), x, y, color, amount);
 }
-__device__ __host__ inline Color* FrameBuffer::getData() {
-	return functions().getData(object());
+
+__device__ __host__ inline int FrameBuffer::getBlockSize()const {
+	return functions().getBlockSize(object());
 }
-__device__ __host__ inline const Color* FrameBuffer::getData()const {
-	return functions().getData(object());
+__device__ __host__ inline int FrameBuffer::getBlockCount()const {
+	return functions().getBlockCount(object());
 }
+__device__ __host__ inline void FrameBuffer::blockPixelLocation(int blockId, int pixelId, int *x, int *y)const {
+	functions().blockPixelLocation(object(), blockId, pixelId, x, y);
+}
+__device__ __host__ inline Color FrameBuffer::getBlockPixelColor(int blockId, int pixelId)const {
+	return functions().getBlockPixelColor(object(), blockId, pixelId);
+}
+__device__ __host__ inline void FrameBuffer::setBlockPixelColor(int blockId, int pixelId, const Color &color) {
+	functions().setBlockPixelColor(object(), blockId, pixelId, color);
+}
+__device__ __host__ inline void FrameBuffer::blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount) {
+	functions().blendBlockPixelColor(object(), blockId, pixelId, color, amount);
+}
+
 
 inline bool FrameBuffer::setResolution(int width, int height) {
 	return functions().setResolution(object(), width, height);
 }
-
-// Note: deviceObject is meant to be of the same type, this FrameBuffer is actually using.
-inline bool FrameBuffer::updateBlocks(int startBlock, int endBlock,
-	int blockWidth, int blockHeight, const FrameBuffer *deviceObject) {
-	if (functions().requiresBlockUpdate()) {
-		char clone[sizeof(FrameBuffer)];
-		if (cudaMemcpy(&clone, deviceObject, sizeof(FrameBuffer), cudaMemcpyDeviceToHost) != cudaSuccess) return false;
-		else return updateBlocks(startBlock, endBlock, blockWidth, blockHeight,
-			((FrameBuffer*)((void*)clone))->object());
-	}
-	else return true;
+inline bool FrameBuffer::requiresBlockUpdate()const {
+	return functions().requiresBlockUpdate();
 }
 // Note: deviceObject is meant to be of the same type, this FrameBuffer is actually using.
-inline bool FrameBuffer::updateBlocks(int startBlock, int endBlock,
-	int blockWidth, int blockHeight, const void *deviceObject) {
-	return functions().updateBlocks(object(), startBlock, endBlock,
-		blockWidth, blockHeight, deviceObject);
+inline bool FrameBuffer::updateDeviceInstance(void *deviceObject)const {
+	char cloneMemory[sizeof(FrameBuffer)];
+	FrameBuffer *clone = ((FrameBuffer*)cloneMemory);
+	cudaStream_t stream; if (cudaStreamCreate(&stream) != cudaSuccess) return false;
+	if (cudaMemcpyAsync(&clone, deviceObject, sizeof(FrameBuffer), cudaMemcpyDeviceToHost, stream) != cudaSuccess) {
+		cudaStreamDestroy(stream); return false;
+	}
+	else if (cudaStreamDestroy(stream) != cudaSuccess) return false;
+	else return functions().updateDeviceInstance(object(), clone->object());
+}
+// Note: deviceObject is meant to be of the same type, this FrameBuffer is actually using.
+inline bool FrameBuffer::updateBlocks(int startBlock, int endBlock, const FrameBuffer *deviceObject) {
+	if (functions().requiresBlockUpdate()) {
+		char cloneMemory[sizeof(FrameBuffer)];
+		FrameBuffer *clone = ((FrameBuffer*)cloneMemory);
+		cudaStream_t stream; if (cudaStreamCreate(&stream) != cudaSuccess) return false;
+		if (cudaMemcpyAsync(&clone, deviceObject, sizeof(FrameBuffer), cudaMemcpyDeviceToHost, stream) != cudaSuccess) {
+			cudaStreamDestroy(stream); return false;
+		}
+		else if (cudaStreamDestroy(stream) != cudaSuccess) return false;
+		else return functions().updateBlocks(object(), startBlock, endBlock, clone->object());
+	}
+	else return true;
 }
 
 inline FrameBuffer* FrameBuffer::upload()const {
@@ -178,3 +253,27 @@ inline FrameBuffer* FrameBuffer::upload(const FrameBuffer *source, int count) {
 /** Friends: **/
 COPY_TYPE_TOOLS_IMPLEMENTATION(FrameBuffer, Generic<FrameBufferFunctionPack>);
 
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+inline FrameBuffer::BlockBank::BlockBank() {
+	left = 0;
+}
+inline void FrameBuffer::BlockBank::reset(const FrameBuffer &buffer) {
+	left = buffer.getBlockCount();
+}
+inline bool FrameBuffer::BlockBank::getBlocks(int count, int *start, int *end) {
+	if (left <= 0) return false;
+	else {
+		lock.lock();
+		(*end) = left;
+		left -= count;
+		(*start) = max(0, left);
+		lock.unlock();
+	}
+}

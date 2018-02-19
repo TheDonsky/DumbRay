@@ -1,6 +1,7 @@
 #pragma once
 #include"../../GeneralPurpose/Generic/Generic.cuh"
 #include"../../Primitives/Pure/Color/Color.h"
+#include<mutex>
 
 
 /** ########################################################################## **/
@@ -13,53 +14,76 @@ public:
 	template<typename BufferType>
 	__device__ __host__ inline void use();
 
-	__device__ __host__ inline void getSize(const void *buffer, int &width, int &height)const;
+	__device__ __host__ inline void getSize(const void *buffer, int *width, int *height)const;
 	__device__ __host__ inline Color getColor(const void *buffer, int x, int y)const;
 	__device__ __host__ inline void setColor(void *buffer, int x, int y, const Color &color)const;
 	__device__ __host__ inline void blendColor(void *buffer, int x, int y, const Color &color, float amount)const;
-	__device__ __host__ inline Color* getData(void *buffer)const;
-	__device__ __host__ inline const Color* getData(const void *buffer)const;
+	
+	__device__ __host__ inline int getBlockSize(const void *buffer)const;
+	__device__ __host__ inline int getBlockCount(const void *buffer)const;
+	__device__ __host__ inline void blockPixelLocation(const void *buffer, int blockId, int pixelId, int *x, int *y)const;
+	__device__ __host__ inline Color getBlockPixelColor(const void *buffer, int blockId, int pixelId)const;
+	__device__ __host__ inline void setBlockPixelColor(void *buffer, int blockId, int pixelId, const Color &color)const;
+	__device__ __host__ inline void blendBlockPixelColor(void *buffer, int blockId, int pixelId, const Color &color, float amount)const;
 
-	inline bool setResolution(void *buffer, int width, int height);
-	inline bool requiresBlockUpdate();
-	inline bool updateBlocks(void *buffer, int startBlock, int endBlock,
-		int blockWidth, int blockHeight, const void *deviceObject);
+
+	inline bool setResolution(void *buffer, int width, int height)const;
+	inline bool requiresBlockUpdate()const;
+	inline bool updateDeviceInstance(const void *buffer, void *deviceObject)const;
+	inline bool updateBlocks(void *buffer, int startBlock, int endBlock, const void *deviceObject)const;
 
 
 
 
 
 private:
-	void(*getSizeFunction)(const void *buffer, int &width, int &height);
-	Color(*getColorFunction)(const void *buffer, int x, int y);
-	void(*setColorFunction)(void *buffer, int x, int y, const Color &color);
-	void(*blendColorFunction)(void *buffer, int x, int y, const Color &color, float amount);
-	Color*(*getDataFunction)(void *buffer);
-	const Color*(*getDataFunctionConst)(const void *buffer);
-	bool(*setResolutionFunction)(void *buffer, int width, int height);
-	bool(*requiresBlockUpdateFunction)();
-	bool(*updateBlocksFunction)(void *buffer, int startBlock, int endBlock,
-		int blockWidth, int blockHeight, const void *deviceObject);
+	void(*getSizeFn)(const void *buffer, int *width, int *height);
+	Color(*getColorFn)(const void *buffer, int x, int y);
+	void(*setColorFn)(void *buffer, int x, int y, const Color &color);
+	void(*blendColorFn)(void *buffer, int x, int y, const Color &color, float amount);
+	
+	int(*getBlockSizeFn)(const void *buffer);
+	int(*getBlockCountFn)(const void *buffer);
+	void(*blockPixelLocationFn)(const void *buffer, int blockId, int pixelId, int *x, int *y);
+	Color(*getBlockPixelColorFn)(const void *buffer, int blockId, int pixelId);
+	void(*setBlockPixelColorFn)(void *buffer, int blockId, int pixelId, const Color &color);
+	void(*blendBlockPixelColorFn)(void *buffer, int blockId, int pixelId, const Color &color, float amount);
+
+	bool(*setResolutionFn)(void *buffer, int width, int height);
+	bool(*requiresBlockUpdateFn)();
+	bool(*updateDeviceInstanceFn)(const void *buffer, void *deviceObject);
+	bool(*updateBlocksFn)(void *buffer, int startBlock, int endBlock, const void *deviceObject);
 
 	template<typename BufferType>
-	__device__ __host__ inline static void getSizeGeneric(const void *buffer, int &width, int &height);
+	__device__ __host__ inline static void getSizeGeneric(const void *buffer, int *width, int *height);
 	template<typename BufferType>
 	__device__ __host__ inline static Color getColorGeneric(const void *buffer, int x, int y);
 	template<typename BufferType>
 	__device__ __host__ inline static void setColorGeneric(void *buffer, int x, int y, const Color &color);
 	template<typename BufferType>
 	__device__ __host__ inline static void blendColorGeneric(void *buffer, int x, int y, const Color &color, float amount);
+	
 	template<typename BufferType>
-	__device__ __host__ inline static Color* getDataGeneric(void *buffer);
+	__device__ __host__ inline static int getBlockSizeGeneric(const void *buffer);
 	template<typename BufferType>
-	__device__ __host__ inline static const Color* getDataGenericConst(const void *buffer);
+	__device__ __host__ inline static int getBlockCountGeneric(const void *buffer);
+	template<typename BufferType>
+	__device__ __host__ inline static void blockPixelLocationGeneric(const void *buffer, int blockId, int pixelId, int *x, int *y);
+	template<typename BufferType>
+	__device__ __host__ inline static Color getBlockPixelColorGeneric(const void *buffer, int blockId, int pixelId);
+	template<typename BufferType>
+	__device__ __host__ inline static void setBlockPixelColorGeneric(void *buffer, int blockId, int pixelId, const Color &color);
+	template<typename BufferType>
+	__device__ __host__ inline static void blendBlockPixelColorGeneric(void *buffer, int blockId, int pixelId, const Color &color, float amount);
+
 	template<typename BufferType>
 	inline static bool setResolutionGeneric(void *buffer, int width, int height);
 	template<typename BufferType>
 	inline static bool requiresBlockUpdateGeneric();
 	template<typename BufferType>
-	inline static bool updateBlocksGeneric(void *buffer, int startBlock, int endBlock,
-		int blockWidth, int blockHeight, const void *deviceObject);
+	inline static bool updateDeviceInstanceGeneric(const void *buffer, void *deviceObject);
+	template<typename BufferType>
+	inline static bool updateBlocksGeneric(void *buffer, int startBlock, int endBlock, const void *deviceObject);
 };
 
 
@@ -72,23 +96,47 @@ private:
 /** ########################################################################## **/
 class FrameBuffer : public Generic<FrameBufferFunctionPack> {
 public:
-	__device__ __host__ inline void getSize(int &width, int &height)const;
+	__device__ __host__ inline void getSize(int *width, int *height)const;
 	__device__ __host__ inline Color getColor(int x, int y)const;
 	__device__ __host__ inline void setColor(int x, int y, const Color &color);
 	__device__ __host__ inline void blendColor(int x, int y, const Color &color, float amount);
-	__device__ __host__ inline Color* getData();
-	__device__ __host__ inline const Color* getData()const;
+
+	__device__ __host__ inline int getBlockSize()const;
+	__device__ __host__ inline int getBlockCount()const;
+	__device__ __host__ inline void blockPixelLocation(int blockId, int pixelId, int *x, int *y)const;
+	__device__ __host__ inline Color getBlockPixelColor(int blockId, int pixelId)const;
+	__device__ __host__ inline void setBlockPixelColor(int blockId, int pixelId, const Color &color);
+	__device__ __host__ inline void blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount);
 
 	inline bool setResolution(int width, int height);
+	inline bool requiresBlockUpdate()const;
 	// Note: deviceObject is meant to be of the same type, this FrameBuffer is actually using.
-	inline bool updateBlocks(int startBlock, int endBlock,
-		int blockWidth, int blockHeight, const FrameBuffer *deviceObject);
+	inline bool updateDeviceInstance(void *deviceObject)const;
 	// Note: deviceObject is meant to be of the same type, this FrameBuffer is actually using.
-	inline bool updateBlocks(int startBlock, int endBlock,
-		int blockWidth, int blockHeight, const void *deviceObject);
+	inline bool updateBlocks(int startBlock, int endBlock, const FrameBuffer *deviceObject);
 
 	inline FrameBuffer *upload()const;
 	inline static FrameBuffer* upload(const FrameBuffer *source, int count = 1);
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+	class BlockBank {
+	public:
+		inline BlockBank();
+		inline void reset(const FrameBuffer &buffer);
+		inline bool getBlocks(int count, int *start, int *end);
+
+
+
+	private:
+		int left;
+		std::mutex lock;
+	};
 };
 
 
