@@ -228,7 +228,7 @@ __device__ __host__ inline void TypeTools<MemoryMappedFrameBuffer>::transfer(
 template<>
 inline bool TypeTools<MemoryMappedFrameBuffer>::prepareForCpyLoad(
 	const MemoryMappedFrameBuffer *source,  MemoryMappedFrameBuffer *hosClone, 
-	MemoryMappedFrameBuffer *devTarget, int count) {
+	MemoryMappedFrameBuffer *, int count) {
 	int i = 0;
 	for (i = 0; i < count; i++) {
 		if ((source[i].flags & MemoryMappedFrameBuffer::CAN_NOT_USE_DEVICE) != 0) return false;
@@ -242,13 +242,11 @@ inline bool TypeTools<MemoryMappedFrameBuffer>::prepareForCpyLoad(
 }
 template<>
 inline void TypeTools<MemoryMappedFrameBuffer>::undoCpyLoadPreparations(
-	const MemoryMappedFrameBuffer *source, MemoryMappedFrameBuffer *hosClone, 
-	MemoryMappedFrameBuffer *devTarget, int count) { }
+	const MemoryMappedFrameBuffer *, MemoryMappedFrameBuffer *, MemoryMappedFrameBuffer *, int) { }
 template<>
 inline bool TypeTools<MemoryMappedFrameBuffer>::devArrayNeedsToBeDisposed() { return false; }
 template<>
-inline bool TypeTools<MemoryMappedFrameBuffer>::disposeDevArray(
-	MemoryMappedFrameBuffer *arr, int count) {
+inline bool TypeTools<MemoryMappedFrameBuffer>::disposeDevArray(MemoryMappedFrameBuffer *, int) {
 	return true;
 }
 

@@ -4,7 +4,7 @@
 
 
 namespace Device {
-	static void dumpCurrentDevice() {
+	void dumpCurrentDevice() {
 		int device;
 		if (cudaGetDevice(&device) != cudaSuccess) {
 			std::cout << "ERROR: Unable to detect CUDA device" << std::endl;
@@ -43,7 +43,7 @@ namespace Device {
 		std::cout << "------------ TCC Driver:                  " << properties.tccDriver << std::endl;
 		std::cout << "####################################################################" << std::endl;
 	}
-	static int multiprocessorCount() {
+	int multiprocessorCount() {
 		int device;
 		if (cudaGetDevice(&device) != cudaSuccess) return -1;
 		cudaDeviceProp properties;

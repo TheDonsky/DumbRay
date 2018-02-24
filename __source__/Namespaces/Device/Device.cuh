@@ -6,11 +6,9 @@
 
 
 namespace Device {
-	static void dumpCurrentDevice();
-	static int multiprocessorCount();
+	void dumpCurrentDevice();
+	int multiprocessorCount();
 }
 
 
 
-
-#include"Device.impl.cuh"

@@ -56,7 +56,7 @@ namespace {
 			size_t i = 0;
 			while (i < line.length() && isspace(line[i])) i++;
 			while (i < line.length() && (!isspace(line[i]))) {
-				command += tolower(line[i]);
+				command += (char)tolower(line[i]);
 				i++;
 			}
 			if (command == "?") {
@@ -167,8 +167,8 @@ namespace {
 			Color *line = (color + (width * i));
 			for (int j = xStart + (checkerboard ? (i & 1) : 0); j < xEnd; j += dj) {
 				Color c(0, 0, 0);
-				for (float y = i; y < (i + 1); y += (1.0f / VER_SAMPLES))
-					for (float x = j; x < (j + 1); x += (1.0f / HOR_SAMPLES))
+				for (float y = i; y < (float)(i + 1); y += (1.0f / VER_SAMPLES))
+					for (float x = j; x < (float)(j + 1); x += (1.0f / HOR_SAMPLES))
 						c += Color(
 							cos(sin((y * x / frameVal) / 1024.0f + frameVal) + frameVal),
 							sin(tan(sin((x / y * frameVal) / 1024.0f + frameVal)) * (frameVal + x + y) / 128.0f),
@@ -228,7 +228,7 @@ namespace {
 		}
 	}
 	void testCheckerboardCPUThreadFix(
-		Color *color, int width, int height, int threadWidth, int threadHeight, volatile int *frameId, bool checkerboard,
+		Color *color, int width, int height, int threadWidth, int threadHeight, volatile int *, bool checkerboard,
 		Semaphore *semaphore, Semaphore *release, std::mutex *blockLock, volatile int *numBlocks, volatile bool *killSwitch) {
 		int kernelWidth = CHUNK_COUNT(width, threadWidth);
 		while (true) {
