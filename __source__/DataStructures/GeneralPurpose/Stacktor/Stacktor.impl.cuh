@@ -354,11 +354,11 @@ namespace StacktorPrivateKernels{
 		}
 	}
 
-	static int getBlockCount(int size){
+	inline static int getBlockCount(int size){
 		register int unitsPerBlock = (STACKTOR_KERNELS_THREADS_PER_BLOCK * STACKTOR_KERNELS_UNITS_PER_THREAD);
 		return((size + (unitsPerBlock - 1)) / (unitsPerBlock));
 	}
-	static int getThreadCount(){
+	inline static int getThreadCount(){
 		return(STACKTOR_KERNELS_THREADS_PER_BLOCK);
 	}
 
