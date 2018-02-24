@@ -18,8 +18,13 @@ public:
 
 	typedef void(*EditFunction)(FrameBuffer &buffer, void *aux);
 	inline void edit(EditFunction editFunction, void *aux, bool blockedAlready = false);
+	template<typename Function, typename... Args>
+	inline void editBuffer(Function function, Args&... args);
+	template<typename Function, typename... Args>
+	inline void editBufferLocked(Function function, Args&... args);
 	inline void lockEdit();
 	inline void unlockEdit();
+	inline void makeDirty();
 
 
 

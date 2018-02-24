@@ -10,7 +10,7 @@ SPECIALISE_TYPE_TOOLS_FOR(MemoryMappedFrameBuffer);
 
 class MemoryMappedFrameBuffer {
 public:
-	__device__ __host__ inline MemoryMappedFrameBuffer();
+	__device__ __host__ inline MemoryMappedFrameBuffer(int blockWidth = 16, int blockHeight=16);
 	__device__ __host__ inline ~MemoryMappedFrameBuffer();
 	__device__ __host__ inline void clear();
 
@@ -26,15 +26,28 @@ public:
 
 	inline bool setResolution(int width, int height);
 	inline static bool requiresBlockUpdate();
-	inline bool updateBlocks(int startBlock, int endBlock, 
-		int blockWidth, int blockHeight, const MemoryMappedFrameBuffer *deviceObject);
+	inline bool updateDeviceInstance(MemoryMappedFrameBuffer *deviceObject)const;
+	inline bool updateBlocks(int startBlock, int endBlock, const MemoryMappedFrameBuffer *deviceObject);
 	
-	__device__ __host__ inline void getSize(int &width, int &height)const;
+	__device__ __host__ inline void getSize(int *width, int *height)const;
 	__device__ __host__ inline Color getColor(int x, int y)const;
 	__device__ __host__ inline void setColor(int x, int y, const Color &color);
 	__device__ __host__ inline void blendColor(int x, int y, const Color &color, float amount);
+	
 	__device__ __host__ inline Color* getData();
 	__device__ __host__ inline const Color* getData()const;
+
+	__device__ __host__ inline static int blockCount(int dataSize, int blockSize);
+	__device__ __host__ inline int widthBlocks()const;
+	__device__ __host__ inline int heightBlocks()const;
+
+	__device__ __host__ inline int getBlockSize()const;
+	__device__ __host__ inline int getBlockCount()const;
+	__device__ __host__ inline bool blockPixelLocation(int blockId, int pixelId, int *x, int *y)const;
+	__device__ __host__ inline bool getBlockPixelColor(int blockId, int pixelId, Color *color)const;
+	__device__ __host__ inline bool setBlockPixelColor(int blockId, int pixelId, const Color &color);
+	__device__ __host__ inline bool blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount);
+
 
 
 
@@ -45,6 +58,7 @@ private:
 	};
 	int allocSize;
 	int sizeX, sizeY;
+	int blockW, blockH;
 	int flags;
 	typedef Color* ColorPointer;
 	ColorPointer data;

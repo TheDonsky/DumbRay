@@ -43,18 +43,37 @@ inline const FrameBuffer* FrameBufferManager::cpuHandle()const {
 }
 
 inline void FrameBufferManager::edit(EditFunction editFunction, void *aux, bool blockedAlready) {
+	//*
+	if (blockedAlready) editBufferLocked(editFunction, aux);
+	else editBuffer(editFunction, aux);
+	/*/
 	if (!blockedAlready) lock.lock();
 	editFunction(frameBuffer, aux);
-	if (info != NULL) {
-		int count = handler.gpuCount();
-		for (int i = 0; i < count; i++) info[i] |= DIRTY;
-	}
+	makeDirty();
 	if (!blockedAlready) lock.unlock();
+	//*/
+}
+template<typename Function, typename... Args>
+inline void FrameBufferManager::editBuffer(Function function, Args&... args) {
+	lockEdit();
+	editBufferLocked(function, args...);
+	unlockEdit();
+}
+template<typename Function, typename... Args>
+inline void FrameBufferManager::editBufferLocked(Function function, Args&... args) {
+	function(frameBuffer, args...);
+	makeDirty();
 }
 inline void FrameBufferManager::lockEdit() {
 	lock.lock();
 }
 inline void FrameBufferManager::unlockEdit() {
 	lock.unlock();
+}
+inline void FrameBufferManager::makeDirty() {
+	if (info != NULL) {
+		int count = handler.gpuCount();
+		for (int i = 0; i < count; i++) info[i] |= DIRTY;
+	}
 }
 

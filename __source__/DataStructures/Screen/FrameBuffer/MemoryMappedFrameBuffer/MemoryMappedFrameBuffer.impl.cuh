@@ -1,10 +1,12 @@
 #include"MemoryMappedFrameBuffer.cuh"
 
 
-__device__ __host__ inline MemoryMappedFrameBuffer::MemoryMappedFrameBuffer() {
+__device__ __host__ inline MemoryMappedFrameBuffer::MemoryMappedFrameBuffer(int blockWidth, int blockHeight) {
 	allocSize = -1;
 	sizeX = -1;
 	sizeY = -1;
+	blockW = blockWidth;
+	blockH = blockHeight;
 	data = NULL;
 	flags = 0;
 }
@@ -111,14 +113,14 @@ inline bool MemoryMappedFrameBuffer::setResolution(int width, int height) {
 	return true;
 }
 inline bool MemoryMappedFrameBuffer::requiresBlockUpdate() { return false; }
-inline bool MemoryMappedFrameBuffer::updateBlocks(int startBlock, int endBlock,
-	int blockWidth, int blockHeight, const MemoryMappedFrameBuffer *deviceObject) {
-	return true;
+inline bool MemoryMappedFrameBuffer::updateDeviceInstance(MemoryMappedFrameBuffer *deviceObject)const { return (deviceObject != NULL); }
+inline bool MemoryMappedFrameBuffer::updateBlocks(int startBlock, int endBlock, const MemoryMappedFrameBuffer *deviceObject) {
+	return ((startBlock >= 0) && (endBlock >= 0) && (deviceObject != NULL));
 }
 
-__device__ __host__ inline void MemoryMappedFrameBuffer::getSize(int &width, int &height)const {
-	width = sizeX;
-	height = sizeY;
+__device__ __host__ inline void MemoryMappedFrameBuffer::getSize(int *width, int *height)const {
+	(*width) = sizeX;
+	(*height) = sizeY;
 }
 __device__ __host__ inline Color MemoryMappedFrameBuffer::getColor(int x, int y)const {
 	return data[(sizeX * y) + x];
@@ -130,11 +132,68 @@ __device__ __host__ inline void MemoryMappedFrameBuffer::blendColor(int x, int y
 	register int id = ((sizeX * y) + x);
 	data[id] = ((color * amount) + data[id] * (1.0f - amount));
 }
+
 __device__ __host__ inline Color* MemoryMappedFrameBuffer::getData() {
 	return data;
 }
 __device__ __host__ inline const Color* MemoryMappedFrameBuffer::getData()const {
 	return data;
+}
+
+__device__ __host__ inline int MemoryMappedFrameBuffer::blockCount(int dataSize, int blockSize) {
+	return ((dataSize <= 0) ? 0 : ((dataSize + blockSize - 1) / blockSize));
+}
+__device__ __host__ inline int MemoryMappedFrameBuffer::widthBlocks()const {
+	return blockCount(sizeX, blockW);
+}
+__device__ __host__ inline int MemoryMappedFrameBuffer::heightBlocks()const {
+	return blockCount(sizeY, blockH);
+}
+
+__device__ __host__ inline int MemoryMappedFrameBuffer::getBlockSize()const {
+	return (blockW * blockH);
+}
+__device__ __host__ inline int MemoryMappedFrameBuffer::getBlockCount()const {
+	return (widthBlocks() * heightBlocks());
+}
+__device__ __host__ inline bool MemoryMappedFrameBuffer::blockPixelLocation(int blockId, int pixelId, int *x, int *y)const {
+	if (pixelId < 0 || pixelId >= getBlockSize()) return false;
+	
+	if (blockId < 0) return false;
+	register int wBlocks = widthBlocks();
+	if (wBlocks <= 0) return false;
+	register int blockY = (blockId / wBlocks);
+	if (blockY >= heightBlocks()) return false;
+	register int blockX = (blockId - (blockY * wBlocks));
+	
+	register int shiftY = (pixelId / blockW);
+	register int shiftX = (pixelId - (shiftY * blockW));
+	register int posX = ((blockX * blockW) + shiftX);
+	if (posX >= sizeX) return false;
+	register int posY = ((blockY * blockH) + shiftY);
+	if (posY >= sizeY) return false;
+
+	(*x) = posX;
+	(*y) = posY;
+	return true;
+}
+__device__ __host__ inline bool MemoryMappedFrameBuffer::getBlockPixelColor(int blockId, int pixelId, Color *color)const {
+	int x, y;
+	if (!blockPixelLocation(blockId, pixelId, &x, &y)) return false;
+	(*color) = getColor(x, y);
+	return true;
+}
+__device__ __host__ inline bool MemoryMappedFrameBuffer::setBlockPixelColor(int blockId, int pixelId, const Color &color) {
+	int x, y;
+	if (!blockPixelLocation(blockId, pixelId, &x, &y)) return false;
+	setColor(x, y, color);
+	return true;
+}
+__device__ __host__ inline bool MemoryMappedFrameBuffer::blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount) {
+	int x, y;
+	if (!blockPixelLocation(blockId, pixelId, &x, &y)) return false;
+	blendColor(x, y, color, amount);
+	return true;
 }
 
 

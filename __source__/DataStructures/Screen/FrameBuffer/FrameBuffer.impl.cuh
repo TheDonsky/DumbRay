@@ -74,17 +74,17 @@ __device__ __host__ inline int FrameBufferFunctionPack::getBlockSize(const void 
 __device__ __host__ inline int FrameBufferFunctionPack::getBlockCount(const void *buffer)const {
 	return getBlockCountFn(buffer);
 }
-__device__ __host__ inline void FrameBufferFunctionPack::blockPixelLocation(const void *buffer, int blockId, int pixelId, int *x, int *y)const {
-	blockPixelLocationFn(buffer, blockId, pixelId, x, y);
+__device__ __host__ inline bool FrameBufferFunctionPack::blockPixelLocation(const void *buffer, int blockId, int pixelId, int *x, int *y)const {
+	return blockPixelLocationFn(buffer, blockId, pixelId, x, y);
 }
-__device__ __host__ inline Color FrameBufferFunctionPack::getBlockPixelColor(const void *buffer, int blockId, int pixelId)const {
-	return getBlockPixelColorFn(buffer, blockId, pixelId);
+__device__ __host__ inline bool FrameBufferFunctionPack::getBlockPixelColor(const void *buffer, int blockId, int pixelId, Color *color)const {
+	return getBlockPixelColorFn(buffer, blockId, pixelId, color);
 }
-__device__ __host__ inline void FrameBufferFunctionPack::setBlockPixelColor(void *buffer, int blockId, int pixelId, const Color &color)const {
-	setBlockPixelColorFn(buffer, blockId, pixelId, color);
+__device__ __host__ inline bool FrameBufferFunctionPack::setBlockPixelColor(void *buffer, int blockId, int pixelId, const Color &color)const {
+	return setBlockPixelColorFn(buffer, blockId, pixelId, color);
 }
-__device__ __host__ inline void FrameBufferFunctionPack::blendBlockPixelColor(void *buffer, int blockId, int pixelId, const Color &color, float amount)const {
-	blendBlockPixelColorFn(buffer, blockId, pixelId, color, amount);
+__device__ __host__ inline bool FrameBufferFunctionPack::blendBlockPixelColor(void *buffer, int blockId, int pixelId, const Color &color, float amount)const {
+	return blendBlockPixelColorFn(buffer, blockId, pixelId, color, amount);
 }
 
 
@@ -129,20 +129,20 @@ __device__ __host__ inline int FrameBufferFunctionPack::getBlockCountGeneric(con
 	return ((const BufferType*)buffer)->getBlockCount();
 }
 template<typename BufferType>
-__device__ __host__ inline void FrameBufferFunctionPack::blockPixelLocationGeneric(const void *buffer, int blockId, int pixelId, int *x, int *y) {
-	((const BufferType*)buffer)->blockPixelLocation(buffer, blockId, pixelId, x, y);
+__device__ __host__ inline bool FrameBufferFunctionPack::blockPixelLocationGeneric(const void *buffer, int blockId, int pixelId, int *x, int *y) {
+	return ((const BufferType*)buffer)->blockPixelLocation(blockId, pixelId, x, y);
 }
 template<typename BufferType>
-__device__ __host__ inline Color FrameBufferFunctionPack::getBlockPixelColorGeneric(const void *buffer, int blockId, int pixelId) {
-	return ((const BufferType*)buffer)->getBlockPixelColor(buffer, blockId, pixelId);
+__device__ __host__ inline bool FrameBufferFunctionPack::getBlockPixelColorGeneric(const void *buffer, int blockId, int pixelId, Color *color) {
+	return ((const BufferType*)buffer)->getBlockPixelColor(blockId, pixelId, color);
 }
 template<typename BufferType>
-__device__ __host__ inline void FrameBufferFunctionPack::setBlockPixelColorGeneric(void *buffer, int blockId, int pixelId, const Color &color) {
-	((BufferType*)buffer)->setBlockPixelColor(buffer, blockId, pixelId, color);
+__device__ __host__ inline bool FrameBufferFunctionPack::setBlockPixelColorGeneric(void *buffer, int blockId, int pixelId, const Color &color) {
+	return ((BufferType*)buffer)->setBlockPixelColor(blockId, pixelId, color);
 }
 template<typename BufferType>
-__device__ __host__ inline void FrameBufferFunctionPack::blendBlockPixelColorGeneric(void *buffer, int blockId, int pixelId, const Color &color, float amount) {
-	((BufferType*)buffer)->setBlockPixelColor(buffer, blockId, pixelId, color, amount);
+__device__ __host__ inline bool FrameBufferFunctionPack::blendBlockPixelColorGeneric(void *buffer, int blockId, int pixelId, const Color &color, float amount) {
+	return ((BufferType*)buffer)->blendBlockPixelColor(blockId, pixelId, color, amount);
 }
 
 
@@ -156,7 +156,7 @@ inline bool FrameBufferFunctionPack::requiresBlockUpdateGeneric() {
 }
 template<typename BufferType>
 inline bool FrameBufferFunctionPack::updateDeviceInstanceGeneric(const void *buffer, void *deviceObject) {
-	return ((const BufferType*)buffer)->updateDeviceInstance(deviceObject);
+	return ((const BufferType*)buffer)->updateDeviceInstance((BufferType*)deviceObject);
 }
 template<typename BufferType>
 inline bool FrameBufferFunctionPack::updateBlocksGeneric(void *buffer, int startBlock, int endBlock, const void *deviceObject) {
@@ -190,17 +190,17 @@ __device__ __host__ inline int FrameBuffer::getBlockSize()const {
 __device__ __host__ inline int FrameBuffer::getBlockCount()const {
 	return functions().getBlockCount(object());
 }
-__device__ __host__ inline void FrameBuffer::blockPixelLocation(int blockId, int pixelId, int *x, int *y)const {
-	functions().blockPixelLocation(object(), blockId, pixelId, x, y);
+__device__ __host__ inline bool FrameBuffer::blockPixelLocation(int blockId, int pixelId, int *x, int *y)const {
+	return functions().blockPixelLocation(object(), blockId, pixelId, x, y);
 }
-__device__ __host__ inline Color FrameBuffer::getBlockPixelColor(int blockId, int pixelId)const {
-	return functions().getBlockPixelColor(object(), blockId, pixelId);
+__device__ __host__ inline bool FrameBuffer::getBlockPixelColor(int blockId, int pixelId, Color *color)const {
+	return functions().getBlockPixelColor(object(), blockId, pixelId, color);
 }
-__device__ __host__ inline void FrameBuffer::setBlockPixelColor(int blockId, int pixelId, const Color &color) {
-	functions().setBlockPixelColor(object(), blockId, pixelId, color);
+__device__ __host__ inline bool FrameBuffer::setBlockPixelColor(int blockId, int pixelId, const Color &color) {
+	return functions().setBlockPixelColor(object(), blockId, pixelId, color);
 }
-__device__ __host__ inline void FrameBuffer::blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount) {
-	functions().blendBlockPixelColor(object(), blockId, pixelId, color, amount);
+__device__ __host__ inline bool FrameBuffer::blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount) {
+	return functions().blendBlockPixelColor(object(), blockId, pixelId, color, amount);
 }
 
 

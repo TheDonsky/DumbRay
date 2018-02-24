@@ -84,7 +84,7 @@ namespace MemoryMappedFrameBufferTest {
 			register int endBlock = (block + GPU_BLOCKS_PER_KERNEL_BLOCK);
 			register int pixelId = (threadIdx.x / GPU_BLOCKS_PER_KERNEL_BLOCK);
 			
-			Color *color = buffer->getData();
+			//Color *color = buffer->getData();
 
 			if (endBlock > endBlockId) endBlock = endBlockId;
 			while (block < endBlock) {
@@ -210,7 +210,7 @@ namespace MemoryMappedFrameBufferTest {
 			virtual bool prepareIteration() { 
 				if (buffer != NULL) {
 					int width, height;
-					buffer->cpuHandle()->getSize(width, height);
+					buffer->cpuHandle()->getSize(&width, &height);
 					if (width <= 0 || height <= 0) {
 						log("ERROR: Buffer size invalid\n");
 						return false;
@@ -228,7 +228,7 @@ namespace MemoryMappedFrameBufferTest {
 				int width, height;
 				FrameBuffer *frame = buffer->cpuHandle();
 				if (frame == NULL) return;
-				frame->getSize(width, height);
+				frame->getSize(&width, &height);
 				int pointer, end;
 				float blending = (((params & FLAG_SINGLE_ITERATION) == 0) ? (1.0f / ((float)iteration())) : 1.0f);
 				while (bank.get(1, pointer, end)) {
@@ -245,7 +245,7 @@ namespace MemoryMappedFrameBufferTest {
 				
 				int width, height;
 				FrameBuffer *frame = buffer->cpuHandle();
-				frame->getSize(width, height);
+				frame->getSize(&width, &height);
 				FrameBuffer *GPUframe = buffer->gpuHandle(info.device);
 
 				if (GPUscene == NULL || GPUframe == NULL || GPUframe == NULL) return;
@@ -261,7 +261,7 @@ namespace MemoryMappedFrameBufferTest {
 				while (bank.get(blockCount, start, end)) {
 					if (prevStart < prevEnd) {
 						if (cudaStreamSynchronize(context->stream) != cudaSuccess) { log("KERNEL FAILURE....\n"); return; }
-						else if (!frame->updateBlocks(start, end, BLOCK_WIDTH, BLOCK_HEIGHT, GPUframe)) { log("UPDATE FAILURE.....\n"); return; }
+						else if (!frame->updateBlocks(start, end, GPUframe)) { log("UPDATE FAILURE.....\n"); return; }
 					}
 					renderPixels<<<blk, thr, 0, context->stream>>>(GPUframe, width, height, start, end, frameId, blending);
 					prevStart = start;
@@ -269,7 +269,7 @@ namespace MemoryMappedFrameBufferTest {
 				}
 				if (prevStart < prevEnd) {
 					if (cudaStreamSynchronize(context->stream) != cudaSuccess) { log("KERNEL FAILURE....\n"); return; }
-					else if (!frame->updateBlocks(start, end, BLOCK_WIDTH, BLOCK_HEIGHT, GPUframe)) { log("UPDATE FAILURE.....\n"); return; }
+					else if (!frame->updateBlocks(start, end, GPUframe)) { log("UPDATE FAILURE.....\n"); return; }
 				}
 			}
 			virtual bool completeIteration() { return true; }
@@ -304,7 +304,7 @@ namespace MemoryMappedFrameBufferTest {
 				condition->wait(uniqueLock);
 				const FrameBuffer &frameBuffer = (*(*buffer)->cpuHandle());
 				int width, height;
-				frameBuffer.getSize(width, height);
+				frameBuffer.getSize(&width, &height);
 				if (width > 0 && height > 0) {
 					if (useMemcpy) {
 						int newSurface = (width * height);
@@ -312,13 +312,13 @@ namespace MemoryMappedFrameBufferTest {
 							delete[] color; surface = newSurface; color = new Color[surface];
 							if (color == NULL) { log("ALLOCATION ERROR (windowUpdateThread)\n"); break; }
 						}
-						if (cudaMemcpyAsync(color, frameBuffer.getData(), sizeof(Color) * newSurface, cudaMemcpyDefault, stream) != cudaSuccess) {
-							log("cudaMemcpyError (windowUpdateThread)\n"); break;
-						}
+						//if (cudaMemcpyAsync(color, frameBuffer.getData(), sizeof(Color) * newSurface, cudaMemcpyDefault, stream) != cudaSuccess) {
+						//	log("cudaMemcpyError (windowUpdateThread)\n"); break;
+						//}
 						if (cudaStreamSynchronize(stream) != cudaSuccess) { log("STREAM SYNCHRONISATION FAILED (windowUpdateThread)\n"); break; }
 						window->updateFrameHost(color, width, height);
 					}
-					else window->updateFrameHost(frameBuffer.getData(), width, height);
+					//else window->updateFrameHost(frameBuffer.getData(), width, height);
 					(*framesDisplayed)++;
 				}
 			}
@@ -374,7 +374,7 @@ namespace MemoryMappedFrameBufferTest {
 					double iterationsPerSecond = (iterationCount / elapsedTime);
 					double averageIterationTime = (elapsedTime / iterationCount);
 					int width, height;
-					back->cpuHandle()->getSize(width, height);
+					back->cpuHandle()->getSize(&width, &height);
 					int shownFrames = (framesDisplayed - framesDisplayedLast);
 					framesDisplayedLast = framesDisplayed;
 					double shownFramesPerSecond = (((double)shownFrames) / elapsedTime);
