@@ -22,4 +22,5 @@ __dumb__ Photon DefaultPerspectiveLense::toScreenSpace(const Photon &photon)cons
 }
 __dumb__ void DefaultPerspectiveLense::getColor(const Vector2 &screenSpacePosition, const Photon &photon, Color &result)const {
 	result = photon.color;
+	// __TODO__???
 }

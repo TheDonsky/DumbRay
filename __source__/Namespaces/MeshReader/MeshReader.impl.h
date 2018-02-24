@@ -138,7 +138,7 @@ namespace MeshReaderPrivate{
 
 	inline static void addVertex(PolyMesh::VertexList &collection, const char *file, int &cursor, bool dump, const char *comment, const Vector3 &scale){
 		collection.push(getVertexFromThisLine(file, cursor) ^ scale);
-		if (dump) std::cout << "VERTEX: " << collection.top() << std::endl;
+		if (dump) std::cout << comment << collection.top() << std::endl;
 	}
 
 	inline static void addFace(PolyMesh::FaceList &faces, const char *file, int &cursor, bool dump){

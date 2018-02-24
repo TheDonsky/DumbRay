@@ -14,7 +14,7 @@ __dumb__ void Camera::getPhotons(const Vector2 &screenSpacePosition, PhotonPack 
 }
 __dumb__ void Camera::getColor(const Vector2 &screenSpacePosition, Photon photon, Color &result)const {
 	photon <<= transform;
-
+	// __TODO__???
 }
 
 

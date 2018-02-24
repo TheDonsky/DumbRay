@@ -256,9 +256,9 @@ class TypeTools{
 /** ########################################################################## **/
 /* Default implementations: */
 template<typename Type>
-__device__ __host__ inline void TypeTools<Type>::init(Type &t) {}
+__device__ __host__ inline void TypeTools<Type>::init(Type &) {}
 template<typename Type>
-__device__ __host__ inline void TypeTools<Type>::dispose(Type &t) {}
+__device__ __host__ inline void TypeTools<Type>::dispose(Type &) {}
 template<typename Type>
 __device__ __host__ inline void TypeTools<Type>::swap(Type &a, Type &b) {
 	Type c = a;
@@ -271,17 +271,17 @@ __device__ __host__ inline void TypeTools<Type>::transfer(Type &src, Type &dst) 
 }
 
 template<typename Type>
-inline bool TypeTools<Type>::prepareForCpyLoad(const Type *source, Type *hosClone, Type *devTarget, int count) {
+inline bool TypeTools<Type>::prepareForCpyLoad(const Type *source, Type *hosClone, Type *, int count) {
 	for (int i = 0; i < count; i++)
 		hosClone[i] = source[i];
 	return(true);
 }
 template<typename Type>
-inline void TypeTools<Type>::undoCpyLoadPreparations(const Type *source, Type *hosClone, Type *devTarget, int count) { }
+inline void TypeTools<Type>::undoCpyLoadPreparations(const Type *, Type *, Type *, int) { }
 template<typename Type>
 inline bool TypeTools<Type>::devArrayNeedsToBeDisposed() { return(false); }
 template<typename Type>
-inline bool TypeTools<Type>::disposeDevArray(Type *arr, int count) { return(true); }
+inline bool TypeTools<Type>::disposeDevArray(Type *, int) { return(true); }
 
 
 

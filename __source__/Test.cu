@@ -123,7 +123,7 @@ void testBackwardRenderer() {
 			for (int i = 0; i < n; i++) {
 				if (i > 0 && i % 32 == 0)
 					std::cout << ".";
-				//*
+				/*
 				if (i % 16 == 0) {
 					window.updateFrameHost(
 						frameBuffer.cpuHandle()->getData(), 1920, 1080);

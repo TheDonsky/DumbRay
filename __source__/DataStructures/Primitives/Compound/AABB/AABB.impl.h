@@ -145,7 +145,7 @@ __dumb__ void AABB::fix(){
 }
 template<unsigned int dimm>
 // checks the triangle intersection (if dimm is 0, for all 3 dimensions, if its 1, for x and y only and, in case of 2, just y)
-__dumb__ bool AABB::intersectsTri(Triangle t)const{
+__dumb__ bool AABB::intersectsTri(Triangle)const{
 	return true;
 }
 template<>

@@ -140,8 +140,8 @@ bool Renderer::Info::isGPU()const {
 
 
 
-Renderer::Renderer(const Renderer &other) { }
-Renderer& Renderer::operator=(const Renderer &other) { return (*this); }
+Renderer::Renderer(const Renderer &) { }
+Renderer& Renderer::operator=(const Renderer &) { return (*this); }
 
 void Renderer::startRenderThreads() {
 	if ((!threadsStarted) && configured()) {

@@ -301,7 +301,7 @@ inline bool TypeTools<Generic<FunctionPack> >::prepareForCpyLoad(const Generic<F
 }
 
 template<typename FunctionPack>
-inline void TypeTools<Generic<FunctionPack> >::undoCpyLoadPreparations(const Generic<FunctionPack> *source, Generic<FunctionPack> *hosClone, Generic<FunctionPack> *devTarget, int count) {
+inline void TypeTools<Generic<FunctionPack> >::undoCpyLoadPreparations(const Generic<FunctionPack> *, Generic<FunctionPack> *hosClone, Generic<FunctionPack> *, int count) {
 	for (int i = 0; i < count; i++)
 		hosClone[i].clean();
 }

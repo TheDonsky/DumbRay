@@ -95,7 +95,7 @@ inline bool FrameBufferFunctionPack::requiresBlockUpdate()const {
 	return requiresBlockUpdateFn();
 }
 inline bool FrameBufferFunctionPack::updateDeviceInstance(const void *buffer, void *deviceObject)const {
-	updateDeviceInstanceFn(buffer, deviceObject);
+	return updateDeviceInstanceFn(buffer, deviceObject);
 }
 inline bool FrameBufferFunctionPack::updateBlocks(void *buffer, int startBlock, int endBlock, const void *deviceObject)const {
 	return updateBlocksFn(buffer, startBlock, endBlock, deviceObject);
@@ -269,11 +269,15 @@ inline void FrameBuffer::BlockBank::reset(const FrameBuffer &buffer) {
 }
 inline bool FrameBuffer::BlockBank::getBlocks(int count, int *start, int *end) {
 	if (left <= 0) return false;
+	bool success;
+	lock.lock();
+	if (left <= 0) success = false;
 	else {
-		lock.lock();
 		(*end) = left;
 		left -= count;
-		(*start) = max(0, left);
-		lock.unlock();
+		(*start) = ((left < 0) ? 0 : left);
+		success = true;
 	}
+	lock.unlock();
+	return success;
 }

@@ -90,7 +90,7 @@ namespace Primitives {
 		}
 
 		// MiddleStrips:
-		int vertUp, texUp, vertDown, texDown;
+		int vertUp = 0, texUp = 0, vertDown = 0, texDown = 0;
 		for (int i = 0; i < (iMax - 1); i++) {
 			vertUp = i * edges + 1;
 			texUp = (i + 1) * (edges + 1) - 1;

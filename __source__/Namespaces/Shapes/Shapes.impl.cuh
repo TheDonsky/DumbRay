@@ -163,7 +163,7 @@ __dumb__ bool cast<BakedTriFace>(const Ray &ray, const BakedTriFace &tri, float 
 	return tri.vert.cast(ray, hitDistance, hitPoint, clipBackface);
 }
 template<>
-__dumb__ bool cast<Vertex>(const Ray &ray, const Vertex &vert, float &hitDistance, Vertex &hitPoint, bool clipBackface){
+__dumb__ bool cast<Vertex>(const Ray &ray, const Vertex &vert, float &hitDistance, Vertex &hitPoint, bool){
 	Vector3 delta = (vert - ray.origin);
 	if ((delta * ray.direction) < -VECTOR_EPSILON) return false;
 	if (delta.angleSin(ray.direction) < -VECTOR_EPSILON){
@@ -322,7 +322,7 @@ __dumb__ AABB intersectionBounds<AABB, BakedTriFace>(const AABB &aabb, const Bak
 	return intersectionBounds<AABB, Triangle>(aabb, triangle.vert);
 }
 template<>
-__dumb__ Vertex intersectionCenter<AABB, Vertex>(const AABB &aabb, const Vertex &vertex) {
+__dumb__ Vertex intersectionCenter<AABB, Vertex>(const AABB &, const Vertex &vertex) {
 	/*const Vertex start = aabb.getMin();
 	const Vertex end = aabb.getMax();
 	const Vertex vertStart = (vertex - EPSILON_VECTOR);
@@ -339,7 +339,7 @@ __dumb__ Vertex intersectionCenter<AABB, Vertex>(const AABB &aabb, const Vertex 
 	return vertex;
 }
 template<>
-__dumb__ AABB intersectionBounds<AABB, Vertex>(const AABB &aabb, const Vertex &vertex) {
+__dumb__ AABB intersectionBounds<AABB, Vertex>(const AABB &, const Vertex &vertex) {
 	return AABB(vertex - EPSILON_VECTOR, vertex + EPSILON_VECTOR);
 }
 

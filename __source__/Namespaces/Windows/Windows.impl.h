@@ -24,7 +24,7 @@ namespace Windows{
 			}
 		}
 
-		inline static int numThreads(int dataSize){
+		inline static int numThreads(int){
 			return WINDOWS_KERNELS_THREADS_PER_BLOCKS;
 		}
 		inline static int numBlocks(int dataSize){
@@ -89,7 +89,10 @@ inline Windows::Window::Window(const char *windowName, const char *className){
 	std::condition_variable c;
 	messageThread = std::thread(createWindow, this, windowName, className, &status, &c);
 	std::mutex m;
-	while (!status)c.wait(std::unique_lock<std::mutex>(m));
+	while (!status) {
+		std::unique_lock<std::mutex> lock(m);
+		c.wait(lock);
+	}
 	content.init();
 }
 
@@ -134,10 +137,12 @@ inline bool Windows::Window::getDimensions(int &width, int &height)const{
 
 inline bool Windows::Window::setWidth(int newWidth){
 	//
+	if (newWidth < 0) newWidth = 0;
 	return false;
 }
 inline bool Windows::Window::setHeight(int newHeight){
 	//
+	if (newHeight < 0) newHeight = 0;
 	return false;
 }
 
@@ -156,7 +161,7 @@ inline bool Windows::Window::inFocus()const{
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 inline void Windows::Window::updateFromHost(const FrameBuffer &image) {
-	
+	// __TODO__
 }
 inline void Windows::Window::updateFrameHost(const Matrix<Color> &image){
 	updateFrameHost(image[0], image.width(), image.height());
