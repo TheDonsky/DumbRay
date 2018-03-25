@@ -71,9 +71,13 @@ template<typename HitType>
 inline bool BackwardRenderer<HitType>::setupSharedData(const Info &info, void *&sharedData) {
 	if (info.isGPU()) {
 		if (!config.scene->uploadToGPU(info.device, false)) return false;
+		//*
 		size_t stackSize;
 		if (cudaDeviceGetLimit(&stackSize, cudaLimitStackSize) != cudaSuccess) return false;
-		if (stackSize < 8096) return (cudaDeviceSetLimit(cudaLimitStackSize, 8096) == cudaSuccess);
+		const int neededStackSize = 8096; // (sizeof(PixelRenderProcess) + 256);
+		if (stackSize < neededStackSize) 
+			return (cudaDeviceSetLimit(cudaLimitStackSize, neededStackSize) == cudaSuccess);
+		//*/
 		else return true;
 	}
 	else return true;
@@ -142,7 +146,7 @@ inline bool BackwardRenderer<HitType>::prepareIteration() {
 	if (frameBuffer != NULL) {
 		frameBuffer->lockEdit();
 		int width, height;
-		frameBuffer->cpuHandle()->getSize(width, height);
+		frameBuffer->cpuHandle()->getSize(&width, &height);
 		int wBlocks = __DumbRay_BACKWARD_RENDERER_PRIVATE_NAMESPACE__
 			::Pixels::getBlockCount(width, config.segmentWidth);
 		int hBlocks = __DumbRay_BACKWARD_RENDERER_PRIVATE_NAMESPACE__
@@ -187,6 +191,16 @@ namespace {
 		namespace RenderKernels {
 			__device__ inline int getIndex() { return ((blockIdx.x * blockDim.x) + threadIdx.x); }
 			template<typename HitType>
+			__global__ static void render(
+				BackwardRenderer<HitType>::PixelRenderProcess *processes,
+				int raycastBudget, bool *renderEnded) {
+				typename BackwardRenderer<HitType>::PixelRenderProcess process = processes[getIndex()];
+				if (!process.render(raycastBudget)) {
+					(*renderEnded) = false;
+					processes[getIndex()] = process;
+				}
+			}
+			template<typename HitType>
 			__global__ static void init(
 				BackwardRenderer<HitType>::PixelRenderProcess *processes,
 				BackwardRenderer<HitType>::PixelRenderProcess::Settings settings,
@@ -194,8 +208,8 @@ namespace {
 				int startBlock, int endBlock, int blocksPerThread, 
 				int blockWidth, int blockHeight,
 				Transform transform, int raycastBudget, bool *renderEnded) {
-				//*
-				typename BackwardRenderer<HitType>::PixelRenderProcess process;
+				
+				typename BackwardRenderer<HitType>::PixelRenderProcess &process = processes[getIndex()];
 				Camera *camera = &scene->cameras[cameraId];
 				camera->transform = transform;
 				process.settings = settings;
@@ -207,8 +221,19 @@ namespace {
 				process.domain = typename BackwardRenderer<HitType>::PixelRenderProcess::Domain(
 					blockStart, blockEnd, blockWidth, blockHeight, threadIdx.x);
 				process.resetState();
-				if (!process.render(raycastBudget)) (*renderEnded) = false;
-				else processes[getIndex()] = process;
+				//*
+				int raycastsLeft = raycastBudget;
+				if (!process.render(raycastsLeft)) {
+					(*renderEnded) = false;
+					//processes[getIndex()] = process;
+				}
+				/*/
+				if (!process.stateActive) return;
+				while (true) {
+					process.context.frame->setColor(process.posX, process.posY, Color(0, 1, 0));
+					if (!process.moveState()) break;
+				}
+				//(*renderEnded) = false;
 				//*/
 			}
 		}
@@ -237,19 +262,31 @@ inline void BackwardRenderer<HitType>::iterateGPU(const Info &info) {
 	while (segmentBank.get(threadData.blockCount * config.devicePixelsPerThread, start, end)) {
 		(*threadData.renderEnded) = true;
 		// __TMP__ __TODO__
-		int numBlocks = (end - start);
-		if (threadData.blockCount < numBlocks) numBlocks = threadData.blockCount;
+		int total = (end - start);
+		int numBlocks = ((total > threadData.blockCount) ? threadData.blockCount : total);
+		int pixelsPerThread = ((total + numBlocks - 1) / numBlocks);
+		
 		__DumbRay_BACKWARD_RENDERER_PRIVATE_NAMESPACE__::RenderKernels
 			::init<HitType><<<numBlocks, threadData.blockSize(), 0, threadData.stream>>>
 			(threadData.pixels, settings, scene, config.cameraId, buffer,
-				start, end, config.devicePixelsPerThread, 
+				start, end, pixelsPerThread,
 				config.segmentWidth, config.segmentHeight, 
 				transform, threadData.raycastBudget, renderEndedDevice);
 		if (cudaStreamSynchronize(threadData.stream) != cudaSuccess) {
-			std::cout << "DOGSHIT..." << std::endl;
+			std::cout << "INIT KERNEL DIED..." << std::endl;
 			return;
 		}
-		if(!cpuBuffer.updateBlocks(start, end, config.segmentWidth, config.segmentHeight, buffer)) break;
+		else while (!(*threadData.renderEnded)) {
+			(*threadData.renderEnded) = true;
+			__DumbRay_BACKWARD_RENDERER_PRIVATE_NAMESPACE__::RenderKernels
+				::render<HitType><<<numBlocks, threadData.blockSize(), 0, threadData.stream>>>
+				(threadData.pixels, threadData.raycastBudget, renderEndedDevice);
+			if (cudaStreamSynchronize(threadData.stream) != cudaSuccess) {
+				std::cout << "RENDER KERNEL DIED..." << std::endl;
+				return;
+			}
+		}
+		if(!cpuBuffer.updateBlocks(start, end, buffer)) break;
 	}
 }
 template<typename HitType>
@@ -298,7 +335,7 @@ __dumb__ BackwardRenderer<HitType>::PixelRenderProcess::Context::Context(
 	scene = s;
 	camera = c;
 	frame = f;
-	if(frame != NULL) frame->getSize(width, height);
+	if(frame != NULL) frame->getSize(&width, &height);
 }
 template<typename HitType>
 __dumb__ BackwardRenderer<HitType>::PixelRenderProcess::Domain::Domain(
@@ -325,6 +362,7 @@ __dumb__ bool BackwardRenderer<HitType>::PixelRenderProcess::moveState() {
 						posX + (state.sampleX * state.sampleDelta),
 						posY + (state.sampleY * state.sampleDelta));
 					state.sampleX++;
+					stateActive = true;
 					return true;
 				}
 				else state.sampleX = 0;
@@ -359,13 +397,11 @@ __dumb__ void BackwardRenderer<HitType>::PixelRenderProcess::resetState() {
 }
 template<typename HitType>
 __dumb__ void BackwardRenderer<HitType>::PixelRenderProcess::initPixel(float x, float y) {
-	pixelColor = Color(0, 0, 0, 0);
-	bounces.clear();
-	lightIllumination.clear();
-	bounces.flush(1);
-	BounceObject &bounce = bounces.top();
-	bounce.hit.object = NULL;
+	bounceHeight = 0;
+	lightId = 0;
+	BounceObject &bounce = bounces[0];
 	bounce.color = ColorRGB(0, 0, 0);
+	//*
 	float divisor;
 	if (settings.boxing == VERTICAL) divisor = y;
 	else if (settings.boxing == HORIZONTAL) divisor = x;
@@ -375,17 +411,89 @@ __dumb__ void BackwardRenderer<HitType>::PixelRenderProcess::initPixel(float x, 
 	float scale = (1.0f / divisor);
 	float w = ((float)context.width);
 	float h = ((float)context.height);
-	context.camera->getPhoton(Vector2((x - (w / 2.0f)) * scale, ((h / 2.0f) - y) * scale), bounce.bounces);
+	screenPoint = Vector2((x - (w / 2.0f)) * scale, ((h / 2.0f) - y) * scale);
+	context.camera->getPhotons(screenPoint, bounce.bounces);
+	//bounce.bounces.clear();
+	//*/
 }
 template<typename HitType>
 __dumb__ bool BackwardRenderer<HitType>::PixelRenderProcess::renderPixel(int &raycastBudget) {
 	// __TODO__
+	while (true) {
+		BounceObject &bounce = bounces[bounceHeight];
+		bool isBounce = (!bounce.bounces.empty());
+		Photon *photonToCast;
+		if (isBounce) photonToCast = (&bounce.bounces.top());
+		else if (!lightIllumination.empty()) photonToCast = (&lightIllumination.top());
+		else photonToCast = NULL;
+		if (photonToCast != NULL) {
+			if (raycastBudget <= 0) return false;
+			raycastBudget--;
+			RaycastHit<Shaded<HitType> > hit;
+			if (context.scene->geometry.cast(photonToCast->ray, hit)) {
+				if (isBounce) {
+					// __PUSH_STACK__
+					bounceHeight++;
+					BounceObject &topBounce = bounces[bounceHeight];
+					topBounce.hit = hit;
+					topBounce.bounce = (*photonToCast);
+					topBounce.color = ColorRGB(0, 0, 0);
+					if (bounceHeight < BACKWARD_RENDERER_MAX_BOUNCES)
+						; // __ASK_MATERIAL_FOR_ADDITIONAL_BOUNCE_HERE__
+				}
+				else if ((bounceHeight > 0) && (hit.object == bounce.hit.object)) {
+					// __CALL_SHADER__
+				}
+			}
+			else if ((!isBounce) && (bounceHeight <= 0)) {
+				// __CALL_CAMERA__
+				Color illumination;
+				context.camera->getColor(screenPoint, *photonToCast, illumination);
+				bounce.color += illumination;
+			}
+			if (isBounce) bounce.bounces.pop();
+			else lightIllumination.pop();
+		}
+		else if (lightId < context.scene->lights.size()) {
+			// __REQUEST_ILLUMINATION_PHOTONS__
+			bool noShadows = false;;
+			context.scene->lights[lightId].
+				getPhotons(bounce.hit.hitPoint, &noShadows, lightIllumination);
+			if (noShadows) {
+				if (bounceHeight > 0) {
+					for (int i = 0; i < lightIllumination.size(); i++) {
+						// __ILLUMIONATE_MATERIAL__
+					}
+				}
+				else {
+					// __ILLUMINATE_LENSE__
+					for (int i = 0; i < lightIllumination.size(); i++) {
+						Color illumination;
+						context.camera->getColor(screenPoint, lightIllumination[i], illumination);
+						bounce.color += illumination;
+					}
+				}
+				lightIllumination.clear();
+			}
+			lightId++;
+		}
+		else {
+			lightId = 0;
+			// No lights and bounces left;
+			if (bounceHeight > 0) {
+				// __POP_STACK__
+			}
+			else {
+				// __DONE__ (TODO)
 #ifndef __CUDA_ARCH__
-	pixelColor = Color(0, 0, 1);
+				bounce.color = Color(0, 0, 1);
 #else
-	pixelColor = Color(0, 1, 0);
+				bounce.color = Color(0, 1, 0);
 #endif
-	return true;
+				return true;
+			}
+		}
+	}
 }
 template<typename HitType>
 __dumb__ bool BackwardRenderer<HitType>::PixelRenderProcess::render(int &raycastBudget) {
@@ -393,11 +501,15 @@ __dumb__ bool BackwardRenderer<HitType>::PixelRenderProcess::render(int &raycast
 		if (!stateActive) if (!moveState()) return true;
 		if (raycastBudget <= 0) return false;
 		if (renderPixel(raycastBudget)) {
-			color += (pixelColor * state.sampleMass);
+			color += (bounces[0].color * state.sampleMass);
 			stateActive = false;
-			if (state.sampleX >= settings.multisampling && (state.sampleY >= (settings.multisampling - 1))) {
+			if ((state.sampleX >= settings.multisampling) && 
+				(state.sampleY >= (settings.multisampling - 1))) {
+				//*
 				context.frame->blendColor(posX, posY, color, settings.blendAmount);
-				color = Color(0, 0, 0, 0);
+				/*/
+				context.frame->setColor(posX, posY, color);
+				//*/
 			}
 		}
 	}

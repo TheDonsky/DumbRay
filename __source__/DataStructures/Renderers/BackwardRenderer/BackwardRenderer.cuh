@@ -9,7 +9,6 @@
 #define BACKWARD_RENDERER_MAX_BOUNCES 64
 
 
-
 template<typename HitType>
 class BackwardRenderer : public Renderer{
 public:
@@ -40,7 +39,7 @@ public:
 			BoxingType boxing = VERTICAL,				// Image boxing (messes with lense behaviour for non-quadratic render targets)
 			int camera = 0,								// Selected camera index
 			int devOversaturation = 8,					// Defines, how okversaturated a single streaming multiprocessor will be on average (more will likely give better performance, but keep in mind that this one eats up a lot of VRAM)
-			int pixelPerDeviceThread = 4,				// Defines, how many pixels each GPU thread will be tasked with.
+			int pixelPerDeviceThread = 32,				// Defines, how many pixels each GPU thread will be tasked with.
 			int cpuOversaturation = 1					// Defines, how many blocks a CPU core will take at once (Higher number will likely boost performance, when there's no GPU).
 		);
 	};
@@ -68,17 +67,19 @@ protected:
 public:
 	struct PixelRenderProcess {
 		struct BounceObject {
-			RaycastHit<HitType> hit;
+			RaycastHit<Shaded<HitType> > hit;
 			Photon bounce;
 			ColorRGB color;
 			PhotonPack bounces;
 		};
-		Stacktor<BounceObject, BACKWARD_RENDERER_MAX_BOUNCES + 1> bounces;
+		BounceObject bounces[BACKWARD_RENDERER_MAX_BOUNCES + 1];
 		PhotonPack lightIllumination;
-		Color pixelColor;
+		Vector2 screenPoint;
 		int posX, posY;
 		bool stateActive;
 		Color color;
+		int bounceHeight;
+		int lightId;
 
 
 		struct Settings {
@@ -124,8 +125,7 @@ public:
 			float sampleMass;
 		};
 		State state;
-
-
+		
 		__dumb__ bool countBase();
 		__dumb__ bool moveState();
 		__dumb__ void resetState(); // This should be called manually;
