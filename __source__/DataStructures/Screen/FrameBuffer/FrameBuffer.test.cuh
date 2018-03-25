@@ -13,11 +13,11 @@ namespace FrameBufferTest {
 		void testPerformance(FrameBufferManager &front, FrameBufferManager &back, Flags flags);
 	}
 
-	template<typename Type>
-	inline static void testPerformance(Flags settings = (USE_GPU | USE_CPU)) {
+	template<typename Type, typename... Args>
+	inline static void testPerformance(Flags settings = (USE_GPU | USE_CPU), Args... args) {
 		FrameBufferManager front, back;
-		front.cpuHandle()->use<Type>();
-		back.cpuHandle()->use<Type>();
+		front.cpuHandle()->use<Type>(args...);
+		back.cpuHandle()->use<Type>(args...);
 		Private::testPerformance(front, back, settings);
 	}
 }
