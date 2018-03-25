@@ -65,7 +65,7 @@ namespace Windows{
 		inline void updateFromHost(const FrameBuffer &image);
 		inline void updateFrameHost(const Matrix<Color> &image);
 		inline void updateFrameHost(const Color *devImage, int width, int height);
-		inline void updateFromDevice(const FrameBuffer *image);
+		//inline void updateFromDevice(const FrameBuffer *image);
 		inline void updateFrameDevice(const Matrix<Color> *devImage);
 		inline void updateFrameDevice(const Color *devImage, int width, int height);
 
@@ -87,6 +87,7 @@ namespace Windows{
 			inline void init();
 			inline void dispose();
 			inline bool set(int width, int height);
+			inline bool loadFromHost(const FrameBuffer &image);
 			inline bool loadFromHost(const Color *image, int width, int height);
 			inline bool loadFromDevice(const Color *image, int width, int height);
 

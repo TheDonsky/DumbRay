@@ -161,7 +161,9 @@ inline bool Windows::Window::inFocus()const{
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 inline void Windows::Window::updateFromHost(const FrameBuffer &image) {
-	// __TODO__
+	if (windowDead) return;
+	if (!content.loadFromHost(image)) return;
+	display();
 }
 inline void Windows::Window::updateFrameHost(const Matrix<Color> &image){
 	updateFrameHost(image[0], image.width(), image.height());
@@ -319,6 +321,15 @@ inline bool Windows::Window::Content::set(int width, int height){
 		bitHeight = height;
 	}
 	return true;
+}
+inline bool Windows::Window::Content::loadFromHost(const FrameBuffer &image) {
+	int width, height;
+	image.getSize(&width, &height);
+	if (!set(width, height)) return false;
+	for (int j = 0; j < height; j++)
+		for (int i = 0; i < width; i++)
+			colorHost[(j * width) + i] = Private::translateColor(image.getColor(i, j));
+	return (SetBitmapBits(bitmap, sizeof(COLORREF) * (width * height), colorHost) != 0);
 }
 inline bool Windows::Window::Content::loadFromHost(const Color *image, int width, int height){
 	if (!set(width, height)) return false;
