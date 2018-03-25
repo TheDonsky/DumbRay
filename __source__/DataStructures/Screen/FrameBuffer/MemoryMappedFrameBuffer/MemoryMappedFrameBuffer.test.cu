@@ -318,7 +318,7 @@ namespace MemoryMappedFrameBufferTest {
 						if (cudaStreamSynchronize(stream) != cudaSuccess) { log("STREAM SYNCHRONISATION FAILED (windowUpdateThread)\n"); break; }
 						window->updateFrameHost(color, width, height);
 					}
-					//else window->updateFrameHost(frameBuffer.getData(), width, height);
+					else window->updateFromHost(frameBuffer);
 					(*framesDisplayed)++;
 				}
 			}

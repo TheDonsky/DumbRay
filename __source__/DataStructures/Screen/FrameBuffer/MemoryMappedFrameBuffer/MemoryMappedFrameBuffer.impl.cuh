@@ -100,7 +100,7 @@ inline bool MemoryMappedFrameBuffer::setResolution(int width, int height) {
 		else {
 			if (data != NULL) cudaFreeHost(data);
 			if (cudaHostAlloc(&data, sizeof(Color) * needed, 
-				cudaHostAllocWriteCombined | cudaHostAllocMapped | cudaHostAllocPortable) != cudaSuccess) {
+				/* cudaHostAllocWriteCombined | /**/ cudaHostAllocMapped | cudaHostAllocPortable) != cudaSuccess) {
 				data = NULL;
 				flags |= CAN_NOT_USE_DEVICE;
 				return setResolution(width, height);
@@ -236,6 +236,8 @@ inline bool TypeTools<MemoryMappedFrameBuffer>::prepareForCpyLoad(
 		hosClone[i].allocSize = source[i].allocSize;
 		hosClone[i].sizeX = source[i].sizeX;
 		hosClone[i].sizeY = source[i].sizeY;
+		hosClone[i].blockW = source[i].blockW;
+		hosClone[i].blockH = source[i].blockH;
 		hosClone[i].flags = source[i].flags;
 	}
 	return true;
