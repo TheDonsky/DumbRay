@@ -2,6 +2,7 @@
 #include"../../Renderers/Renderer/Renderer.cuh"
 #include"../../../Namespaces/Windows/Windows.h"
 #include"../../../Namespaces/Device/Device.cuh"
+#include"../../Primitives/Compound/Pair/Pair.cuh"
 #include<mutex>
 
 
@@ -114,26 +115,36 @@ namespace FrameBufferTest {
 					std::cout << "GPU " << info.device << ": BUFFER IS NULL" << std::endl;
 					return;
 				}
+				FrameBuffer *cpuBuffer = back->cpuHandle();
 
 				int iter = iteration();
 
-				if (iter > 1) back->cpuHandle()->updateDeviceInstance(buffer);
+				if (iter > 1) cpuBuffer->updateDeviceInstance(buffer);
 
 				cudaStream_t &stream = (*((cudaStream_t*)info.data));
 
 				int start, end, blockSize, devBlockCount;
-				blockSize = back->cpuHandle()->getBlockSize();
+				blockSize = cpuBuffer->getBlockSize();
 				
-				devBlockCount = ((*((int*)info.sharedData)) * 4);
+				devBlockCount = ((*((int*)info.sharedData)) * 16);
 				
+				Stacktor<Pair<int, int>, 512> renderedBlocks;
+
 				while (blockBank.getBlocks(devBlockCount, &start, &end)) {
 					renderBlocks << <(end - start), blockSize, 0, stream >> > (start, buffer, iter);
+					Pair<int, int> &lastBlock = renderedBlocks.top();
+					if (lastBlock.second == start) lastBlock.second = end;
+					else if (lastBlock.first == end) lastBlock.first = start;
+					else renderedBlocks.push(Pair<int, int>(start, end));
 				}
 				
 				if (cudaStreamSynchronize(stream) != cudaSuccess)
 					std::cout << "GPU " << info.device << " FAILED TO SYNCHRONIZE THE THREAD..." << std::endl;
 
-				// TODO: Synch cpu instance...
+				for (int i = 0; i < renderedBlocks.size(); i++) {
+					const Pair<int, int> &block = renderedBlocks[i];
+					cpuBuffer->updateBlocks(block.first, block.second, buffer);
+				}
 			}
 			virtual bool completeIteration() {
 				cudaDeviceSynchronize();
