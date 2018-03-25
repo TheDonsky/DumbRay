@@ -11,6 +11,7 @@
 #include"DataStructures/Objects/Scene/SceneHandler/SceneHandler.test.cuh"
 #include"DataStructures/Renderers/Renderer/Renderer.test.cuh"
 #include"DataStructures/Screen/FrameBuffer/MemoryMappedFrameBuffer/MemoryMappedFrameBuffer.test.cuh"
+#include"DataStructures/Screen/FrameBuffer/FrameBuffer.test.cuh"
 #include"Namespaces/Device/Device.cuh"
 #include <map>
 #include <string>
@@ -367,13 +368,14 @@ namespace {
 }
 
 int main() {
-	Transform trans(Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(1, 1, 1));
-	std::cout << "(-1, 1, 1)" << trans.ray(Vector3(-1, 1, 1)) << std::endl;
-	std::cout << "(1, 1, 1)" << trans.ray(Vector3(1, 1, 1)) << std::endl;
+	//Transform trans(Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(1, 1, 1));
+	//std::cout << "(-1, 1, 1)" << trans.ray(Vector3(-1, 1, 1)) << std::endl;
+	//std::cout << "(1, 1, 1)" << trans.ray(Vector3(1, 1, 1)) << std::endl;
 
-	testCheckerboard();
+	//testCheckerboard();
 	std::cout << std::fixed << std::setprecision(4);
 	//testBackwardRenderer();
+	FrameBufferTest::testPerformance<MemoryMappedFrameBuffer>(FrameBufferTest::USE_CPU | FrameBufferTest::USE_GPU);
 	test();
 	return 0;
 }
