@@ -215,7 +215,7 @@ inline bool FrameBuffer::updateDeviceInstance(void *deviceObject)const {
 	char cloneMemory[sizeof(FrameBuffer)];
 	FrameBuffer *clone = ((FrameBuffer*)cloneMemory);
 	cudaStream_t stream; if (cudaStreamCreate(&stream) != cudaSuccess) return false;
-	if (cudaMemcpyAsync(&clone, deviceObject, sizeof(FrameBuffer), cudaMemcpyDeviceToHost, stream) != cudaSuccess) {
+	if (cudaMemcpyAsync(clone, deviceObject, sizeof(FrameBuffer), cudaMemcpyDeviceToHost, stream) != cudaSuccess) {
 		cudaStreamDestroy(stream); return false;
 	}
 	else if (cudaStreamDestroy(stream) != cudaSuccess) return false;

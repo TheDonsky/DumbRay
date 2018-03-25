@@ -134,7 +134,7 @@ public:
 
 
 	private:
-		int left;
+		volatile int left;
 		std::mutex lock;
 	};
 };
