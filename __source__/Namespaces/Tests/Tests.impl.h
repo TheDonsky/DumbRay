@@ -12,11 +12,11 @@ namespace Tests {
 		logLineBold();
 		std::cout << "Time: " << ((double)time) / CLOCKS_PER_SEC << std::endl << std::endl;
 	}
-	template<typename Function>
-	inline static void runTest(Function&& function, std::string header) {
+	template<typename Function, typename... Args>
+	inline static void runTest(Function&& function, std::string header, Args... args) {
 		logIntro();
 		std::cout << header << std::endl;
-		function();
+		function(args...);
 		logOutro();
 	}
 
