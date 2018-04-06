@@ -3,6 +3,10 @@
 
 __device__ __host__ inline BlockBasedFrameBuffer::BlockBasedFrameBuffer(int blockWidth, int blockHeight) {
 	// __TODO__...
+	imageW = imageH = 0;
+	blockW = blockWidth;
+	blockH = blockHeight;
+	blockSize = (blockW * blockH);
 }
 __device__ __host__ inline BlockBasedFrameBuffer::~BlockBasedFrameBuffer() {
 	// __TODO__...
@@ -38,6 +42,8 @@ __device__ __host__ inline void BlockBasedFrameBuffer::swapWith(const BlockBased
 
 __device__ __host__ inline void BlockBasedFrameBuffer::getSize(int *width, int *height)const {
 	// __TODO__...
+	(*width) = imageW;
+	(*height) = imageH;
 }
 __device__ __host__ inline Color BlockBasedFrameBuffer::getColor(int x, int y)const {
 	// __TODO__...
@@ -52,11 +58,11 @@ __device__ __host__ inline void BlockBasedFrameBuffer::blendColor(int x, int y, 
 
 __device__ __host__ inline int BlockBasedFrameBuffer::getBlockSize()const {
 	// __TODO__...
-	return 0;
+	return blockSize;
 }
 __device__ __host__ inline int BlockBasedFrameBuffer::getBlockCount()const {
 	// __TODO__...
-	return 0;
+	return blockCount;
 }
 __device__ __host__ inline bool BlockBasedFrameBuffer::blockPixelLocation(int blockId, int pixelId, int *x, int *y)const {
 	// __TODO__...
@@ -77,6 +83,9 @@ __device__ __host__ inline bool BlockBasedFrameBuffer::blendBlockPixelColor(int 
 
 inline bool BlockBasedFrameBuffer::setResolution(int width, int height) {
 	// __TODO__...
+	imageW = width;
+	imageH = height;
+	blockCount = (((imageW + blockW - 1) / blockW) * ((imageH + blockH - 1) / blockH));
 	return true;
 }
 inline bool BlockBasedFrameBuffer::requiresBlockUpdate() {
@@ -91,4 +100,45 @@ inline bool BlockBasedFrameBuffer::updateBlocks(int startBlock, int endBlock, co
 	// __TODO__...
 	return true;
 }
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+/** Friends: **/
+template<>
+__device__ __host__ inline void TypeTools<BlockBasedFrameBuffer>::init(BlockBasedFrameBuffer &m) { new(&m) BlockBasedFrameBuffer(); }
+template<>
+__device__ __host__ inline void TypeTools<BlockBasedFrameBuffer>::dispose(BlockBasedFrameBuffer &m) { m.~BlockBasedFrameBuffer(); }
+template<>
+__device__ __host__ inline void TypeTools<BlockBasedFrameBuffer>::swap(BlockBasedFrameBuffer &a, BlockBasedFrameBuffer &b) { a.swapWith(b); }
+template<>
+__device__ __host__ inline void TypeTools<BlockBasedFrameBuffer>::transfer( BlockBasedFrameBuffer &src, BlockBasedFrameBuffer &dst) { dst.stealFrom(src); }
+
+template<>
+inline bool TypeTools<BlockBasedFrameBuffer>::prepareForCpyLoad(
+	const BlockBasedFrameBuffer *source, BlockBasedFrameBuffer *hosClone,
+	BlockBasedFrameBuffer *, int count) {
+	int i = 0;
+	for (i = 0; i < count; i++) {
+		// __TODO__....
+	}
+	return true;
+}
+template<>
+inline void TypeTools<BlockBasedFrameBuffer>::undoCpyLoadPreparations(
+	const BlockBasedFrameBuffer *, BlockBasedFrameBuffer *, BlockBasedFrameBuffer *, int) { 
+	// __TODO__...
+}
+template<>
+inline bool TypeTools<BlockBasedFrameBuffer>::devArrayNeedsToBeDisposed() { return true; }
+template<>
+inline bool TypeTools<BlockBasedFrameBuffer>::disposeDevArray(BlockBasedFrameBuffer *, int) {
+	// __TODO__...
+	return true;
+}
+
 

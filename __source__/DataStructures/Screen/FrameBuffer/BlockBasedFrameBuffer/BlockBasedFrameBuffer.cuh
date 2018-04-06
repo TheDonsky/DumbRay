@@ -45,7 +45,9 @@ public:
 
 
 private:
-
+	int imageW, imageH;
+	int blockW, blockH;
+	int blockCount, blockSize;
 
 
 	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(BlockBasedFrameBuffer);

@@ -13,11 +13,14 @@ namespace FrameBufferTest {
 		void frameBufferWindowThread(
 			const FrameBufferManager **buffer, Windows::Window *window, 
 			std::mutex *bufferLock, std::condition_variable *bufferLockCond,
-			volatile Count *displayedFrameCount) {
+			volatile Count *displayedFrameCount, volatile bool *shouldStop, volatile bool *stopped) {
 			while (true) {
 				std::unique_lock<std::mutex> uniqueLock(*bufferLock);
 				bufferLockCond->wait(uniqueLock);
-				if (window->dead()) break;
+				if (*shouldStop) {
+					(*stopped) = true;
+					break;
+				}
 				window->updateFromHost(*(*buffer)->cpuHandle());
 				(*displayedFrameCount)++;
 			}
@@ -78,10 +81,14 @@ namespace FrameBufferTest {
 				if (info.isGPU()) {
 					FrameBuffer::DeviceBlockManager *manager = new FrameBuffer::DeviceBlockManager(
 						info.device, info.getSharedData<FrameBuffer::DeviceBlockManager::DeviceFrameSyncher>(), 
-						FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET, 8, 0);
-					if (manager == NULL) return false;
+						FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET, 32, 0);
+					if (manager == NULL) {
+						std::cout << "Failed to create a DeviceBlockManager" << std::endl;
+						return false;
+					}
 					if (manager->errors() != 0) {
 						delete manager;
+						std::cout << "DeviceBlockManager has some errors" << std::endl;
 						return false;
 					}
 					data = manager;
@@ -171,19 +178,36 @@ namespace FrameBufferTest {
 				{
 					volatile Count renderedFrames = 0, displayedFrames = 0;
 					Count lastRenderedFrames = 0, lastDisplayedFrames = 0;
-					
+
+					volatile bool shouldStop = false;
+					volatile bool stopped = false;
+
 					windowThread = std::thread(
 						frameBufferWindowThread,
 						(const FrameBufferManager**)(&front), (Windows::Window*)(&window),
 						(std::mutex*)(&swapLock), (std::condition_variable*)(&swapCond),
-						(volatile Count*)(&displayedFrames));
+						(volatile Count*)(&displayedFrames), &shouldStop, &stopped);
 
 					clock_t lastTime = clock();
 
-					while (!window.dead()) {
+					while (true) {
+						{
+							if (window.dead() || shouldStop) {
+								while (!stopped) {
+									std::cout << "Joinig window thread..." << std::endl;
+									swapLock.lock();
+									shouldStop = true;
+									Count lastDisplayed = displayedFrames;
+									swapCond.notify_all();
+									swapLock.unlock();
+									while (!stopped) if (lastDisplayed != displayedFrames) break;
+								}
+								break;
+							}
+						}
 						{
 							int windowWidth, windowHeight;
-							if (!window.getDimensions(windowWidth, windowHeight)) break;
+							if (!window.getDimensions(windowWidth, windowHeight)) continue;
 							int imageWidth, imageHeight;
 							back->cpuHandle()->getSize(&imageWidth, &imageHeight);
 							if (imageWidth != windowWidth || imageHeight != windowHeight) {
@@ -196,7 +220,8 @@ namespace FrameBufferTest {
 							if (renderSingleIteration) resetIterations();
 							if (!iterate()) {
 								std::cout << "Error: iterate() failed..." << std::endl;
-								break;
+								shouldStop = true;
+								continue;
 							}
 							renderedFrames++;
 							maybeSwapBuffers();
@@ -216,11 +241,9 @@ namespace FrameBufferTest {
 							}
 						}
 					}
+					std::cout << "Waiting for window thread..." << std::endl;
+					windowThread.join();
 				}
-				swapLock.lock();
-				swapCond.notify_all();
-				swapLock.unlock();
-				windowThread.join();
 			}
 		};
 	}
