@@ -1,11 +1,14 @@
 #pragma once
 #include"FrameBufferManager/FrameBufferManager.cuh"
+#include "../../../Namespaces/Tests/Tests.h"
 
 
 namespace FrameBufferTest {
 	enum RenderSettings {
 		USE_GPU = 1,
-		USE_CPU = 2
+		USE_CPU = 2,
+		UPDATE_SCREEN_FROM_DEVICE = 4,
+		TEST_FOR_SINGLE_ITERATION = 8
 	};
 	typedef unsigned int Flags;
 	
@@ -19,5 +22,38 @@ namespace FrameBufferTest {
 		front.cpuHandle()->use<Type>(args...);
 		back.cpuHandle()->use<Type>(args...);
 		Private::testPerformance(front, back, settings);
+	}
+
+	template<typename Type, typename... Args>
+	inline static void fullPerformanceTest(const std::string &typeName) {
+		Tests::runTest(
+			testPerformance<Type>,
+			"Testing " + typeName + " (GPU & CPU; turn off the window to quit)",
+			USE_CPU | USE_GPU);
+
+		Tests::runTest(
+			testPerformance<Type>,
+			"Testing " + typeName + " (CPU; turn off the window to quit)",
+			USE_CPU);
+
+		Tests::runTest(
+			testPerformance<Type>,
+			"Testing " + typeName + " (GPU; turn off the window to quit)",
+			USE_GPU);
+
+		Tests::runTest(
+			testPerformance<Type>,
+			"Testing " + typeName + " (GPU & CPU single iteration; turn off the window to quit)",
+			USE_CPU | USE_GPU | TEST_FOR_SINGLE_ITERATION);
+
+		Tests::runTest(
+			testPerformance<Type>,
+			"Testing " + typeName + " (CPU single iteration; turn off the window to quit)",
+			USE_CPU | TEST_FOR_SINGLE_ITERATION);
+
+		Tests::runTest(
+			testPerformance<Type>,
+			"Testing " + typeName + " (GPU single iteration; turn off the window to quit)",
+			USE_GPU | TEST_FOR_SINGLE_ITERATION);
 	}
 }

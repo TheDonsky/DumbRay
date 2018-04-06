@@ -35,18 +35,19 @@ namespace FrameBufferTest {
 			}
 		}
 
-		__device__ __host__ inline void colorPixel(int blockId, int pixelId, FrameBuffer *buffer, int iteration) {
+		__device__ __host__ inline void colorPixel(int blockId, int blockSize, int pixelId, FrameBuffer *buffer, int iteration) {
 #ifdef __CUDA_ARCH__
 			Color color(0, 1, 0, 1);
 #else
 			Color color(0, 0, 1, 1);
 #endif
+			color *= (((float)pixelId) / ((float)blockSize));
 			if (iteration > 1) buffer->blendBlockPixelColor(blockId, pixelId, color, (1.0f / ((float)iteration)));
 			else buffer->setBlockPixelColor(blockId, pixelId, color);
 		}
 
 		__global__ static void renderBlocks(int startBlock, FrameBuffer *buffer, int iteration) {
-			colorPixel(startBlock + blockIdx.x, threadIdx.x, buffer, iteration);
+			colorPixel(startBlock + blockIdx.x, blockDim.x, threadIdx.x, buffer, iteration);
 		}
 
 		static int multiprocessorCount() { return Device::multiprocessorCount(); }
@@ -59,13 +60,13 @@ namespace FrameBufferTest {
 			void maybeSwapBuffers() { trySwapBuffers(&front, &back, &swapLock, &swapCond); }
 
 			FrameBuffer::BlockBank blockBank;
+			bool updateScreenFromDevice, renderSingleIteration;
 
 
 		protected:
 			virtual bool setupSharedData(const Info &info, void *& sharedData) {
 				if (info.isGPU()) {
-					if (cudaSetDevice(info.device) != cudaSuccess) return false;
-					sharedData = ((void*)new int(multiprocessorCount()));
+					sharedData = new FrameBuffer::DeviceBlockManager::DeviceFrameSyncher();
 					return (sharedData != NULL);
 				}
 				else {
@@ -75,16 +76,15 @@ namespace FrameBufferTest {
 			}
 			virtual bool setupData(const Info &info, void *& data) {
 				if (info.isGPU()) {
-					if (cudaSetDevice(info.device) != cudaSuccess) return false;
-					cudaStream_t *stream = new cudaStream_t();
-					if (stream == NULL) return false;
-					if (cudaStreamCreate(stream) != cudaSuccess) {
-						delete stream;
-						data = NULL;
-						std::cout << "GPU " << info.device << " FAILED TO ALLOCATE STREAM..." << std::endl;
+					FrameBuffer::DeviceBlockManager *manager = new FrameBuffer::DeviceBlockManager(
+						info.device, info.getSharedData<FrameBuffer::DeviceBlockManager::DeviceFrameSyncher>(), 
+						FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET, 8, 0);
+					if (manager == NULL) return false;
+					if (manager->errors() != 0) {
+						delete manager;
 						return false;
 					}
-					data = (void*)stream;
+					data = manager;
 					return true;
 				}
 				else {
@@ -107,69 +107,57 @@ namespace FrameBufferTest {
 				blockSize = buffer->getBlockSize();
 				while (blockBank.getBlocks(1, &start, &end))
 					for (int i = 0; i < blockSize; i++)
-						colorPixel(start, i, buffer, iter);
+						colorPixel(start, blockSize, i, buffer, iter);
 			}
+			
 			virtual void iterateGPU(const Info &info) {
 				FrameBuffer *buffer = back->gpuHandle(info.device);
-				if (buffer == NULL) {
-					std::cout << "GPU " << info.device << ": BUFFER IS NULL" << std::endl;
-					return;
-				}
+				if (buffer == NULL) { std::cout << "GPU " << info.device << ": BUFFER IS NULL" << std::endl; return; }
 				FrameBuffer *cpuBuffer = back->cpuHandle();
 
-				int iter = iteration();
+				FrameBuffer::DeviceBlockManager *blockManager = info.getData<FrameBuffer::DeviceBlockManager>();
+				if (!blockManager->setBuffers(cpuBuffer, buffer, &blockBank)) {
+					std::cout << "GPU " << info.device << ": FAILED TO SET BUFFER" << std::endl; return; }
 
-				if (iter > 1) cpuBuffer->updateDeviceInstance(buffer);
+				if (iteration() > 1) if (!blockManager->sunchDeviceInstance(info.manageSharedData, info.numDeviceThreads - 1)) {
+					std::cout << "GPU " << info.device << ": FAILED TO SYNCH DEVICE BUFFER" << std::endl; return; }
 
-				cudaStream_t &stream = (*((cudaStream_t*)info.data));
-
-				int start, end, blockSize, devBlockCount;
-				blockSize = cpuBuffer->getBlockSize();
+				int start = 0, end = 0, blockSize = cpuBuffer->getBlockSize();
+				while (blockManager->getBlocks(start, end)) 
+					renderBlocks<<<(end - start), blockSize, 0, blockManager->getRenderStream()>>>(start, buffer, iteration());
 				
-				devBlockCount = ((*((int*)info.sharedData)) * 16);
-				
-				Stacktor<Pair<int, int>, 512> renderedBlocks;
-
-				while (blockBank.getBlocks(devBlockCount, &start, &end)) {
-					renderBlocks << <(end - start), blockSize, 0, stream >> > (start, buffer, iter);
-					Pair<int, int> &lastBlock = renderedBlocks.top();
-					if (lastBlock.second == start) lastBlock.second = end;
-					else if (lastBlock.first == end) lastBlock.first = start;
-					else renderedBlocks.push(Pair<int, int>(start, end));
-				}
-				
-				if (cudaStreamSynchronize(stream) != cudaSuccess)
-					std::cout << "GPU " << info.device << " FAILED TO SYNCHRONIZE THE THREAD..." << std::endl;
-
-				for (int i = 0; i < renderedBlocks.size(); i++) {
-					const Pair<int, int> &block = renderedBlocks[i];
-					cpuBuffer->updateBlocks(block.first, block.second, buffer);
-				}
+				if (blockManager->errors() != 0) { std::cout << "GPU " << info.device << ": ERROR(S) OCCURED" << std::endl; return; }
+				if (!blockManager->synchBlockSynchStream()) { std::cout << "GPU " << info.device << ": BLOCK SYNCH FAILED" << std::endl; return; }
 			}
+
 			virtual bool completeIteration() {
 				cudaDeviceSynchronize();
 				return true;
 			}
 			virtual bool clearData(const Info &info, void *& data) {
 				if (data != NULL) {
-					cudaStream_t *stream = ((cudaStream_t*)data);
-					bool success = (cudaStreamDestroy(*stream) == cudaSuccess);
-					delete stream;
+					FrameBuffer::DeviceBlockManager *manager = ((FrameBuffer::DeviceBlockManager*)data);
+					delete manager;
 					data = NULL;
-					return success;
+					return true;
 				}
 				return true;
 			}
 			virtual bool clearSharedData(const Info &info, void *& sharedData) {
 				if (sharedData != NULL) {
-					delete ((int*)sharedData);
+					delete ((FrameBuffer::DeviceBlockManager::DeviceFrameSyncher*)sharedData);
 					sharedData = NULL;
 				}
 				return true;
 			}
 
 		public:
-			PerformanceTestRender(const Renderer::ThreadConfiguration &configuration) : Renderer(configuration) {}
+			PerformanceTestRender(
+				const Renderer::ThreadConfiguration &configuration, 
+				bool deviceWindow, bool singleIteration) : Renderer(configuration) {
+				updateScreenFromDevice = deviceWindow;
+				renderSingleIteration = singleIteration;
+			}
 
 			PerformanceTestRender& useBuffers(FrameBufferManager &frontBuffer, FrameBufferManager &backBuffer) {
 				front = &frontBuffer;
@@ -205,7 +193,7 @@ namespace FrameBufferTest {
 							}
 						}
 						{
-							//resetIterations();
+							if (renderSingleIteration) resetIterations();
 							if (!iterate()) {
 								std::cout << "Error: iterate() failed..." << std::endl;
 								break;
@@ -242,7 +230,10 @@ namespace FrameBufferTest {
 			Renderer::ThreadConfiguration configuration;
 			configuration.configureCPU(((flags & USE_CPU) != 0) ? Renderer::ThreadConfiguration::ALL : Renderer::ThreadConfiguration::NONE);
 			configuration.configureEveryGPU((flags & USE_GPU) ? 1 : 0);
-			PerformanceTestRender(configuration).useBuffers(front, back).test();
+			PerformanceTestRender(
+				configuration, 
+				(flags & UPDATE_SCREEN_FROM_DEVICE) != 0, 
+				(flags & TEST_FOR_SINGLE_ITERATION) != 0).useBuffers(front, back).test();
 		}
 	}
 }
