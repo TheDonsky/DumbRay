@@ -7,14 +7,14 @@
 Semaphore::Semaphore(unsigned int count) {
 	value = count;
 }
-void Semaphore::wait() {
+void Semaphore::wait(int count) {
 	std::unique_lock<std::mutex> mutexLock(lock);
-	while (value <= 0) condition.wait(mutexLock);
-	value--;
+	while (value < count) condition.wait(mutexLock);
+	value -= count;
 }
-void Semaphore::post() {
+void Semaphore::post(int count) {
 	std::lock_guard<std::mutex> guard(lock);
-	value++;
+	value += count;
 	condition.notify_one();
 }
 void Semaphore::set(unsigned int count) {
