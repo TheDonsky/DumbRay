@@ -146,6 +146,30 @@ inline bool BlockBasedFrameBuffer::updateBlocks(int startBlock, int endBlock, co
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
+
+template<size_t CacheSize>
+inline BlockBasedFrameBuffer::ObjectCache<CacheSize>::Entry::Entry() { set(NULL); }
+template<size_t CacheSize>
+inline void BlockBasedFrameBuffer::ObjectCache<CacheSize>::Entry::set(const BlockBasedFrameBuffer *devObj) {
+	// __TODO__...;
+}
+template<size_t CacheSize>
+inline void BlockBasedFrameBuffer::ObjectCache<CacheSize>::clean() {
+	for (size_t i = 0; i < CacheSize; i++) entries[i].set(0);
+}
+template<size_t CacheSize>
+inline BlockBasedFrameBuffer::BufferData* BlockBasedFrameBuffer::ObjectCache<CacheSize>::hostClone(const BlockBasedFrameBuffer *devObj) {
+	// __TODO__...;
+	return NULL;
+}
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
 /** Friends: **/
 template<>
 __device__ __host__ inline void TypeTools<BlockBasedFrameBuffer>::init(BlockBasedFrameBuffer &m) { new(&m) BlockBasedFrameBuffer(); }
