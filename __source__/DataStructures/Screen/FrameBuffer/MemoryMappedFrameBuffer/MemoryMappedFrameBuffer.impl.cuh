@@ -100,7 +100,7 @@ inline bool MemoryMappedFrameBuffer::setResolution(int width, int height) {
 		else {
 			if (data != NULL) cudaFreeHost(data);
 			if (cudaHostAlloc(&data, sizeof(Color) * needed, 
-				cudaHostAllocWriteCombined | /**/ cudaHostAllocMapped | cudaHostAllocPortable) != cudaSuccess) {
+				/* cudaHostAllocWriteCombined | /**/ cudaHostAllocMapped | cudaHostAllocPortable) != cudaSuccess) {
 				data = NULL;
 				flags |= CAN_NOT_USE_DEVICE;
 				return setResolution(width, height);
@@ -113,8 +113,8 @@ inline bool MemoryMappedFrameBuffer::setResolution(int width, int height) {
 	return true;
 }
 inline bool MemoryMappedFrameBuffer::requiresBlockUpdate() { return false; }
-inline bool MemoryMappedFrameBuffer::updateDeviceInstance(MemoryMappedFrameBuffer *deviceObject)const { return (deviceObject != NULL); }
-inline bool MemoryMappedFrameBuffer::updateBlocks(int startBlock, int endBlock, const MemoryMappedFrameBuffer *deviceObject) {
+inline bool MemoryMappedFrameBuffer::updateDeviceInstance(MemoryMappedFrameBuffer *deviceObject, cudaStream_t *)const { return (deviceObject != NULL); }
+inline bool MemoryMappedFrameBuffer::updateBlocks(int startBlock, int endBlock, const MemoryMappedFrameBuffer *deviceObject, cudaStream_t *) {
 	return ((startBlock >= 0) && (endBlock >= 0) && (deviceObject != NULL));
 }
 

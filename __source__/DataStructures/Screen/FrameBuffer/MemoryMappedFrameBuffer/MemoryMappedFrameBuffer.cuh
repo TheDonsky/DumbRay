@@ -26,8 +26,8 @@ public:
 
 	inline bool setResolution(int width, int height);
 	inline static bool requiresBlockUpdate();
-	inline bool updateDeviceInstance(MemoryMappedFrameBuffer *deviceObject)const;
-	inline bool updateBlocks(int startBlock, int endBlock, const MemoryMappedFrameBuffer *deviceObject);
+	inline bool updateDeviceInstance(MemoryMappedFrameBuffer *deviceObject, cudaStream_t *stream)const;
+	inline bool updateBlocks(int startBlock, int endBlock, const MemoryMappedFrameBuffer *deviceObject, cudaStream_t *stream);
 	
 	__device__ __host__ inline void getSize(int *width, int *height)const;
 	__device__ __host__ inline Color getColor(int x, int y)const;
