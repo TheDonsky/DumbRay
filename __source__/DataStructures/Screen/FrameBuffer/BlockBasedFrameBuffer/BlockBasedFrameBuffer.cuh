@@ -1,5 +1,7 @@
 #pragma once
 #include"../../../Primitives/Pure/Color/Color.h"
+#include"../../../Primitives/Compound/Pair/Pair.cuh"
+#include"../../../GeneralPurpose/Stacktor/Stacktor.cuh"
 #include"../../../GeneralPurpose/TypeTools/TypeTools.cuh"
 
 
@@ -11,16 +13,17 @@ class BlockBasedFrameBuffer {
 public:
 	__device__ __host__ inline BlockBasedFrameBuffer(int blockWidth = 16, int blockHeight = 16);
 	__device__ __host__ inline ~BlockBasedFrameBuffer();
+	__device__ __host__ inline void clear();
 
 	inline BlockBasedFrameBuffer(const BlockBasedFrameBuffer &other);
 	inline BlockBasedFrameBuffer& operator=(const BlockBasedFrameBuffer &other);
-	inline bool copyFrom(const BlockBasedFrameBuffer &other);
+	inline void copyFrom(const BlockBasedFrameBuffer &other);
 
 	__device__ __host__ inline BlockBasedFrameBuffer(BlockBasedFrameBuffer &&other);
 	__device__ __host__ inline BlockBasedFrameBuffer& operator=(BlockBasedFrameBuffer &&other);
-	__device__ __host__ inline void stealFrom(const BlockBasedFrameBuffer &other);
+	__device__ __host__ inline void stealFrom(BlockBasedFrameBuffer &other);
 
-	__device__ __host__ inline void swapWith(const BlockBasedFrameBuffer &other);
+	__device__ __host__ inline void swapWith(BlockBasedFrameBuffer &other);
 
 
 	__device__ __host__ inline void getSize(int *width, int *height)const;
@@ -45,9 +48,31 @@ public:
 
 
 private:
-	int imageW, imageH;
-	int blockW, blockH;
-	int blockCount, blockSize;
+	struct BufferData {
+		int blockW, blockH, blockSize;
+
+		int imageW, imageH;
+		int blockCount, allocCount;
+		Color *data;
+	};
+	BufferData buffer;
+
+	template<size_t CacheSize>
+	struct ObjectCache {
+		struct Entry {
+			const BlockBasedFrameBuffer *deviceObject;
+			char hostClone[sizeof(BufferData)];
+
+			inline Entry();
+			inline void set(const BlockBasedFrameBuffer *devObj);
+		};
+		Entry entries[CacheSize];
+
+		inline void clean();
+		inline BufferData* hostClone(const BlockBasedFrameBuffer *devObj);
+	};
+	typedef ObjectCache<8> DeviceObjectCache;
+	mutable DeviceObjectCache *deviceObjectCache;
 
 
 	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(BlockBasedFrameBuffer);
