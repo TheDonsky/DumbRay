@@ -11,6 +11,7 @@
 #include"DataStructures/Objects/Scene/SceneHandler/SceneHandler.test.cuh"
 #include"DataStructures/Renderers/Renderer/Renderer.test.cuh"
 #include"DataStructures/Screen/FrameBuffer/MemoryMappedFrameBuffer/MemoryMappedFrameBuffer.test.cuh"
+#include"DataStructures/Screen/FrameBuffer/BlockBasedFrameBuffer/BlockBasedFrameBuffer.test.cuh"
 #include"DataStructures/Screen/FrameBuffer/FrameBuffer.test.cuh"
 #include"Namespaces/Device/Device.cuh"
 #include <map>
@@ -47,6 +48,7 @@ namespace {
 		tests["stacktor"] = { "Short for 'stacktor_full'", StacktorTest::test };
 		tests["int_map"] = { "Basic tests for IntMap", IntMapTest::test };
 		tests["mmaped_frame_buffer"] = { "Basic test for MemoryMappedFrameBuffer", MemoryMappedFrameBufferTest::test };
+		tests["block_frame_buffer"] = { "Basic test for BlockBasedFrameBuffer", BlockBasedFrameBufferTest::test };
 		std::cout << "___________________________________________________________________" << std::endl;
 		std::cout << "WELCOME TO DumbRay TESTING MODULE" << std::endl << "(enter ? for further instructions or any test to run)" << std::endl;
 		while (true) {
@@ -375,7 +377,6 @@ int main() {
 	//testCheckerboard();
 	std::cout << std::fixed << std::setprecision(4);
 	//testBackwardRenderer();
-	FrameBufferTest::testPerformance<MemoryMappedFrameBuffer>(FrameBufferTest::USE_CPU | FrameBufferTest::USE_GPU);
 	test();
 	return 0;
 }
