@@ -53,10 +53,12 @@ namespace FrameBufferTest {
 			colorPixel(startBlock + blockIdx.x, blockDim.x, threadIdx.x, buffer, iteration);
 		}
 
-		static int multiprocessorCount() { return Device::multiprocessorCount(); }
-
 		class PerformanceTestRender : public Renderer {
 		private:
+			int synchLockCount;
+			int renderingDeviceCount;
+			Semaphore *synchLocks;
+
 			FrameBufferManager *front, *back;
 			std::mutex swapLock;
 			std::condition_variable swapCond;
@@ -81,7 +83,7 @@ namespace FrameBufferTest {
 				if (info.isGPU()) {
 					FrameBuffer::DeviceBlockManager *manager = new FrameBuffer::DeviceBlockManager(
 						info.device, info.getSharedData<FrameBuffer::DeviceBlockManager::DeviceFrameSyncher>(), 
-						FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET, 32, 0);
+						FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET, 8, 0);
 					if (manager == NULL) {
 						std::cout << "Failed to create a DeviceBlockManager" << std::endl;
 						return false;
@@ -111,8 +113,9 @@ namespace FrameBufferTest {
 				}
 				int start, end, blockSize, iter;
 				iter = iteration();
+				if (iter > 1) synchLocks[info.deviceThreadId].wait(renderingDeviceCount);
 				blockSize = buffer->getBlockSize();
-				while (blockBank.getBlocks(16, &start, &end))
+				while (blockBank.getBlocks(4, &start, &end))
 					for (int block = start; block < end; block++)
 						for (int i = 0; i < blockSize; i++)
 							colorPixel(block, blockSize, i, buffer, iter);
@@ -127,11 +130,14 @@ namespace FrameBufferTest {
 				if (!blockManager->setBuffers(cpuBuffer, buffer, &blockBank)) {
 					std::cout << "GPU " << info.device << ": FAILED TO SET BUFFER" << std::endl; return; }
 
-				if (iteration() > 1) if (!blockManager->sunchDeviceInstance(info.manageSharedData, info.numDeviceThreads - 1)) {
-					std::cout << "GPU " << info.device << ": FAILED TO SYNCH DEVICE BUFFER" << std::endl; return; }
+				if ((iteration() > 1) && ((synchLockCount > 0) || (renderingDeviceCount > 1))) {
+					if (!blockManager->sunchDeviceInstance(info.manageSharedData, info.numDeviceThreads - 1)) {
+						std::cout << "GPU " << info.device << ": FAILED TO SYNCH DEVICE BUFFER" << std::endl; return; }
+					if (info.manageSharedData) for (int i = 0; i < synchLockCount; i++) synchLocks[i].post();
+				}
 
 				int start = 0, end = 0, blockSize = cpuBuffer->getBlockSize();
-				while (blockManager->getBlocks(start, end)) 
+				while (blockManager->getBlocks(start, end))
 					renderBlocks<<<(end - start), blockSize, 0, blockManager->getRenderStream()>>>(start, buffer, iteration());
 				
 				if (blockManager->errors() != 0) { std::cout << "GPU " << info.device << ": ERROR(S) OCCURED" << std::endl; return; }
@@ -165,6 +171,12 @@ namespace FrameBufferTest {
 				bool deviceWindow, bool singleIteration) : Renderer(configuration) {
 				updateScreenFromDevice = deviceWindow;
 				renderSingleIteration = singleIteration;
+				synchLockCount = threadConfiguration().numHostThreads();
+				renderingDeviceCount = threadConfiguration().numActiveDevices();
+				synchLocks = new Semaphore[synchLockCount];
+			}
+			~PerformanceTestRender() {
+				delete[] synchLocks;
 			}
 
 			PerformanceTestRender& useBuffers(FrameBufferManager &frontBuffer, FrameBufferManager &backBuffer) {

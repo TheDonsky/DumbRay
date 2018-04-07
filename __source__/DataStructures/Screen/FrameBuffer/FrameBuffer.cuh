@@ -5,6 +5,8 @@
 #include"../../../Namespaces/Device/Device.cuh"
 #include"../../GeneralPurpose/Semaphore/Semaphore.h"
 #include<mutex>
+#include<atomic>
+
 
 
 /** ########################################################################## **/
@@ -25,9 +27,9 @@ public:
 	__device__ __host__ inline int getBlockSize(const void *buffer)const;
 	__device__ __host__ inline int getBlockCount(const void *buffer)const;
 	__device__ __host__ inline bool blockPixelLocation(const void *buffer, int blockId, int pixelId, int *x, int *y)const;
-	__device__ __host__ inline bool getBlockPixelColor(const void *buffer, int blockId, int pixelId, Color *color)const;
-	__device__ __host__ inline bool setBlockPixelColor(void *buffer, int blockId, int pixelId, const Color &color)const;
-	__device__ __host__ inline bool blendBlockPixelColor(void *buffer, int blockId, int pixelId, const Color &color, float amount)const;
+	__device__ __host__ inline Color getBlockPixelColor(const void *buffer, int blockId, int pixelId)const;
+	__device__ __host__ inline void setBlockPixelColor(void *buffer, int blockId, int pixelId, const Color &color)const;
+	__device__ __host__ inline void blendBlockPixelColor(void *buffer, int blockId, int pixelId, const Color &color, float amount)const;
 
 
 	inline bool setResolution(void *buffer, int width, int height)const;
@@ -48,9 +50,9 @@ private:
 	int(*getBlockSizeFn)(const void *buffer);
 	int(*getBlockCountFn)(const void *buffer);
 	bool(*blockPixelLocationFn)(const void *buffer, int blockId, int pixelId, int *x, int *y);
-	bool(*getBlockPixelColorFn)(const void *buffer, int blockId, int pixelId, Color *color);
-	bool(*setBlockPixelColorFn)(void *buffer, int blockId, int pixelId, const Color &color);
-	bool(*blendBlockPixelColorFn)(void *buffer, int blockId, int pixelId, const Color &color, float amount);
+	Color(*getBlockPixelColorFn)(const void *buffer, int blockId, int pixelId);
+	void(*setBlockPixelColorFn)(void *buffer, int blockId, int pixelId, const Color &color);
+	void(*blendBlockPixelColorFn)(void *buffer, int blockId, int pixelId, const Color &color, float amount);
 
 	bool(*setResolutionFn)(void *buffer, int width, int height);
 	bool(*requiresBlockUpdateFn)();
@@ -73,11 +75,11 @@ private:
 	template<typename BufferType>
 	__device__ __host__ inline static bool blockPixelLocationGeneric(const void *buffer, int blockId, int pixelId, int *x, int *y);
 	template<typename BufferType>
-	__device__ __host__ inline static bool getBlockPixelColorGeneric(const void *buffer, int blockId, int pixelId, Color *color);
+	__device__ __host__ inline static Color getBlockPixelColorGeneric(const void *buffer, int blockId, int pixelId);
 	template<typename BufferType>
-	__device__ __host__ inline static bool setBlockPixelColorGeneric(void *buffer, int blockId, int pixelId, const Color &color);
+	__device__ __host__ inline static void setBlockPixelColorGeneric(void *buffer, int blockId, int pixelId, const Color &color);
 	template<typename BufferType>
-	__device__ __host__ inline static bool blendBlockPixelColorGeneric(void *buffer, int blockId, int pixelId, const Color &color, float amount);
+	__device__ __host__ inline static void blendBlockPixelColorGeneric(void *buffer, int blockId, int pixelId, const Color &color, float amount);
 
 	template<typename BufferType>
 	inline static bool setResolutionGeneric(void *buffer, int width, int height);
@@ -107,9 +109,9 @@ public:
 	__device__ __host__ inline int getBlockSize()const;
 	__device__ __host__ inline int getBlockCount()const;
 	__device__ __host__ inline bool blockPixelLocation(int blockId, int pixelId, int *x, int *y)const;
-	__device__ __host__ inline bool getBlockPixelColor(int blockId, int pixelId, Color *color)const;
-	__device__ __host__ inline bool setBlockPixelColor(int blockId, int pixelId, const Color &color);
-	__device__ __host__ inline bool blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount);
+	__device__ __host__ inline Color getBlockPixelColor(int blockId, int pixelId)const;
+	__device__ __host__ inline void setBlockPixelColor(int blockId, int pixelId, const Color &color);
+	__device__ __host__ inline void blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount);
 
 	inline bool setResolution(int width, int height);
 	inline static void *getDeviceObject(const FrameBuffer *deviceBuffer, cudaStream_t *stream = NULL);
@@ -138,8 +140,7 @@ public:
 
 
 	private:
-		volatile int left;
-		std::mutex lock;
+		std::atomic<int> left;
 	};
 
 
