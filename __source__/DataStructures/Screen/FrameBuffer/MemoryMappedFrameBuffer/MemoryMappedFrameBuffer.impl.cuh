@@ -177,23 +177,20 @@ __device__ __host__ inline bool MemoryMappedFrameBuffer::blockPixelLocation(int 
 	(*y) = posY;
 	return true;
 }
-__device__ __host__ inline bool MemoryMappedFrameBuffer::getBlockPixelColor(int blockId, int pixelId, Color *color)const {
+__device__ __host__ inline Color MemoryMappedFrameBuffer::getBlockPixelColor(int blockId, int pixelId)const {
 	int x, y;
-	if (!blockPixelLocation(blockId, pixelId, &x, &y)) return false;
-	(*color) = getColor(x, y);
-	return true;
+	if (!blockPixelLocation(blockId, pixelId, &x, &y)) return Color(0, 0, 0, 0);
+	return getColor(x, y);
 }
-__device__ __host__ inline bool MemoryMappedFrameBuffer::setBlockPixelColor(int blockId, int pixelId, const Color &color) {
+__device__ __host__ inline void MemoryMappedFrameBuffer::setBlockPixelColor(int blockId, int pixelId, const Color &color) {
 	int x, y;
-	if (!blockPixelLocation(blockId, pixelId, &x, &y)) return false;
+	if (!blockPixelLocation(blockId, pixelId, &x, &y)) return;
 	setColor(x, y, color);
-	return true;
 }
-__device__ __host__ inline bool MemoryMappedFrameBuffer::blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount) {
+__device__ __host__ inline void MemoryMappedFrameBuffer::blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount) {
 	int x, y;
-	if (!blockPixelLocation(blockId, pixelId, &x, &y)) return false;
+	if (!blockPixelLocation(blockId, pixelId, &x, &y)) return;
 	blendColor(x, y, color, amount);
-	return true;
 }
 
 

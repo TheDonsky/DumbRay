@@ -44,9 +44,9 @@ public:
 	__device__ __host__ inline int getBlockSize()const;
 	__device__ __host__ inline int getBlockCount()const;
 	__device__ __host__ inline bool blockPixelLocation(int blockId, int pixelId, int *x, int *y)const;
-	__device__ __host__ inline bool getBlockPixelColor(int blockId, int pixelId, Color *color)const;
-	__device__ __host__ inline bool setBlockPixelColor(int blockId, int pixelId, const Color &color);
-	__device__ __host__ inline bool blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount);
+	__device__ __host__ inline Color getBlockPixelColor(int blockId, int pixelId)const;
+	__device__ __host__ inline void setBlockPixelColor(int blockId, int pixelId, const Color &color);
+	__device__ __host__ inline void blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount);
 
 
 
