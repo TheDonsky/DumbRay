@@ -1,4 +1,4 @@
 #include "BlockBasedFrameBuffer.cuh"
 
-std::mutex BlockBasedFrameBuffer::deviceReferenceLock;
-BlockBasedFrameBuffer::DeviceReferenceMirrors BlockBasedFrameBuffer::deviceReferenceMirrors;
+std::mutex BlockBufferData::deviceReferenceLock;
+BlockBufferData::DeviceReferenceMirrors BlockBufferData::deviceReferenceMirrors;

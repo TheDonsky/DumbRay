@@ -2,5 +2,5 @@
 #include "../FrameBuffer.test.cuh"
 
 namespace BlockBasedFrameBufferTest {
-	void test() { FrameBufferTest::fullPerformanceTest<BlockBasedFrameBuffer>("BlockBasedFrameBuffer"); }
+	void test() { FrameBufferTest::fullPerformanceTest<BlockBuffer>("BlockBuffer"); }
 }

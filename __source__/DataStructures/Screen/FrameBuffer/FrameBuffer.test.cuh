@@ -43,17 +43,17 @@ namespace FrameBufferTest {
 
 		Tests::runTest(
 			testPerformance<Type>,
-			"Testing " + typeName + " (GPU & CPU single iteration; turn off the window to quit)",
+			"Testing " + typeName + " (GPU & CPU single iteration)",
 			USE_CPU | USE_GPU | TEST_FOR_SINGLE_ITERATION);
 
 		Tests::runTest(
 			testPerformance<Type>,
-			"Testing " + typeName + " (CPU single iteration; turn off the window to quit)",
+			"Testing " + typeName + " (CPU single iteration)",
 			USE_CPU | TEST_FOR_SINGLE_ITERATION);
 
 		Tests::runTest(
 			testPerformance<Type>,
-			"Testing " + typeName + " (GPU single iteration; turn off the window to quit)",
+			"Testing " + typeName + " (GPU single iteration)",
 			USE_GPU | TEST_FOR_SINGLE_ITERATION);
 	}
 }

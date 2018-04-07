@@ -197,7 +197,8 @@ namespace FrameBufferTest {
 
 					windowThread = std::thread(
 						frameBufferWindowThread,
-						(const FrameBufferManager**)(&front), (Windows::Window*)(&window),
+						(const FrameBufferManager**)(renderSingleIteration ? (&front) : (&back)),
+						(Windows::Window*)(&window),
 						(std::mutex*)(&swapLock), (std::condition_variable*)(&swapCond),
 						(volatile Count*)(&displayedFrames), &shouldStop, &stopped);
 
@@ -217,6 +218,7 @@ namespace FrameBufferTest {
 							int imageWidth, imageHeight;
 							back->cpuHandle()->getSize(&imageWidth, &imageHeight);
 							if (imageWidth != windowWidth || imageHeight != windowHeight) {
+								std::lock_guard<std::mutex> guard(swapLock);
 								back->cpuHandle()->setResolution(windowWidth, windowHeight);
 								back->makeDirty();
 								resetIterations();
@@ -230,7 +232,8 @@ namespace FrameBufferTest {
 								continue;
 							}
 							renderedFrames++;
-							maybeSwapBuffers();
+							if (renderSingleIteration) maybeSwapBuffers();
+							else swapCond.notify_all();
 						}
 						{
 							clock_t curTime = clock();

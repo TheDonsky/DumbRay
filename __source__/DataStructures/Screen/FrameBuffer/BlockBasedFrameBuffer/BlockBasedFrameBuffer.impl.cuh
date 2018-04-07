@@ -1,21 +1,20 @@
 #include "BlockBasedFrameBuffer.cuh"
 
 
-__device__ __host__ inline BlockBasedFrameBuffer::BlockBasedFrameBuffer(int blockWidth, int blockHeight) {
-	buffer.blockW = blockWidth;
-	buffer.blockH = blockHeight;
-	buffer.blockSize = (buffer.blockW * buffer.blockH);
-	
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline BlockBasedFrameBuffer<blockW, blockH>::BlockBasedFrameBuffer() {
 	buffer.imageW = buffer.imageH = 0;
 	buffer.blockCount = 0;
 	buffer.allocCount = 0;
 	buffer.data = NULL;
 }
 
-__device__ __host__ inline BlockBasedFrameBuffer::~BlockBasedFrameBuffer() {
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline BlockBasedFrameBuffer<blockW, blockH>::~BlockBasedFrameBuffer() {
 	clear();
 }
-__device__ __host__ inline void BlockBasedFrameBuffer::clear() {
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline void BlockBasedFrameBuffer<blockW, blockH>::clear() {
 	if (buffer.data != NULL) {
 		delete[] buffer.data; // May or may not be replaced with the mapped memory down the line;
 		buffer.data = NULL;
@@ -25,15 +24,18 @@ __device__ __host__ inline void BlockBasedFrameBuffer::clear() {
 	buffer.allocCount = 0;
 }
 
-inline BlockBasedFrameBuffer::BlockBasedFrameBuffer(const BlockBasedFrameBuffer &other) 
-	: BlockBasedFrameBuffer(other.buffer.blockW, other.buffer.blockH) {
+template<size_t blockW, size_t blockH>
+inline BlockBasedFrameBuffer<blockW, blockH>::BlockBasedFrameBuffer(const BlockBasedFrameBuffer &other)
+	: BlockBasedFrameBuffer() {
 	copyFrom(other);
 }
-inline BlockBasedFrameBuffer& BlockBasedFrameBuffer::operator=(const BlockBasedFrameBuffer &other) {
+template<size_t blockW, size_t blockH>
+inline BlockBasedFrameBuffer<blockW, blockH>& BlockBasedFrameBuffer<blockW, blockH>::operator=(const BlockBasedFrameBuffer &other) {
 	copyFrom(other);
 	return (*this);
 }
-inline void BlockBasedFrameBuffer::copyFrom(const BlockBasedFrameBuffer &other) {
+template<size_t blockW, size_t blockH>
+inline void BlockBasedFrameBuffer<blockW, blockH>::copyFrom(const BlockBasedFrameBuffer &other) {
 	if (this == (&other)) return;
 	buffer = other.buffer;
 	buffer.data = new Color[buffer.allocCount]; // May or may not change to mapped memory...
@@ -45,59 +47,68 @@ inline void BlockBasedFrameBuffer::copyFrom(const BlockBasedFrameBuffer &other) 
 		buffer.data[i] = other.buffer.data[i];
 }
 
-__device__ __host__ inline BlockBasedFrameBuffer::BlockBasedFrameBuffer(BlockBasedFrameBuffer &&other) 
-	: BlockBasedFrameBuffer(other.buffer.blockW, other.buffer.blockH) {
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline BlockBasedFrameBuffer<blockW, blockH>::BlockBasedFrameBuffer(BlockBasedFrameBuffer &&other)
+	: BlockBasedFrameBuffer() {
 	stealFrom(other);
 }
-__device__ __host__ inline BlockBasedFrameBuffer& BlockBasedFrameBuffer::operator=(BlockBasedFrameBuffer &&other) {
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline BlockBasedFrameBuffer<blockW, blockH>& BlockBasedFrameBuffer<blockW, blockH>::operator=(BlockBasedFrameBuffer &&other) {
 	stealFrom(other);
 	return (*this);
 }
-__device__ __host__ inline void BlockBasedFrameBuffer::stealFrom(BlockBasedFrameBuffer &other) {
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline void BlockBasedFrameBuffer<blockW, blockH>::stealFrom(BlockBasedFrameBuffer &other) {
 	swapWith(other);
 }
 
-__device__ __host__ inline void BlockBasedFrameBuffer::swapWith(BlockBasedFrameBuffer &other) {
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline void BlockBasedFrameBuffer<blockW, blockH>::swapWith(BlockBasedFrameBuffer &other) {
 	if (this == (&other)) return;
-	TypeTools<BufferData>::swap(buffer, other.buffer);
+	TypeTools<BlockBufferData>::swap(buffer, other.buffer);
 }
 
 
-__device__ __host__ inline void BlockBasedFrameBuffer::getSize(int *width, int *height)const {
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline void BlockBasedFrameBuffer<blockW, blockH>::getSize(int *width, int *height)const {
 	(*width) = buffer.imageW;
 	(*height) = buffer.imageH;
 }
-__device__ __host__ inline Color BlockBasedFrameBuffer::getColor(int x, int y)const {
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline Color BlockBasedFrameBuffer<blockW, blockH>::getColor(int x, int y)const {
 	int blockId, pixelId;
 	if (pixelBlockLocation(x, y, &blockId, &pixelId))
-		return buffer.data[(buffer.blockSize * blockId) + pixelId];
+		return buffer.data[((blockW * blockH) * blockId) + pixelId];
 	return Color(0, 0, 0, 0);
 }
-__device__ __host__ inline void BlockBasedFrameBuffer::setColor(int x, int y, const Color &color) {
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline void BlockBasedFrameBuffer<blockW, blockH>::setColor(int x, int y, const Color &color) {
 	int blockId, pixelId;
 	if (pixelBlockLocation(x, y, &blockId, &pixelId))
-		buffer.data[(buffer.blockSize * blockId) + pixelId] = color;
+		buffer.data[((blockW * blockH) * blockId) + pixelId] = color;
 }
-__device__ __host__ inline void BlockBasedFrameBuffer::blendColor(int x, int y, const Color &color, float amount) {
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline void BlockBasedFrameBuffer<blockW, blockH>::blendColor(int x, int y, const Color &color, float amount) {
 	int blockId, pixelId;
 	if (pixelBlockLocation(x, y, &blockId, &pixelId)) {
-		Color &colorRef = buffer.data[(buffer.blockSize * blockId) + pixelId];
+		Color &colorRef = buffer.data[((blockW * blockH) * blockId) + pixelId];
 		colorRef = ((color * amount) + (colorRef * (1.0f - amount)));
 	}
 }
 
-__device__ __host__ inline int BlockBasedFrameBuffer::getBlockSize()const {
-	return buffer.blockSize;
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline int BlockBasedFrameBuffer<blockW, blockH>::getBlockSize()const {
+	return (blockW * blockH);
 }
-__device__ __host__ inline int BlockBasedFrameBuffer::getBlockCount()const {
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline int BlockBasedFrameBuffer<blockW, blockH>::getBlockCount()const {
 	return buffer.blockCount;
 }
-__device__ __host__ inline bool BlockBasedFrameBuffer::pixelBlockLocation(int x, int y, int *blockId, int *pixelId)const {
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline bool BlockBasedFrameBuffer<blockW, blockH>::pixelBlockLocation(int x, int y, int *blockId, int *pixelId)const {
 	register int imageW = buffer.imageW;
 	if (x >= imageW || y >= buffer.imageH) return false;
 
-	register int blockW = buffer.blockW;
-	register int blockH = buffer.blockH;
 	register int numWidthBlocks = ((imageW + blockW - 1) / blockW);
 	
 	register int blockX = (x / blockW);
@@ -110,10 +121,10 @@ __device__ __host__ inline bool BlockBasedFrameBuffer::pixelBlockLocation(int x,
 
 	return true;
 }
-__device__ __host__ inline bool BlockBasedFrameBuffer::blockPixelLocation(int blockId, int pixelId, int *x, int *y)const {
-	if (blockId >= buffer.blockCount || pixelId >= buffer.blockSize) return false;
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline bool BlockBasedFrameBuffer<blockW, blockH>::blockPixelLocation(int blockId, int pixelId, int *x, int *y)const {
+	if (blockId >= buffer.blockCount || pixelId >= (blockW * blockH)) return false;
 	
-	register int blockW = buffer.blockW;
 	register int numWidthBlocks = ((buffer.imageW + blockW - 1) / blockW);
 	register int blockY = (blockId / numWidthBlocks);
 	register int blockX = (blockId - (blockY * numWidthBlocks));
@@ -122,7 +133,7 @@ __device__ __host__ inline bool BlockBasedFrameBuffer::blockPixelLocation(int bl
 	register int offX = (pixelId - (offY * blockW));
 
 	int posX = ((blockW * blockX) + offX);
-	int posY = ((buffer.blockH * blockY) + offY);
+	int posY = ((blockH * blockY) + offY);
 	if (posX >= buffer.imageW || posY >= buffer.imageH) return false;
 
 	(*x) = posX;
@@ -130,38 +141,44 @@ __device__ __host__ inline bool BlockBasedFrameBuffer::blockPixelLocation(int bl
 
 	return true;
 }
-__device__ __host__ inline Color BlockBasedFrameBuffer::getBlockPixelColor(int blockId, int pixelId)const {
-	return buffer.data[(buffer.blockSize * blockId) + pixelId];
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline Color BlockBasedFrameBuffer<blockW, blockH>::getBlockPixelColor(int blockId, int pixelId)const {
+	return buffer.data[((blockW * blockH) * blockId) + pixelId];
 }
-__device__ __host__ inline void BlockBasedFrameBuffer::setBlockPixelColor(int blockId, int pixelId, const Color &color) {
-	buffer.data[(buffer.blockSize * blockId) + pixelId] = color;
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline void BlockBasedFrameBuffer<blockW, blockH>::setBlockPixelColor(int blockId, int pixelId, const Color &color) {
+	buffer.data[((blockW * blockH) * blockId) + pixelId] = color;
 }
-__device__ __host__ inline void BlockBasedFrameBuffer::blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount) {
-	Color &colorRef = buffer.data[(buffer.blockSize * blockId) + pixelId];
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline void BlockBasedFrameBuffer<blockW, blockH>::blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount) {
+	Color &colorRef = buffer.data[((blockW * blockH) * blockId) + pixelId];
 	colorRef = ((color * amount) + (colorRef * (1.0f - amount)));
 }
 
-inline bool BlockBasedFrameBuffer::setResolution(int width, int height) {
+template<size_t blockW, size_t blockH>
+inline bool BlockBasedFrameBuffer<blockW, blockH>::setResolution(int width, int height) {
 	if (buffer.imageW == width && buffer.imageH == height) return true;
 	clear();
 	buffer.imageW = width;
 	buffer.imageH = height;
 	buffer.blockCount = 
-		(((buffer.imageW + buffer.blockW - 1) / buffer.blockW) 
-			* ((buffer.imageH + buffer.blockH - 1) / buffer.blockH));
-	buffer.allocCount = (buffer.blockCount * buffer.blockSize);
+		(((buffer.imageW + blockW - 1) / blockW) 
+			* ((buffer.imageH + blockH - 1) / blockH));
+	buffer.allocCount = (buffer.blockCount * (blockW * blockH));
 	buffer.data = new Color[buffer.allocCount]; // May or may not change to mapped memory...
 	if (buffer.data != NULL) return true;
 	clear();
 	return false;
 }
-inline bool BlockBasedFrameBuffer::requiresBlockUpdate() { return true; }
-inline bool BlockBasedFrameBuffer::updateDeviceInstance(BlockBasedFrameBuffer *deviceObject, cudaStream_t *stream)const {
-	BufferData data;
+template<size_t blockW, size_t blockH>
+inline bool BlockBasedFrameBuffer<blockW, blockH>::requiresBlockUpdate() { return true; }
+template<size_t blockW, size_t blockH>
+inline bool BlockBasedFrameBuffer<blockW, blockH>::updateDeviceInstance(BlockBasedFrameBuffer *deviceObject, cudaStream_t *stream)const {
+	BlockBufferData data;
 	{
-		std::lock_guard<std::mutex> guard(deviceReferenceLock);
-		DeviceReferenceMirrors::iterator iter = deviceReferenceMirrors.find(deviceObject);
-		if (iter != deviceReferenceMirrors.end()) data = iter->second;
+		std::lock_guard<std::mutex> guard(BlockBufferData::deviceReferenceLock);
+		BlockBufferData::DeviceReferenceMirrors::iterator iter = BlockBufferData::deviceReferenceMirrors.find(deviceObject);
+		if (iter != BlockBufferData::deviceReferenceMirrors.end()) data = iter->second;
 		else return false;
 	}
 	
@@ -178,12 +195,13 @@ inline bool BlockBasedFrameBuffer::updateDeviceInstance(BlockBasedFrameBuffer *d
 	
 	return success;
 }
-inline bool BlockBasedFrameBuffer::updateBlocks(int startBlock, int endBlock, const BlockBasedFrameBuffer *deviceObject, cudaStream_t *stream) {
-	BufferData data;
+template<size_t blockW, size_t blockH>
+inline bool BlockBasedFrameBuffer<blockW, blockH>::updateBlocks(int startBlock, int endBlock, const BlockBasedFrameBuffer *deviceObject, cudaStream_t *stream) {
+	BlockBufferData data;
 	{
-		std::lock_guard<std::mutex> guard(deviceReferenceLock);
-		DeviceReferenceMirrors::iterator iter = deviceReferenceMirrors.find(deviceObject);
-		if (iter != deviceReferenceMirrors.end()) data = iter->second;
+		std::lock_guard<std::mutex> guard(BlockBufferData::deviceReferenceLock);
+		BlockBufferData::DeviceReferenceMirrors::iterator iter = BlockBufferData::deviceReferenceMirrors.find(deviceObject);
+		if (iter != BlockBufferData::deviceReferenceMirrors.end()) data = iter->second;
 		else return false;
 	}
 	bool streamPassed = (stream != NULL);
@@ -193,8 +211,8 @@ inline bool BlockBasedFrameBuffer::updateBlocks(int startBlock, int endBlock, co
 		stream = (&localStream);
 	}
 
-	register int offset = (startBlock * buffer.blockSize);
-	register size_t numBytes = (sizeof(Color) * (endBlock - startBlock) * buffer.blockSize);
+	register int offset = (startBlock * (blockW * blockH));
+	register size_t numBytes = (sizeof(Color) * (endBlock - startBlock) * (blockW * blockH));
 	bool success = (cudaMemcpyAsync(buffer.data + offset, data.data + offset, numBytes, cudaMemcpyDeviceToHost, *stream) == cudaSuccess);
 	
 	if (!streamPassed) {
@@ -213,19 +231,19 @@ inline bool BlockBasedFrameBuffer::updateBlocks(int startBlock, int endBlock, co
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 /** Friends: **/
-template<>
-__device__ __host__ inline void TypeTools<BlockBasedFrameBuffer>::init(BlockBasedFrameBuffer &m) { new(&m) BlockBasedFrameBuffer(); }
-template<>
-__device__ __host__ inline void TypeTools<BlockBasedFrameBuffer>::dispose(BlockBasedFrameBuffer &m) { m.~BlockBasedFrameBuffer(); }
-template<>
-__device__ __host__ inline void TypeTools<BlockBasedFrameBuffer>::swap(BlockBasedFrameBuffer &a, BlockBasedFrameBuffer &b) { a.swapWith(b); }
-template<>
-__device__ __host__ inline void TypeTools<BlockBasedFrameBuffer>::transfer( BlockBasedFrameBuffer &src, BlockBasedFrameBuffer &dst) { dst.stealFrom(src); }
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline void TypeTools<BlockBasedFrameBuffer<blockW, blockH> >::init(BufferType &m) { new(&m) BufferType(); }
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline void TypeTools<BlockBasedFrameBuffer<blockW, blockH> >::dispose(BufferType &m) { m.~BufferType(); }
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline void TypeTools<BlockBasedFrameBuffer<blockW, blockH> >::swap(BufferType &a, BufferType &b) { a.swapWith(b); }
+template<size_t blockW, size_t blockH>
+__device__ __host__ inline void TypeTools<BlockBasedFrameBuffer<blockW, blockH> >::transfer(BufferType &src, BufferType &dst) { dst.stealFrom(src); }
 
-template<>
-inline bool TypeTools<BlockBasedFrameBuffer>::prepareForCpyLoad(
-	const BlockBasedFrameBuffer *source, BlockBasedFrameBuffer *hosClone,
-	BlockBasedFrameBuffer *devClone, int count) {
+template<size_t blockW, size_t blockH>
+inline bool TypeTools<BlockBasedFrameBuffer<blockW, blockH> >::prepareForCpyLoad(
+	const BufferType *source, BufferType *hosClone,
+	BufferType *devClone, int count) {
 	
 	cudaStream_t stream;
 	if (cudaStreamCreate(&stream) != cudaSuccess) return false;
@@ -234,57 +252,57 @@ inline bool TypeTools<BlockBasedFrameBuffer>::prepareForCpyLoad(
 	int i = 0;
 	
 	for (i = 0; i < count; i++) {
-		BlockBasedFrameBuffer &clone = hosClone[i];
+		BufferType &clone = hosClone[i];
 		clone.buffer = source[i].buffer;
 
-		size_t allocationSize = sizeof(Color) * clone.buffer.allocCount;
-		if (cudaMalloc(&clone.buffer.data, allocationSize) != cudaSuccess) {
+		size_t allocationSize = sizeof(Color) * clone.allocCount();
+		if (cudaMalloc(&clone.data(), allocationSize) != cudaSuccess) {
 			success = false; break; }
-		if (cudaMemcpyAsync(clone.buffer.data, source[i].buffer.data, allocationSize, cudaMemcpyHostToDevice, stream) != cudaSuccess) {
-			cudaFree(clone.buffer.data); success = false; break; }
+		if (cudaMemcpyAsync(clone.data(), source[i].data(), allocationSize, cudaMemcpyHostToDevice, stream) != cudaSuccess) {
+			cudaFree(clone.data()); success = false; break; }
 	}
 	
 	if (cudaStreamSynchronize(stream) != cudaSuccess) success = false;
 	if (cudaStreamDestroy(stream) != cudaSuccess) success = false;
 	
-	if (!success) for (int j = 0; j < i; j++) cudaFree(hosClone[j].buffer.data);
+	if (!success) for (int j = 0; j < i; j++) cudaFree(hosClone[j].data());
 	else {
-		BlockBasedFrameBuffer::deviceReferenceLock.lock();
-		for (i = 0; i < count; i++) BlockBasedFrameBuffer::deviceReferenceMirrors[devClone + i] = hosClone[i].buffer;
-		BlockBasedFrameBuffer::deviceReferenceLock.unlock();
+		BufferType::deviceReferenceLock().lock();
+		for (i = 0; i < count; i++) BufferType::deviceReferenceMirrors()[devClone + i] = hosClone[i].buffer;
+		BufferType::deviceReferenceLock().unlock();
 	}
 	return success;
 }
-template<>
-inline void TypeTools<BlockBasedFrameBuffer>::undoCpyLoadPreparations(
-	const BlockBasedFrameBuffer *, BlockBasedFrameBuffer *hosClone, BlockBasedFrameBuffer *devClone, int count) {
-	BlockBasedFrameBuffer::deviceReferenceLock.lock();
+template<size_t blockW, size_t blockH>
+inline void TypeTools<BlockBasedFrameBuffer<blockW, blockH> >::undoCpyLoadPreparations(
+	const BufferType *, BufferType *hosClone, BufferType *devClone, int count) {
+	BufferType::deviceReferenceLock().lock();
 	for (int i = 0; i < count; i++) {
-		cudaFree(hosClone[i].buffer.data);
-		BlockBasedFrameBuffer::deviceReferenceMirrors.erase(devClone + i);
+		cudaFree(hosClone[i].data());
+		BufferType::deviceReferenceMirrors().erase(devClone + i);
 	}
-	BlockBasedFrameBuffer::deviceReferenceLock.unlock();
+	BufferType::deviceReferenceLock().unlock();
 }
-template<>
-inline bool TypeTools<BlockBasedFrameBuffer>::devArrayNeedsToBeDisposed() { return true; }
+template<size_t blockW, size_t blockH>
+inline bool TypeTools<BlockBasedFrameBuffer<blockW, blockH> >::devArrayNeedsToBeDisposed() { return true; }
 
-template<>
-inline bool TypeTools<BlockBasedFrameBuffer>::disposeDevArray(BlockBasedFrameBuffer *buffers, int count) {
+template<size_t blockW, size_t blockH>
+inline bool TypeTools<BlockBasedFrameBuffer<blockW, blockH> >::disposeDevArray(BufferType *buffers, int count) {
 	if (count <= 0) return true;
 	
-	char hosCloneLocalMemory[sizeof(BlockBasedFrameBuffer)];
+	char hosCloneLocalMemory[sizeof(BufferType)];
 	char *allocation;
-	size_t allocationSize = (sizeof(BlockBasedFrameBuffer) * count);
-	BlockBasedFrameBuffer *hosClone;
+	size_t allocationSize = (sizeof(BufferType) * count);
+	BufferType *hosClone;
 	
 	if (count > 1) {
 		allocation = new char[allocationSize];
-		hosClone = ((BlockBasedFrameBuffer*)allocation);
+		hosClone = ((BufferType*)allocation);
 		if (hosClone == NULL) return false;
 	}
 	else {
 		allocation = NULL;
-		hosClone = ((BlockBasedFrameBuffer*)hosCloneLocalMemory);
+		hosClone = ((BufferType*)hosCloneLocalMemory);
 	}
 
 	bool success = false;
@@ -296,12 +314,12 @@ inline bool TypeTools<BlockBasedFrameBuffer>::disposeDevArray(BlockBasedFrameBuf
 	}
 	
 	if (success) {
-		BlockBasedFrameBuffer::deviceReferenceLock.lock();
+		BufferType::deviceReferenceLock().lock();
 		for (int i = 0; i < count; i++) {
-			if (cudaFree(hosClone[i].buffer.data) != cudaSuccess) success = false;
-			BlockBasedFrameBuffer::deviceReferenceMirrors.erase(buffers + i);
+			if (cudaFree(hosClone[i].data()) != cudaSuccess) success = false;
+			BufferType::deviceReferenceMirrors().erase(buffers + i);
 		}
-		BlockBasedFrameBuffer::deviceReferenceLock.unlock();
+		BufferType::deviceReferenceLock().unlock();
 	}
 
 	if (allocation != NULL) delete allocation;

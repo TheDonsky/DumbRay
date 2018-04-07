@@ -7,13 +7,35 @@
 #include<unordered_map>
 
 
-class BlockBasedFrameBuffer;
-SPECIALISE_TYPE_TOOLS_FOR(BlockBasedFrameBuffer);
+template<size_t blockW, size_t blockH> class BlockBasedFrameBuffer;
+template<size_t blockW, size_t blockH>
+class TypeTools<BlockBasedFrameBuffer<blockW, blockH> > {
+public:
+	typedef BlockBasedFrameBuffer<blockW, blockH> BufferType;
+	DEFINE_TYPE_TOOLS_CONTENT_FOR(BufferType);
+};
 
 
+struct BlockBufferData {
+private:
+
+	Color *data;
+	int imageW, imageH;
+	int blockCount, allocCount;
+
+	static std::mutex deviceReferenceLock;
+	typedef std::unordered_map<const void*, BlockBufferData> DeviceReferenceMirrors;
+	static DeviceReferenceMirrors deviceReferenceMirrors;
+
+public:
+
+	template<size_t blockW, size_t blockH> friend class BlockBasedFrameBuffer;
+};
+
+template<size_t blockW = 16, size_t blockH = blockW>
 class BlockBasedFrameBuffer {
 public:
-	__device__ __host__ inline BlockBasedFrameBuffer(int blockWidth = 16, int blockHeight = 16);
+	__device__ __host__ inline BlockBasedFrameBuffer();
 	__device__ __host__ inline ~BlockBasedFrameBuffer();
 	__device__ __host__ inline void clear();
 
@@ -51,25 +73,28 @@ public:
 
 
 private:
-	struct BufferData {
-		Color *data;
-		int blockW, blockH, blockSize;
+	BlockBufferData buffer;
 
-		int imageW, imageH;
-		int blockCount, allocCount;
-	};
-	BufferData buffer;
+	inline Color*& data() { return buffer.data; }
+	inline const Color* data()const { return buffer.data; }
 
-	static std::mutex deviceReferenceLock;
-	typedef std::unordered_map<const BlockBasedFrameBuffer*, BufferData> DeviceReferenceMirrors;
-	static DeviceReferenceMirrors deviceReferenceMirrors;
+	inline int& allocCount() { return buffer.allocCount; }
+	inline const int& allocCount()const { return buffer.allocCount; }
+
+	inline static std::mutex &deviceReferenceLock() { return BlockBufferData::deviceReferenceLock; }
+	typedef BlockBufferData::DeviceReferenceMirrors DeviceReferenceMirrors;
+	inline static DeviceReferenceMirrors &deviceReferenceMirrors() { return BlockBufferData::deviceReferenceMirrors; }
 
 
 	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(BlockBasedFrameBuffer);
 };
 
 
+typedef BlockBasedFrameBuffer<16, 16> BlockBuffer;
+
+
 
 
 
 #include "BlockBasedFrameBuffer.impl.cuh"
+
