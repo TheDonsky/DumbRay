@@ -23,6 +23,7 @@ inline FrameBuffer* FrameBufferManager::gpuHandle(int index, bool blockedAlready
 			handler.uploadToGPU(index, ((info[index] & DIRTY) != 0));
 			if (!blockedAlready) lock.unlock();
 			rv = handler.getHandleGPU(index);
+			info[index] &= (~((int)DIRTY));
 		}
 		return rv;
 	}
