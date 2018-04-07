@@ -24,9 +24,8 @@ __device__ __host__ inline void FrameBufferFunctionPack::clean() {
 	blendBlockPixelColorFn = NULL;
 
 	setResolutionFn = NULL;
-	requiresBlockUpdateFn = NULL;
-	updateDeviceInstanceFn = NULL;
-	updateBlocksFn = NULL;
+	updateDeviceBlocksFn = NULL;
+	updateHostBlocksFn = NULL;
 }
 template<typename BufferType>
 __device__ __host__ inline void FrameBufferFunctionPack::use() {
@@ -44,14 +43,12 @@ __device__ __host__ inline void FrameBufferFunctionPack::use() {
 
 #ifndef __CUDA_ARCH__
 	setResolutionFn = setResolutionGeneric<BufferType>;
-	requiresBlockUpdateFn = requiresBlockUpdateGeneric<BufferType>;
-	updateDeviceInstanceFn = updateDeviceInstanceGeneric<BufferType>;
-	updateBlocksFn = updateBlocksGeneric<BufferType>;
+	updateDeviceBlocksFn = updateDeviceBlocksGeneric<BufferType>;
+	updateHostBlocksFn = updateHostBlocksGeneric<BufferType>;
 #else
 	setResolutionFn = NULL;
-	requiresBlockUpdateFn = NULL;
-	updateDeviceInstanceFn = NULL;
-	updateBlocksFn = NULL;
+	updateDeviceBlocksFn = NULL;
+	updateHostBlocksFn = NULL;
 #endif
 }
 
@@ -91,14 +88,11 @@ __device__ __host__ inline void FrameBufferFunctionPack::blendBlockPixelColor(vo
 inline bool FrameBufferFunctionPack::setResolution(void *buffer, int width, int height)const {
 	return setResolutionFn(buffer, width, height);
 }
-inline bool FrameBufferFunctionPack::requiresBlockUpdate()const {
-	return requiresBlockUpdateFn();
+inline bool FrameBufferFunctionPack::updateDeviceBlocks(const void *buffer, void *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream)const {
+	return updateDeviceBlocksFn(buffer, deviceBuffer, startBlock, endBlock, stream);
 }
-inline bool FrameBufferFunctionPack::updateDeviceInstance(const void *buffer, void *deviceObject, cudaStream_t *stream)const {
-	return updateDeviceInstanceFn(buffer, deviceObject, stream);
-}
-inline bool FrameBufferFunctionPack::updateBlocks(void *buffer, int startBlock, int endBlock, const void *deviceObject, cudaStream_t *stream)const {
-	return updateBlocksFn(buffer, startBlock, endBlock, deviceObject, stream);
+inline bool FrameBufferFunctionPack::updateHostBlocks(void *buffer, const void *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream)const {
+	return updateHostBlocksFn(buffer, deviceBuffer, startBlock, endBlock, stream);
 }
 
 
@@ -151,16 +145,12 @@ inline bool FrameBufferFunctionPack::setResolutionGeneric(void *buffer, int widt
 	return ((BufferType*)buffer)->setResolution(width, height);
 }
 template<typename BufferType>
-inline bool FrameBufferFunctionPack::requiresBlockUpdateGeneric() {
-	return BufferType::requiresBlockUpdate();
+inline bool FrameBufferFunctionPack::updateDeviceBlocksGeneric(const void *buffer, void *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream) {
+	return ((const BufferType*)buffer)->updateDeviceBlocks((BufferType*)deviceBuffer, startBlock, endBlock, stream);
 }
 template<typename BufferType>
-inline bool FrameBufferFunctionPack::updateDeviceInstanceGeneric(const void *buffer, void *deviceObject, cudaStream_t *stream) {
-	return ((const BufferType*)buffer)->updateDeviceInstance((BufferType*)deviceObject, stream);
-}
-template<typename BufferType>
-inline bool FrameBufferFunctionPack::updateBlocksGeneric(void *buffer, int startBlock, int endBlock, const void *deviceObject, cudaStream_t *stream) {
-	return ((BufferType*)buffer)->updateBlocks(startBlock, endBlock, (const BufferType*)deviceObject, stream);
+inline bool FrameBufferFunctionPack::updateHostBlocksGeneric(void *buffer, const void *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream) {
+	return ((BufferType*)buffer)->updateHostBlocks((const BufferType*)deviceBuffer, startBlock, endBlock, stream);
 }
 
 
@@ -224,23 +214,17 @@ inline void *FrameBuffer::getDeviceObject(const FrameBuffer *deviceBuffer, cudaS
 	else if (stream == (&localStream)) if (cudaStreamDestroy(localStream) != cudaSuccess) return NULL;
 	return clone->object();
 }
-inline bool FrameBuffer::requiresBlockUpdate()const {
-	return functions().requiresBlockUpdate();
-}
 // Note: deviceObject is meant to be of the same type, this FrameBuffer is actually using.
-inline bool FrameBuffer::updateDeviceInstance(FrameBuffer *deviceObject, cudaStream_t *stream)const {
+inline bool FrameBuffer::updateDeviceBlocks(FrameBuffer *deviceObject, int startBlock, int endBlock, cudaStream_t *stream)const {
 	void *devObject = getDeviceObject(deviceObject, stream);
 	if (devObject == NULL) return false;
-	return functions().updateDeviceInstance(object(), devObject, stream);
+	return functions().updateDeviceBlocks(object(), deviceObject, startBlock, endBlock, stream);
 }
 // Note: deviceObject is meant to be of the same type, this FrameBuffer is actually using.
-inline bool FrameBuffer::updateBlocks(int startBlock, int endBlock, const FrameBuffer *deviceObject, cudaStream_t *stream) {
-	if (functions().requiresBlockUpdate()) {
-		void *devObject = getDeviceObject(deviceObject, stream);
-		if (devObject == NULL) return false; 
-		return functions().updateBlocks(object(), startBlock, endBlock, devObject, stream);
-	}
-	else return true;
+inline bool FrameBuffer::updateHostBlocks(const FrameBuffer *deviceObject, int startBlock, int endBlock, cudaStream_t *stream) {
+	void *devObject = getDeviceObject(deviceObject, stream);
+	if (devObject == NULL) return false;
+	return functions().updateHostBlocks(object(), devObject, startBlock, endBlock, stream);
 }
 
 inline FrameBuffer* FrameBuffer::upload()const {
@@ -284,10 +268,7 @@ inline bool FrameBuffer::BlockBank::getBlocks(int count, int *start, int *end) {
 }
 
 
-inline FrameBuffer::DeviceBlockManager::DeviceBlockManager(
-	int deviceId, DeviceFrameSyncher *syncher,
-	Settings settings, int blocksPerSM,
-	size_t mmapedMemorySize) {
+inline FrameBuffer::DeviceBlockManager::DeviceBlockManager(int deviceId, Settings settings, int blocksPerSM) {
 
 	settingFlags = settings;
 	errorFlags = 0;
@@ -312,24 +293,6 @@ inline FrameBuffer::DeviceBlockManager::DeviceBlockManager(
 
 	batchBlocks = (numSM * blocksPerSM);
 
-	if (mmapedMemorySize > 0) {
-		mmapedByteCount = mmapedMemorySize;
-		if (cudaHostAlloc(
-			&mmapedBytes, mmapedByteCount,
-			/* cudaHostAllocWriteCombined | */ cudaHostAllocMapped | cudaHostAllocPortable)
-			!= cudaSuccess) {
-			errorFlags |= CUDA_HOST_ALLOC_FAILED;
-			return;
-		}
-		else statusFlags |= CUDA_HOST_ALLOC_OK;
-	}
-	else {
-		mmapedByteCount = 0;
-		mmapedBytes = NULL;
-	}
-
-	
-	synch = syncher;
 	
 	if (cudaStreamCreate(&synchStream) != cudaSuccess) {
 		errorFlags |= CUDA_SYNCH_STREAM_CREATE_FAILED;
@@ -353,7 +316,6 @@ inline FrameBuffer::DeviceBlockManager::DeviceBlockManager(
 	lastEndBlock = 0;
 }
 inline FrameBuffer::DeviceBlockManager::~DeviceBlockManager() {
-	if ((statusFlags & CUDA_HOST_ALLOC_OK) != 0) cudaFreeHost(mmapedBytes);
 	if ((statusFlags & CUDA_SYNCH_STREAM_CREATE_OK) != 0) cudaStreamDestroy(synchStream);
 	if ((statusFlags & CUDA_RENDER_STREAM_CREATE_OK) != 0) cudaStreamDestroy(renderStream);
 }
@@ -390,11 +352,11 @@ inline bool FrameBuffer::DeviceBlockManager::setBuffers(FrameBuffer *host, Frame
 }
 
 
-inline bool FrameBuffer::DeviceBlockManager::getBlocks(int &start, int &end) {
+inline bool FrameBuffer::DeviceBlockManager::getBlocks(int &start, int &end, bool refreshDeviceBlocks) {
 	if (errorFlags != 0) return false;
 	if (lastStartBlock != lastEndBlock) {
 		if ((settingFlags & CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET) != 0) if (!synchRenderStream()) return false;
-		if (!hostBuffer->functions().updateBlocks(hostBuffer->object(), lastStartBlock, lastEndBlock, deviceBufferObject, &synchStream)) {
+		if (!hostBuffer->functions().updateHostBlocks(hostBuffer->object(), deviceBufferObject, lastStartBlock, lastEndBlock, &synchStream)) {
 			errorFlags |= CUDA_HOST_BLOCK_UPDATE_FAILED;
 			lastStartBlock = lastEndBlock;
 			return false;
@@ -402,6 +364,11 @@ inline bool FrameBuffer::DeviceBlockManager::getBlocks(int &start, int &end) {
 		if ((settingFlags & CUDA_BLOCK_SYNCH_STREAM_AUTO_SYNCH_ON_GET) != 0) if (!synchBlockSynchStream()) return false;
 	}
 	if (blockBank->getBlocks(batchBlocks, &lastStartBlock, &lastEndBlock)) {
+		if (refreshDeviceBlocks)
+			if (!hostBuffer->functions().updateDeviceBlocks(hostBuffer->object(), deviceBufferObject, lastStartBlock, lastEndBlock, &synchStream)) {
+				errorFlags |= CUDA_UPDATE_DEVICE_INSTANCE_FAILED;
+				return false;
+			}
 		start = lastStartBlock;
 		end = lastEndBlock;
 		return true;
@@ -420,22 +387,4 @@ inline bool FrameBuffer::DeviceBlockManager::synchRenderStream() {
 	if (cudaStreamSynchronize(renderStream) == cudaSuccess) return true;
 	errorFlags |= CUDA_RENDER_STREAM_SYNCH_FAILED;
 	return false;
-}
-
-inline bool FrameBuffer::DeviceBlockManager::sunchDeviceInstance(bool isMasterThread, int otherThreadCount) {
-	if (isMasterThread) {
-		bool success;
-		if (errorFlags != 0) success = false;
-		else if (!hostBuffer->functions().updateDeviceInstance(hostBuffer->object(), deviceBufferObject, &synchStream)) {
-			errorFlags |= CUDA_UPDATE_DEVICE_INSTANCE_FAILED;
-			success = false;
-		}
-		else success = true;
-		synch->semaphore.post(otherThreadCount);
-		return success;
-	}
-	else {
-		synch->semaphore.wait();
-		return (errorFlags == 0);
-	}
 }

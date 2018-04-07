@@ -286,7 +286,7 @@ inline void BackwardRenderer<HitType>::iterateGPU(const Info &info) {
 				return;
 			}
 		}
-		if(!cpuBuffer.updateBlocks(start, end, buffer)) break;
+		if(!cpuBuffer.updateHostBlocks(buffer, start, end)) break;
 	}
 }
 template<typename HitType>

@@ -112,11 +112,8 @@ inline bool MemoryMappedFrameBuffer::setResolution(int width, int height) {
 	sizeY = height;
 	return true;
 }
-inline bool MemoryMappedFrameBuffer::requiresBlockUpdate() { return false; }
-inline bool MemoryMappedFrameBuffer::updateDeviceInstance(MemoryMappedFrameBuffer *deviceObject, cudaStream_t *)const { return (deviceObject != NULL); }
-inline bool MemoryMappedFrameBuffer::updateBlocks(int startBlock, int endBlock, const MemoryMappedFrameBuffer *deviceObject, cudaStream_t *) {
-	return ((startBlock >= 0) && (endBlock >= 0) && (deviceObject != NULL));
-}
+inline bool MemoryMappedFrameBuffer::updateDeviceBlocks(MemoryMappedFrameBuffer *, int, int, cudaStream_t *)const { return true; }
+inline bool MemoryMappedFrameBuffer::updateHostBlocks(const MemoryMappedFrameBuffer *, int, int, cudaStream_t *) { return true; }
 
 __device__ __host__ inline void MemoryMappedFrameBuffer::getSize(int *width, int *height)const {
 	(*width) = sizeX;

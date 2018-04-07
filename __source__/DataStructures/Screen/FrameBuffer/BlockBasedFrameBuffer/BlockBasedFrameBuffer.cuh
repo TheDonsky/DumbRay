@@ -64,9 +64,8 @@ public:
 	__device__ __host__ inline void blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount);
 
 	inline bool setResolution(int width, int height);
-	inline static bool requiresBlockUpdate();
-	inline bool updateDeviceInstance(BlockBasedFrameBuffer *deviceObject, cudaStream_t *stream = NULL)const;
-	inline bool updateBlocks(int startBlock, int endBlock, const BlockBasedFrameBuffer *deviceObject, cudaStream_t *stream = NULL);
+	inline bool updateDeviceBlocks(BlockBasedFrameBuffer *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream)const;
+	inline bool updateHostBlocks(const BlockBasedFrameBuffer *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream);
 
 
 

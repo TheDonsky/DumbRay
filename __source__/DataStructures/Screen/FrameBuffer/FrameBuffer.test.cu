@@ -72,9 +72,7 @@ namespace FrameBufferTest {
 
 		class PerformanceTestRender : public Renderer {
 		private:
-			int synchLockCount;
 			int renderingDeviceCount;
-			Semaphore *synchLocks;
 
 			FrameBufferManager *front, *back;
 			std::mutex swapLock;
@@ -86,21 +84,12 @@ namespace FrameBufferTest {
 
 
 		protected:
-			virtual bool setupSharedData(const Info &info, void *& sharedData) {
-				if (info.isGPU()) {
-					sharedData = new FrameBuffer::DeviceBlockManager::DeviceFrameSyncher();
-					return (sharedData != NULL);
-				}
-				else {
-					sharedData = NULL;
-					return true;
-				}
-			}
+			virtual bool setupSharedData(const Info &info, void *& sharedData) { return true; }
+
 			virtual bool setupData(const Info &info, void *& data) {
 				if (info.isGPU()) {
 					FrameBuffer::DeviceBlockManager *manager = new FrameBuffer::DeviceBlockManager(
-						info.device, info.getSharedData<FrameBuffer::DeviceBlockManager::DeviceFrameSyncher>(), 
-						FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET, 8, 0);
+						info.device, FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET, 32);
 					if (manager == NULL) {
 						std::cout << "Failed to create a DeviceBlockManager" << std::endl;
 						return false;
@@ -130,7 +119,6 @@ namespace FrameBufferTest {
 				}
 				int start, end, blockSize, iter;
 				iter = iteration();
-				if (iter > 1) synchLocks[info.deviceThreadId].wait(renderingDeviceCount);
 				blockSize = buffer->getBlockSize();
 				while (blockBank.getBlocks(4, &start, &end))
 					for (int block = start; block < end; block++)
@@ -147,15 +135,12 @@ namespace FrameBufferTest {
 				if (!blockManager->setBuffers(cpuBuffer, buffer, &blockBank)) {
 					std::cout << "GPU " << info.device << ": FAILED TO SET BUFFER" << std::endl; return; }
 
-				if ((iteration() > 1) && ((synchLockCount > 0) || (renderingDeviceCount > 1))) {
-					if (!blockManager->sunchDeviceInstance(info.manageSharedData, info.numDeviceThreads - 1)) {
-						std::cout << "GPU " << info.device << ": FAILED TO SYNCH DEVICE BUFFER" << std::endl; return; }
-					if (info.manageSharedData) for (int i = 0; i < synchLockCount; i++) synchLocks[i].post();
-				}
+				int iter = iteration();
+				bool synchNeeded = ((iter > 1) && ((renderingDeviceCount > 1) || (threadConfiguration().numHostThreads() > 0)));
 
 				int start = 0, end = 0, blockSize = cpuBuffer->getBlockSize();
-				while (blockManager->getBlocks(start, end))
-					renderBlocks<<<(end - start), blockSize, 0, blockManager->getRenderStream()>>>(start, buffer, iteration());
+				while (blockManager->getBlocks(start, end, synchNeeded))
+					renderBlocks<<<(end - start), blockSize, 0, blockManager->getRenderStream()>>>(start, buffer, iter);
 				
 				if (blockManager->errors() != 0) { std::cout << "GPU " << info.device << ": ERROR(S) OCCURED" << std::endl; return; }
 				if (!blockManager->synchBlockSynchStream()) { std::cout << "GPU " << info.device << ": BLOCK SYNCH FAILED" << std::endl; return; }
@@ -174,26 +159,15 @@ namespace FrameBufferTest {
 				}
 				return true;
 			}
-			virtual bool clearSharedData(const Info &info, void *& sharedData) {
-				if (sharedData != NULL) {
-					delete ((FrameBuffer::DeviceBlockManager::DeviceFrameSyncher*)sharedData);
-					sharedData = NULL;
-				}
-				return true;
-			}
+			virtual bool clearSharedData(const Info &info, void *& sharedData) { return true; }
 
 		public:
 			PerformanceTestRender(
-				const Renderer::ThreadConfiguration &configuration, 
+				const Renderer::ThreadConfiguration &configuration,
 				bool deviceWindow, bool singleIteration) : Renderer(configuration) {
 				updateScreenFromDevice = deviceWindow;
 				renderSingleIteration = singleIteration;
-				synchLockCount = threadConfiguration().numHostThreads();
 				renderingDeviceCount = threadConfiguration().numActiveDevices();
-				synchLocks = new Semaphore[synchLockCount];
-			}
-			~PerformanceTestRender() {
-				delete[] synchLocks;
 			}
 
 			PerformanceTestRender& useBuffers(FrameBufferManager &frontBuffer, FrameBufferManager &backBuffer) {
@@ -277,7 +251,14 @@ namespace FrameBufferTest {
 		void testPerformance(FrameBufferManager &front, FrameBufferManager &back, Flags flags) {
 			Renderer::ThreadConfiguration configuration;
 			configuration.configureCPU(((flags & USE_CPU) != 0) ? Renderer::ThreadConfiguration::ALL : Renderer::ThreadConfiguration::NONE);
-			configuration.configureEveryGPU((flags & USE_GPU) ? 4 : 0);
+			if (((flags & USE_GPU) != 0) && (configuration.numDevices() > 0)) {
+				if ((flags & TEST_SINGLE_GPU_ONLY) != 0) {
+					configuration.configureEveryGPU(0);
+					configuration.configureGPU(0, 2);
+				}
+				else configuration.configureEveryGPU(2);
+			}
+			else configuration.configureEveryGPU(0);
 			PerformanceTestRender(
 				configuration, 
 				(flags & UPDATE_SCREEN_FROM_DEVICE) != 0, 

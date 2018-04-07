@@ -25,9 +25,8 @@ public:
 	__device__ __host__ inline void swapWith(MemoryMappedFrameBuffer &other);
 
 	inline bool setResolution(int width, int height);
-	inline static bool requiresBlockUpdate();
-	inline bool updateDeviceInstance(MemoryMappedFrameBuffer *deviceObject, cudaStream_t *stream)const;
-	inline bool updateBlocks(int startBlock, int endBlock, const MemoryMappedFrameBuffer *deviceObject, cudaStream_t *stream);
+	inline bool updateDeviceBlocks(MemoryMappedFrameBuffer *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream)const;
+	inline bool updateHostBlocks(const MemoryMappedFrameBuffer *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream);
 	
 	__device__ __host__ inline void getSize(int *width, int *height)const;
 	__device__ __host__ inline Color getColor(int x, int y)const;

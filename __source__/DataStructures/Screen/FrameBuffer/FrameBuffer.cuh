@@ -33,9 +33,8 @@ public:
 
 
 	inline bool setResolution(void *buffer, int width, int height)const;
-	inline bool requiresBlockUpdate()const;
-	inline bool updateDeviceInstance(const void *buffer, void *deviceObject, cudaStream_t *stream)const;
-	inline bool updateBlocks(void *buffer, int startBlock, int endBlock, const void *deviceObject, cudaStream_t *stream)const;
+	inline bool updateDeviceBlocks(const void *buffer, void *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream)const;
+	inline bool updateHostBlocks(void *buffer, const void *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream)const;
 
 
 
@@ -55,9 +54,8 @@ private:
 	void(*blendBlockPixelColorFn)(void *buffer, int blockId, int pixelId, const Color &color, float amount);
 
 	bool(*setResolutionFn)(void *buffer, int width, int height);
-	bool(*requiresBlockUpdateFn)();
-	bool(*updateDeviceInstanceFn)(const void *buffer, void *deviceObject, cudaStream_t *stream);
-	bool(*updateBlocksFn)(void *buffer, int startBlock, int endBlock, const void *deviceObject, cudaStream_t *stream);
+	bool(*updateDeviceBlocksFn)(const void *buffer, void *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream);
+	bool(*updateHostBlocksFn)(void *buffer, const void *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream);
 
 	template<typename BufferType>
 	__device__ __host__ inline static void getSizeGeneric(const void *buffer, int *width, int *height);
@@ -84,11 +82,9 @@ private:
 	template<typename BufferType>
 	inline static bool setResolutionGeneric(void *buffer, int width, int height);
 	template<typename BufferType>
-	inline static bool requiresBlockUpdateGeneric();
+	inline static bool updateDeviceBlocksGeneric(const void *buffer, void *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream);
 	template<typename BufferType>
-	inline static bool updateDeviceInstanceGeneric(const void *buffer, void *deviceObject, cudaStream_t *stream);
-	template<typename BufferType>
-	inline static bool updateBlocksGeneric(void *buffer, int startBlock, int endBlock, const void *deviceObject, cudaStream_t *stream);
+	inline static bool updateHostBlocksGeneric(void *buffer, const void *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream);
 };
 
 
@@ -115,11 +111,10 @@ public:
 
 	inline bool setResolution(int width, int height);
 	inline static void *getDeviceObject(const FrameBuffer *deviceBuffer, cudaStream_t *stream = NULL);
-	inline bool requiresBlockUpdate()const;
 	// Note: deviceObject is meant to be of the same type, this FrameBuffer is actually using.
-	inline bool updateDeviceInstance(FrameBuffer *deviceObject, cudaStream_t *stream = NULL)const;
+	inline bool updateDeviceBlocks(FrameBuffer *deviceObject, int startBlock, int endBlock, cudaStream_t *stream = NULL)const;
 	// Note: deviceObject is meant to be of the same type, this FrameBuffer is actually using.
-	inline bool updateBlocks(int startBlock, int endBlock, const FrameBuffer *deviceObject, cudaStream_t *stream = NULL);
+	inline bool updateHostBlocks(const FrameBuffer *deviceObject, int startBlock, int endBlock, cudaStream_t *stream = NULL);
 
 	inline FrameBuffer *upload()const;
 	inline static FrameBuffer* upload(const FrameBuffer *source, int count = 1);
@@ -149,14 +144,6 @@ public:
 
 	class DeviceBlockManager {
 	public:
-		struct DeviceFrameSyncher {
-		public:
-			friend class DeviceBlockManager;
-
-		private:
-			Semaphore semaphore;
-		};
-
 		typedef uint16_t Settings, Errors, Status;
 
 		enum SettingFlags {
@@ -186,10 +173,7 @@ public:
 			CUDA_DEVICE_BUFFER_PRESENT = 32
 		};
 
-		inline DeviceBlockManager(
-			int deviceId, DeviceFrameSyncher *syncher,
-			Settings settings, int blocksPerSM,
-			size_t mmapedMemorySize = 64);
+		inline DeviceBlockManager(int deviceId, Settings settings, int blocksPerSM);
 		inline ~DeviceBlockManager();
 
 		inline Settings settings()const;
@@ -198,14 +182,12 @@ public:
 
 		inline bool setBuffers(FrameBuffer *host, FrameBuffer *device, BlockBank *bank);
 
-		inline bool getBlocks(int &start, int &end);
+		inline bool getBlocks(int &start, int &end, bool refreshDeviceBlocks);
 
 		inline cudaStream_t &getBlockSynchStream();
 		inline bool synchBlockSynchStream();
 		inline cudaStream_t &getRenderStream();
 		inline bool synchRenderStream();
-
-		inline bool sunchDeviceInstance(bool isMasterThread, int otherThreadCount);
 
 
 
@@ -219,10 +201,7 @@ public:
 		int devId;
 		int numSM;
 		int batchBlocks;
-		size_t mmapedByteCount;
-		void *mmapedBytes;
 
-		DeviceFrameSyncher *synch;
 		cudaStream_t synchStream;
 		cudaStream_t renderStream;
 

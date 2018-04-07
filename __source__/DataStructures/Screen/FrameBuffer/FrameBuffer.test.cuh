@@ -8,7 +8,8 @@ namespace FrameBufferTest {
 		USE_GPU = 1,
 		USE_CPU = 2,
 		UPDATE_SCREEN_FROM_DEVICE = 4,
-		TEST_FOR_SINGLE_ITERATION = 8
+		TEST_FOR_SINGLE_ITERATION = 8,
+		TEST_SINGLE_GPU_ONLY = 16
 	};
 	typedef unsigned int Flags;
 	
@@ -55,5 +56,10 @@ namespace FrameBufferTest {
 			testPerformance<Type>,
 			"Testing " + typeName + " (GPU single iteration)",
 			USE_GPU | TEST_FOR_SINGLE_ITERATION);
+
+		Tests::runTest(
+			testPerformance<Type>,
+			"Testing " + typeName + " (single GPU; single iteration)",
+			USE_GPU | TEST_FOR_SINGLE_ITERATION | TEST_SINGLE_GPU_ONLY);
 	}
 }

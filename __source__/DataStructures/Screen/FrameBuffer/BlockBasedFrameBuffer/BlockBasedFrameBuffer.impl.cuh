@@ -170,37 +170,41 @@ inline bool BlockBasedFrameBuffer<blockW, blockH>::setResolution(int width, int 
 	clear();
 	return false;
 }
+
 template<size_t blockW, size_t blockH>
-inline bool BlockBasedFrameBuffer<blockW, blockH>::requiresBlockUpdate() { return true; }
-template<size_t blockW, size_t blockH>
-inline bool BlockBasedFrameBuffer<blockW, blockH>::updateDeviceInstance(BlockBasedFrameBuffer *deviceObject, cudaStream_t *stream)const {
+inline bool BlockBasedFrameBuffer<blockW, blockH>::updateDeviceBlocks(
+	BlockBasedFrameBuffer *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream)const {
 	BlockBufferData data;
 	{
 		std::lock_guard<std::mutex> guard(BlockBufferData::deviceReferenceLock);
-		BlockBufferData::DeviceReferenceMirrors::iterator iter = BlockBufferData::deviceReferenceMirrors.find(deviceObject);
+		BlockBufferData::DeviceReferenceMirrors::iterator iter = BlockBufferData::deviceReferenceMirrors.find(deviceBuffer);
 		if (iter != BlockBufferData::deviceReferenceMirrors.end()) data = iter->second;
 		else return false;
 	}
-	
 	bool streamPassed = (stream != NULL);
 	cudaStream_t localStream;
 	if (!streamPassed) {
 		if (cudaStreamCreate(&localStream) != cudaSuccess) return false;
 		stream = (&localStream);
 	}
-	
-	bool success = (cudaMemcpyAsync(data.data, buffer.data, sizeof(Color) * buffer.allocCount, cudaMemcpyHostToDevice, *stream) == cudaSuccess);
-	if (cudaStreamSynchronize(*stream) != cudaSuccess) success = false;
-	if (!streamPassed) if (cudaStreamDestroy(localStream) != cudaSuccess) success = false;
-	
+
+	register int offset = (startBlock * (blockW * blockH));
+	register size_t numBytes = (sizeof(Color) * (endBlock - startBlock) * (blockW * blockH));
+	bool success = (cudaMemcpyAsync(data.data + offset, buffer.data + offset, numBytes, cudaMemcpyHostToDevice, *stream) == cudaSuccess);
+
+	if (!streamPassed) {
+		if (cudaStreamSynchronize(localStream) != cudaSuccess) success = false;
+		if (cudaStreamDestroy(localStream) != cudaSuccess) success = false;
+	}
 	return success;
 }
 template<size_t blockW, size_t blockH>
-inline bool BlockBasedFrameBuffer<blockW, blockH>::updateBlocks(int startBlock, int endBlock, const BlockBasedFrameBuffer *deviceObject, cudaStream_t *stream) {
+inline bool BlockBasedFrameBuffer<blockW, blockH>::updateHostBlocks(
+	const BlockBasedFrameBuffer *deviceBuffer, int startBlock, int endBlock, cudaStream_t *stream) {
 	BlockBufferData data;
 	{
 		std::lock_guard<std::mutex> guard(BlockBufferData::deviceReferenceLock);
-		BlockBufferData::DeviceReferenceMirrors::iterator iter = BlockBufferData::deviceReferenceMirrors.find(deviceObject);
+		BlockBufferData::DeviceReferenceMirrors::iterator iter = BlockBufferData::deviceReferenceMirrors.find(deviceBuffer);
 		if (iter != BlockBufferData::deviceReferenceMirrors.end()) data = iter->second;
 		else return false;
 	}
