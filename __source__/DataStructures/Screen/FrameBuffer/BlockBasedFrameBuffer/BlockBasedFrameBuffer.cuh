@@ -3,6 +3,8 @@
 #include"../../../Primitives/Compound/Pair/Pair.cuh"
 #include"../../../GeneralPurpose/Stacktor/Stacktor.cuh"
 #include"../../../GeneralPurpose/TypeTools/TypeTools.cuh"
+#include<mutex>
+#include<unordered_map>
 
 
 class BlockBasedFrameBuffer;
@@ -33,6 +35,7 @@ public:
 
 	__device__ __host__ inline int getBlockSize()const;
 	__device__ __host__ inline int getBlockCount()const;
+	__device__ __host__ inline bool pixelBlockLocation(int x, int y, int *blockId, int *pixelId)const;
 	__device__ __host__ inline bool blockPixelLocation(int blockId, int pixelId, int *x, int *y)const;
 	__device__ __host__ inline bool getBlockPixelColor(int blockId, int pixelId, Color *color)const;
 	__device__ __host__ inline bool setBlockPixelColor(int blockId, int pixelId, const Color &color);
@@ -57,22 +60,9 @@ private:
 	};
 	BufferData buffer;
 
-	template<size_t CacheSize>
-	struct ObjectCache {
-		struct Entry {
-			const BlockBasedFrameBuffer *deviceObject;
-			char hostClone[sizeof(BufferData)];
-
-			inline Entry();
-			inline void set(const BlockBasedFrameBuffer *devObj);
-		};
-		Entry entries[CacheSize];
-
-		inline void clean();
-		inline BufferData* hostClone(const BlockBasedFrameBuffer *devObj);
-	};
-	typedef ObjectCache<8> DeviceObjectCache;
-	mutable DeviceObjectCache *deviceObjectCache;
+	static std::mutex deviceReferenceLock;
+	typedef std::unordered_map<const BlockBasedFrameBuffer*, BufferData> DeviceReferenceMirrors;
+	static DeviceReferenceMirrors deviceReferenceMirrors;
 
 
 	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(BlockBasedFrameBuffer);

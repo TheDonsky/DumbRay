@@ -112,9 +112,10 @@ namespace FrameBufferTest {
 				int start, end, blockSize, iter;
 				iter = iteration();
 				blockSize = buffer->getBlockSize();
-				while (blockBank.getBlocks(1, &start, &end))
-					for (int i = 0; i < blockSize; i++)
-						colorPixel(start, blockSize, i, buffer, iter);
+				while (blockBank.getBlocks(16, &start, &end))
+					for (int block = start; block < end; block++)
+						for (int i = 0; i < blockSize; i++)
+							colorPixel(block, blockSize, i, buffer, iter);
 			}
 			
 			virtual void iterateGPU(const Info &info) {
@@ -193,15 +194,8 @@ namespace FrameBufferTest {
 					while (true) {
 						{
 							if (window.dead() || shouldStop) {
-								while (!stopped) {
-									std::cout << "Joinig window thread..." << std::endl;
-									swapLock.lock();
-									shouldStop = true;
-									Count lastDisplayed = displayedFrames;
-									swapCond.notify_all();
-									swapLock.unlock();
-									while (!stopped) if (lastDisplayed != displayedFrames) break;
-								}
+								shouldStop = true;
+								while (!stopped) swapCond.notify_all();
 								break;
 							}
 						}
@@ -241,7 +235,6 @@ namespace FrameBufferTest {
 							}
 						}
 					}
-					std::cout << "Waiting for window thread..." << std::endl;
 					windowThread.join();
 				}
 			}
