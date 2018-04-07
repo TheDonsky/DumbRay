@@ -28,11 +28,34 @@ void Renderer::ThreadConfiguration::configureEveryGPU(int threads) {
 	for (int i = 0; i < threadsPerGPU.size(); i++) configureGPU(i, threads);
 }
 
+int Renderer::ThreadConfiguration::numActiveDevices()const {
+	int num = 0;
+	for (int i = 0; i < threadsPerGPU.size(); i++)
+		if (threadsPerGPU[i] > 0) num++;
+	return num;
+}
+int Renderer::ThreadConfiguration::numDevices()const {
+	return threadsPerGPU.size();
+}
+int Renderer::ThreadConfiguration::numDeviceThreads(int deviceId)const {
+	int num = 0;
+	for (int i = 0; i < threadsPerGPU.size(); i++)
+		num += threadsPerGPU[i];
+	return num;
+}
+int Renderer::ThreadConfiguration::numHostThreads()const {
+	return threadsOnCPU;
+}
+
+
+
 
 
 #define DEVICE_CPU -1
 
 Renderer::Renderer(const ThreadConfiguration &config) {
+	configuration = config;
+
 	cpuThreads = config.threadsOnCPU;
 	gpuThreads = 0;
 	for (int i = 0; i < config.threadsPerGPU.size(); i++)
@@ -114,6 +137,12 @@ bool Renderer::iterate() {
 		threads[i].properties.endLock.wait();
 	return completeIteration();
 }
+
+int Renderer::deviceThreadCount() { return gpuThreads; }
+
+int Renderer::hostThreadCount() { return cpuThreads; }
+
+const Renderer::ThreadConfiguration &Renderer::threadConfiguration() { return configuration; }
 
 void Renderer::killRenderThreads() {
 	startRenderThreads();

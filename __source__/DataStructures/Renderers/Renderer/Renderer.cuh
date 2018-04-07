@@ -46,6 +46,30 @@ public:
 		*/
 		void configureEveryGPU(int threads = ONE);
 
+		/*
+		Number of active devices:
+		*/
+		int numActiveDevices()const;
+
+		/*
+		Number of devices:
+		*/
+		int numDevices()const;
+
+		/*
+		Number of threads on the given device:
+		*/
+		int numDeviceThreads(int deviceId)const;
+
+		/*
+		Number of host threads:
+		*/
+		int numHostThreads()const;
+
+
+
+
+
 	private:
 		friend class Renderer;
 		int threadsOnCPU;
@@ -86,6 +110,24 @@ public:
 	Makes a single iteration.
 	*/
 	bool iterate();
+
+	/*
+	Number of active device threads:
+	*/
+	int deviceThreadCount();
+
+	/*
+	Number of total host threads:
+	*/
+	int hostThreadCount();
+
+	/*
+	Initial thread configuration:
+	*/
+	const ThreadConfiguration &threadConfiguration();
+
+
+
 
 
 protected:
@@ -151,6 +193,8 @@ private:
 		std::thread thread;
 		ThreadAttributes properties;
 	};
+
+	ThreadConfiguration configuration;
 
 	volatile int iterationId;
 
