@@ -130,21 +130,15 @@ __device__ __host__ inline bool BlockBasedFrameBuffer::blockPixelLocation(int bl
 
 	return true;
 }
-__device__ __host__ inline bool BlockBasedFrameBuffer::getBlockPixelColor(int blockId, int pixelId, Color *color)const {
-	if (blockId >= buffer.blockCount || pixelId >= buffer.blockSize) return false;
-	(*color) = buffer.data[(buffer.blockSize * blockId) + pixelId];
-	return true;
+__device__ __host__ inline Color BlockBasedFrameBuffer::getBlockPixelColor(int blockId, int pixelId)const {
+	return buffer.data[(buffer.blockSize * blockId) + pixelId];
 }
-__device__ __host__ inline bool BlockBasedFrameBuffer::setBlockPixelColor(int blockId, int pixelId, const Color &color) {
-	if (blockId >= buffer.blockCount || pixelId >= buffer.blockSize) return false;
+__device__ __host__ inline void BlockBasedFrameBuffer::setBlockPixelColor(int blockId, int pixelId, const Color &color) {
 	buffer.data[(buffer.blockSize * blockId) + pixelId] = color;
-	return true;
 }
-__device__ __host__ inline bool BlockBasedFrameBuffer::blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount) {
-	if (blockId >= buffer.blockCount || pixelId >= buffer.blockSize) return false;
+__device__ __host__ inline void BlockBasedFrameBuffer::blendBlockPixelColor(int blockId, int pixelId, const Color &color, float amount) {
 	Color &colorRef = buffer.data[(buffer.blockSize * blockId) + pixelId];
 	colorRef = ((color * amount) + (colorRef * (1.0f - amount)));
-	return true;
 }
 
 inline bool BlockBasedFrameBuffer::setResolution(int width, int height) {
