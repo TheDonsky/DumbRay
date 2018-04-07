@@ -15,7 +15,7 @@ void Semaphore::wait(int count) {
 void Semaphore::post(int count) {
 	std::lock_guard<std::mutex> guard(lock);
 	value += count;
-	condition.notify_one();
+	condition.notify_all();
 }
 void Semaphore::set(unsigned int count) {
 	std::lock_guard<std::mutex> guard(lock);

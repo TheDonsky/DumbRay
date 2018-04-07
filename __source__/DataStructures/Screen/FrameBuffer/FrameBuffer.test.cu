@@ -4,6 +4,7 @@
 #include"../../../Namespaces/Device/Device.cuh"
 #include"../../Primitives/Compound/Pair/Pair.cuh"
 #include<mutex>
+#include<sstream>
 
 
 namespace FrameBufferTest {
@@ -51,6 +52,22 @@ namespace FrameBufferTest {
 
 		__global__ static void renderBlocks(int startBlock, FrameBuffer *buffer, int iteration) {
 			colorPixel(startBlock + blockIdx.x, blockDim.x, threadIdx.x, buffer, iteration);
+		}
+
+		template<typename First>
+		static void printToStream(std::ostream &stream, First first) {
+			stream << first;
+		}
+		template<typename First, typename... Rest>
+		static void printToStream(std::ostream &stream, First first, Rest... rest) {
+			printToStream(stream << first, rest...);
+		}
+
+		template<typename... Types>
+		static void print(Types... types) {
+			std::stringstream stream;
+			printToStream(stream, types...);
+			std::cout << stream.str();
 		}
 
 		class PerformanceTestRender : public Renderer {
@@ -260,7 +277,7 @@ namespace FrameBufferTest {
 		void testPerformance(FrameBufferManager &front, FrameBufferManager &back, Flags flags) {
 			Renderer::ThreadConfiguration configuration;
 			configuration.configureCPU(((flags & USE_CPU) != 0) ? Renderer::ThreadConfiguration::ALL : Renderer::ThreadConfiguration::NONE);
-			configuration.configureEveryGPU((flags & USE_GPU) ? 1 : 0);
+			configuration.configureEveryGPU((flags & USE_GPU) ? 4 : 0);
 			PerformanceTestRender(
 				configuration, 
 				(flags & UPDATE_SCREEN_FROM_DEVICE) != 0, 
