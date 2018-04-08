@@ -9,17 +9,44 @@
 
 namespace FrameBufferTest {
 	namespace {
+		template<typename First>
+		static void printToStream(std::ostream &stream, First first) {
+			stream << first;
+		}
+		template<typename First, typename... Rest>
+		static void printToStream(std::ostream &stream, First first, Rest... rest) {
+			printToStream(stream << first, rest...);
+		}
+
+		template<typename... Types>
+		static void print(Types... types) {
+			std::stringstream stream;
+			printToStream(stream, types...);
+			std::cout << stream.str();
+		}
+
 		typedef unsigned long long Count;
 
 		void frameBufferWindowThread(
-			const FrameBufferManager **buffer, Windows::Window *window, 
+			FrameBufferManager **buffer, Windows::Window *window, 
 			std::mutex *bufferLock, std::condition_variable *bufferLockCond,
-			volatile Count *displayedFrameCount, volatile bool *shouldStop, volatile bool *stopped) {
+			volatile Count *displayedFrameCount, bool synchNeeded,
+			volatile bool *shouldStop, volatile bool *stopped) {
+			if (synchNeeded) if (cudaSetDevice(0) != cudaSuccess) {
+				(*stopped) = true;
+				print("WINDOW THREAD FAILED TO SET DEVICE");
+				return;
+			}
 			while (true) {
 				std::unique_lock<std::mutex> uniqueLock(*bufferLock);
 				bufferLockCond->wait(uniqueLock);
 				if (*shouldStop) {
 					(*stopped) = true;
+					break;
+				}
+				if (synchNeeded) if (!(*buffer)->cpuHandle()->updateHostBlocks((*buffer)->gpuHandle(0), 0, (*buffer)->cpuHandle()->getBlockCount())) {
+					(*stopped) = true;
+					print("WINDOW THREAD FAILED TO UPDATE HOST BLOCKS");
 					break;
 				}
 				window->updateFromHost(*(*buffer)->cpuHandle());
@@ -54,25 +81,10 @@ namespace FrameBufferTest {
 			colorPixel(startBlock + blockIdx.x, blockDim.x, threadIdx.x, buffer, iteration);
 		}
 
-		template<typename First>
-		static void printToStream(std::ostream &stream, First first) {
-			stream << first;
-		}
-		template<typename First, typename... Rest>
-		static void printToStream(std::ostream &stream, First first, Rest... rest) {
-			printToStream(stream << first, rest...);
-		}
-
-		template<typename... Types>
-		static void print(Types... types) {
-			std::stringstream stream;
-			printToStream(stream, types...);
-			std::cout << stream.str();
-		}
-
 		class PerformanceTestRender : public Renderer {
 		private:
 			int renderingDeviceCount;
+			bool hostBlockSynchNeeded;
 
 			FrameBufferManager *front, *back;
 			std::mutex swapLock;
@@ -89,7 +101,8 @@ namespace FrameBufferTest {
 			virtual bool setupData(const Info &info, void *& data) {
 				if (info.isGPU()) {
 					FrameBuffer::DeviceBlockManager *manager = new FrameBuffer::DeviceBlockManager(
-						info.device, FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET, 32);
+						info.device, FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET |
+						(hostBlockSynchNeeded ? 0 : FrameBuffer::DeviceBlockManager::CUDA_MANUALLY_SYNCH_HOST_BLOCKS), 32);
 					if (manager == NULL) {
 						std::cout << "Failed to create a DeviceBlockManager" << std::endl;
 						return false;
@@ -136,14 +149,14 @@ namespace FrameBufferTest {
 					std::cout << "GPU " << info.device << ": FAILED TO SET BUFFER" << std::endl; return; }
 
 				int iter = iteration();
-				bool synchNeeded = ((iter > 1) && ((renderingDeviceCount > 1) || (threadConfiguration().numHostThreads() > 0)));
+				bool synchNeeded = ((iter > 1) && hostBlockSynchNeeded);
 
 				int start = 0, end = 0, blockSize = cpuBuffer->getBlockSize();
 				while (blockManager->getBlocks(start, end, synchNeeded))
 					renderBlocks<<<(end - start), blockSize, 0, blockManager->getRenderStream()>>>(start, buffer, iter);
 				
 				if (blockManager->errors() != 0) { std::cout << "GPU " << info.device << ": ERROR(S) OCCURED" << std::endl; return; }
-				if (!blockManager->synchBlockSynchStream()) { std::cout << "GPU " << info.device << ": BLOCK SYNCH FAILED" << std::endl; return; }
+				if (hostBlockSynchNeeded) if (!blockManager->synchBlockSynchStream()) { std::cout << "GPU " << info.device << ": BLOCK SYNCH FAILED" << std::endl; return; }
 			}
 
 			virtual bool completeIteration() {
@@ -168,6 +181,7 @@ namespace FrameBufferTest {
 				updateScreenFromDevice = deviceWindow;
 				renderSingleIteration = singleIteration;
 				renderingDeviceCount = threadConfiguration().numActiveDevices();
+				hostBlockSynchNeeded = ((renderingDeviceCount > 1) || (threadConfiguration().numHostThreads() > 0));
 			}
 
 			PerformanceTestRender& useBuffers(FrameBufferManager &frontBuffer, FrameBufferManager &backBuffer) {
@@ -188,10 +202,11 @@ namespace FrameBufferTest {
 
 					windowThread = std::thread(
 						frameBufferWindowThread,
-						(const FrameBufferManager**)(renderSingleIteration ? (&front) : (&back)),
+						(FrameBufferManager**)(renderSingleIteration ? (&front) : (&back)),
 						(Windows::Window*)(&window),
 						(std::mutex*)(&swapLock), (std::condition_variable*)(&swapCond),
-						(volatile Count*)(&displayedFrames), &shouldStop, &stopped);
+						(volatile Count*)(&displayedFrames), !hostBlockSynchNeeded,
+						&shouldStop, &stopped);
 
 					clock_t lastTime = clock();
 

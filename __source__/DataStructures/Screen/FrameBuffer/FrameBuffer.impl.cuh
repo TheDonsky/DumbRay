@@ -356,12 +356,14 @@ inline bool FrameBuffer::DeviceBlockManager::getBlocks(int &start, int &end, boo
 	if (errorFlags != 0) return false;
 	if (lastStartBlock != lastEndBlock) {
 		if ((settingFlags & CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET) != 0) if (!synchRenderStream()) return false;
-		if (!hostBuffer->functions().updateHostBlocks(hostBuffer->object(), deviceBufferObject, lastStartBlock, lastEndBlock, &synchStream)) {
-			errorFlags |= CUDA_HOST_BLOCK_UPDATE_FAILED;
-			lastStartBlock = lastEndBlock;
-			return false;
+		if ((settingFlags & CUDA_MANUALLY_SYNCH_HOST_BLOCKS) == 0) {
+			if (!hostBuffer->functions().updateHostBlocks(hostBuffer->object(), deviceBufferObject, lastStartBlock, lastEndBlock, &synchStream)) {
+				errorFlags |= CUDA_HOST_BLOCK_UPDATE_FAILED;
+				lastStartBlock = lastEndBlock;
+				return false;
+			}
+			if ((settingFlags & CUDA_BLOCK_SYNCH_STREAM_AUTO_SYNCH_ON_GET) != 0) if (!synchBlockSynchStream()) return false;
 		}
-		if ((settingFlags & CUDA_BLOCK_SYNCH_STREAM_AUTO_SYNCH_ON_GET) != 0) if (!synchBlockSynchStream()) return false;
 	}
 	if (blockBank->getBlocks(batchBlocks, &lastStartBlock, &lastEndBlock)) {
 		if (refreshDeviceBlocks)
