@@ -1,6 +1,6 @@
 #include"FrameBuffer.test.cuh"
 #include"../../Renderers/Renderer/Renderer.cuh"
-#include"../../../Namespaces/Windows/Windows.h"
+#include"../BufferedWindow/BufferedWindow.cuh"
 #include"../../../Namespaces/Device/Device.cuh"
 #include"../../Primitives/Compound/Pair/Pair.cuh"
 #include<mutex>
@@ -27,45 +27,6 @@ namespace FrameBufferTest {
 
 		typedef unsigned long long Count;
 
-		void frameBufferWindowThread(
-			FrameBufferManager **buffer, Windows::Window *window, 
-			std::mutex *bufferLock, std::condition_variable *bufferLockCond,
-			volatile Count *displayedFrameCount, bool synchNeeded,
-			volatile bool *shouldStop, volatile bool *stopped) {
-			if (synchNeeded) if (cudaSetDevice(0) != cudaSuccess) {
-				(*stopped) = true;
-				print("WINDOW THREAD FAILED TO SET DEVICE");
-				return;
-			}
-			while (true) {
-				std::unique_lock<std::mutex> uniqueLock(*bufferLock);
-				bufferLockCond->wait(uniqueLock);
-				if (*shouldStop) {
-					(*stopped) = true;
-					break;
-				}
-				if (synchNeeded) if (!(*buffer)->cpuHandle()->updateHostBlocks((*buffer)->gpuHandle(0), 0, (*buffer)->cpuHandle()->getBlockCount())) {
-					(*stopped) = true;
-					print("WINDOW THREAD FAILED TO UPDATE HOST BLOCKS");
-					break;
-				}
-				window->updateFromHost(*(*buffer)->cpuHandle());
-				(*displayedFrameCount)++;
-			}
-		}
-
-		static void trySwapBuffers(
-			FrameBufferManager **front, FrameBufferManager **back,
-			std::mutex *bufferLock, std::condition_variable *swapCond) {
-			if (bufferLock->try_lock()) {
-				FrameBufferManager *tmp = (*front);
-				(*front) = (*back);
-				(*back) = tmp;
-				swapCond->notify_all();
-				bufferLock->unlock();
-			}
-		}
-
 		__device__ __host__ inline void colorPixel(int blockId, int blockSize, int pixelId, FrameBuffer *buffer, int iteration) {
 #ifdef __CUDA_ARCH__
 			Color color(0, 1, 0, 1);
@@ -87,9 +48,6 @@ namespace FrameBufferTest {
 			bool hostBlockSynchNeeded;
 
 			FrameBufferManager *front, *back;
-			std::mutex swapLock;
-			std::condition_variable swapCond;
-			void maybeSwapBuffers() { trySwapBuffers(&front, &back, &swapLock, &swapCond); }
 
 			FrameBuffer::BlockBank blockBank;
 			bool updateScreenFromDevice, renderSingleIteration;
@@ -101,15 +59,14 @@ namespace FrameBufferTest {
 			virtual bool setupData(const Info &info, void *& data) {
 				if (info.isGPU()) {
 					FrameBuffer::DeviceBlockManager *manager = new FrameBuffer::DeviceBlockManager(
-						info.device, FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET |
-						(hostBlockSynchNeeded ? 0 : FrameBuffer::DeviceBlockManager::CUDA_MANUALLY_SYNCH_HOST_BLOCKS), 32);
-					if (manager == NULL) {
-						std::cout << "Failed to create a DeviceBlockManager" << std::endl;
-						return false;
-					}
+						info.device, (hostBlockSynchNeeded ?
+							FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET :
+							FrameBuffer::DeviceBlockManager::CUDA_MANUALLY_SYNCH_HOST_BLOCKS),
+						hostBlockSynchNeeded ? 16 : 2048);
+					if (manager == NULL) { print("Failed to create a DeviceBlockManager\n"); return false; }
 					if (manager->errors() != 0) {
 						delete manager;
-						std::cout << "DeviceBlockManager has some errors" << std::endl;
+						print("DeviceBlockManager has some errors\n");
 						return false;
 					}
 					data = manager;
@@ -126,10 +83,7 @@ namespace FrameBufferTest {
 			}
 			virtual void iterateCPU(const Info &info) {
 				FrameBuffer *buffer = back->cpuHandle();
-				if (buffer == NULL) {
-					std::cout << "CPU " << info.deviceThreadId << ": BUFFER IS NULL" << std::endl;
-					return;
-				}
+				if (buffer == NULL) { print("CPU ", info.deviceThreadId, ": BUFFER IS NULL\n"); return; }
 				int start, end, blockSize, iter;
 				iter = iteration();
 				blockSize = buffer->getBlockSize();
@@ -141,12 +95,12 @@ namespace FrameBufferTest {
 			
 			virtual void iterateGPU(const Info &info) {
 				FrameBuffer *buffer = back->gpuHandle(info.device);
-				if (buffer == NULL) { std::cout << "GPU " << info.device << ": BUFFER IS NULL" << std::endl; return; }
+				if (buffer == NULL) { print("GPU ", info.device, ": BUFFER IS NULL\n"); return; }
 				FrameBuffer *cpuBuffer = back->cpuHandle();
 
 				FrameBuffer::DeviceBlockManager *blockManager = info.getData<FrameBuffer::DeviceBlockManager>();
 				if (!blockManager->setBuffers(cpuBuffer, buffer, &blockBank)) {
-					std::cout << "GPU " << info.device << ": FAILED TO SET BUFFER" << std::endl; return; }
+					print("GPU ", info.device, ": FAILED TO SET BUFFER\n"); return; }
 
 				int iter = iteration();
 				bool synchNeeded = ((iter > 1) && hostBlockSynchNeeded);
@@ -155,8 +109,9 @@ namespace FrameBufferTest {
 				while (blockManager->getBlocks(start, end, synchNeeded))
 					renderBlocks<<<(end - start), blockSize, 0, blockManager->getRenderStream()>>>(start, buffer, iter);
 				
-				if (blockManager->errors() != 0) { std::cout << "GPU " << info.device << ": ERROR(S) OCCURED" << std::endl; return; }
-				if (hostBlockSynchNeeded) if (!blockManager->synchBlockSynchStream()) { std::cout << "GPU " << info.device << ": BLOCK SYNCH FAILED" << std::endl; return; }
+				if (blockManager->errors() != 0) { print("GPU ", info.device, ": ERROR(S) OCCURED\n"); return; }
+				if (hostBlockSynchNeeded) if (!blockManager->synchBlockSynchStream()) { print("GPU ", info.device, ": BLOCK SYNCH FAILED\n"); return; }
+				else if (!blockManager->synchRenderStream()) { print("GPU ", info.device, ": RENDER STREAM SYNCH FAILED\n"); return; }
 			}
 
 			virtual bool completeIteration() {
@@ -191,62 +146,46 @@ namespace FrameBufferTest {
 			}
 
 			void test() {
-				std::thread windowThread;
-				Windows::Window window;
+				BufferedWindow bufferedWindow(hostBlockSynchNeeded ? 0 : BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE);
+				bufferedWindow.setBuffer(renderSingleIteration ? front : back);
 				{
-					volatile Count renderedFrames = 0, displayedFrames = 0;
+					volatile Count renderedFrames = 0;
 					Count lastRenderedFrames = 0, lastDisplayedFrames = 0;
-
-					volatile bool shouldStop = false;
-					volatile bool stopped = false;
-
-					windowThread = std::thread(
-						frameBufferWindowThread,
-						(FrameBufferManager**)(renderSingleIteration ? (&front) : (&back)),
-						(Windows::Window*)(&window),
-						(std::mutex*)(&swapLock), (std::condition_variable*)(&swapCond),
-						(volatile Count*)(&displayedFrames), !hostBlockSynchNeeded,
-						&shouldStop, &stopped);
-
 					clock_t lastTime = clock();
-
 					while (true) {
-						{
-							if (window.dead() || shouldStop) {
-								shouldStop = true;
-								while (!stopped) swapCond.notify_all();
-								break;
-							}
-						}
+						if (bufferedWindow.windowClosed()) break;
 						{
 							int windowWidth, windowHeight;
-							if (!window.getDimensions(windowWidth, windowHeight)) continue;
+							if (!bufferedWindow.getWindowResolution(windowWidth, windowHeight)) break;
 							int imageWidth, imageHeight;
 							back->cpuHandle()->getSize(&imageWidth, &imageHeight);
 							if (imageWidth != windowWidth || imageHeight != windowHeight) {
-								std::lock_guard<std::mutex> guard(swapLock);
+								if (renderSingleIteration) bufferedWindow.setBuffer(NULL);
 								back->cpuHandle()->setResolution(windowWidth, windowHeight);
 								back->makeDirty();
+								if (renderSingleIteration) bufferedWindow.setBuffer(back);
 								resetIterations();
 							}
 						}
 						{
-							if (renderSingleIteration) resetIterations();
-							if (!iterate()) {
-								std::cout << "Error: iterate() failed..." << std::endl;
-								shouldStop = true;
-								continue;
-							}
+							if (!iterate()) { print("Error: iterate() failed...\n"); break; }
 							renderedFrames++;
-							if (renderSingleIteration) maybeSwapBuffers();
-							else swapCond.notify_all();
+							if (renderSingleIteration) {
+								if (bufferedWindow.trySetBuffer(back)) {
+									FrameBufferManager *tmp = back;
+									back = front; front = tmp;
+									bufferedWindow.notifyChange();
+								}
+								resetIterations();
+							}
+							else bufferedWindow.notifyChange();
 						}
 						{
 							clock_t curTime = clock();
 							float deltaTime = (((float)(curTime - lastTime)) / CLOCKS_PER_SEC);
 							if (deltaTime >= 1.0f) {
 								Count rendered = renderedFrames;
-								Count displayed = displayedFrames;
+								Count displayed = bufferedWindow.framesDisplayed();
 								float fps = ((rendered - lastRenderedFrames) / deltaTime);
 								float screenFps = ((displayed - lastDisplayedFrames) / deltaTime);
 								lastRenderedFrames = rendered;
@@ -256,7 +195,6 @@ namespace FrameBufferTest {
 							}
 						}
 					}
-					windowThread.join();
 				}
 			}
 		};
