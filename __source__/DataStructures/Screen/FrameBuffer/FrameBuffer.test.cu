@@ -138,6 +138,7 @@ namespace FrameBufferTest {
 				renderingDeviceCount = threadConfiguration().numActiveDevices();
 				hostBlockSynchNeeded = ((renderingDeviceCount > 1) || (threadConfiguration().numHostThreads() > 0));
 			}
+			~PerformanceTestRender() { killRenderThreads(); }
 
 			PerformanceTestRender& useBuffers(FrameBufferManager &frontBuffer, FrameBufferManager &backBuffer) {
 				front = &frontBuffer;
