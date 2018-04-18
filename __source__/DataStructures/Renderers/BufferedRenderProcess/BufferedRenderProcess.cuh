@@ -1,6 +1,8 @@
 #pragma once
 #include "../BufferedRenderer/BufferedRenderer.cuh"
 #include "../../Screen/BufferedWindow/BufferedWindow.cuh"
+#include <mutex>
+#include <thread>
 
 
 
@@ -9,27 +11,21 @@
 class BufferedRenderProcess {
 public:
 	BufferedRenderProcess();
-	virtual ~BufferedRenderProcess();
-	
-	enum Status {
-		STATUS_OK = 0,
-		STATUS_ERROR_PROCESS_ALREADY_STARTED = 1,
-		STATUS_ERROR_FAILED_TO_START_PROCESS = 2,
-		STATUS_ERROR_PROCESS_HAS_NOT_STARTED = 3
-	};
+	~BufferedRenderProcess();
 
-	Status setRenderer(BufferedRenderer *renderer);
-	Status setFrontBuffer(FrameBuffer *frontBuffer);
-	Status setBackBuffer(FrameBuffer *backBuffer);
-	Status setDisplayWindow(BufferedWindow *window);
-	Status setFixedTargetResolution(uint32_t width, uint32_t height);
-	Status linkTargetResolutionToWindowSize();
+	void start();
+	void end();
 
-	Status startRenderProcess();
-	Status stopRenderProcess();
+	void synchSettings();
 
 
 private:
+	volatile uint16_t flags;
+	std::mutex settingsLock;
+	std::thread renderThread;
+	std::condition_variable synchCond;
 
+	static void renderProcess(BufferedRenderProcess *target);
+	void renderProcessThread();
 };
 
