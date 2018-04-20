@@ -16,16 +16,27 @@ public:
 	void start();
 	void end();
 
-	void setRenderer(BufferedRenderer *renderer);
-	void setBuffer(FrameBufferManager *buffer);
-	void setDoubleBuffers(FrameBufferManager *a, FrameBufferManager *b);
-	void setTargetIterations(int targetIterations);
-	void setInfinateTargetIterations();
-	void setTargetDisplayWindows(BufferedWindow *window);
-	void setTargetResolution(int width, int height);
-	void setTargetResolutionToWindowSize();
+	void lockSettings();
+	void unlockSettings();
 
-	void synchSettings();
+	void setRenderer(BufferedRenderer *renderer, bool lock = false);
+	void setBuffer(FrameBufferManager *buffer, bool lock = false);
+	void setDoubleBuffers(FrameBufferManager *a, FrameBufferManager *b, bool lock = false);
+	void setTargetIterations(int targetIterations, bool lock = false);
+	void setInfinateTargetIterations(bool lock = false);
+	void setTargetDisplayWindow(BufferedWindow *window, bool lock = false);
+	void setTargetResolution(int width, int height, bool lock = false);
+	void setTargetResolutionToWindowSize(bool lock = false);
+
+	typedef void(*Callback)(void *arg);
+	void setIterationCompletionCallback(Callback callback, void *arg, bool lock = false);
+	void setRenderCompletionCallback(Callback callback, void *arg, bool lock = false);
+	void setAlreadyRenderedCallback(Callback callback, void *arg, bool lock = false);
+
+	void setErrorOnResolutionChange(Callback callback, void *arg, bool lock = false);
+	void setErrorOnIteration(Callback callback, void *arg, bool lock = false);
+
+	void synchSettings(bool alreadyLocked = false);
 
 
 private:
@@ -40,6 +51,18 @@ private:
 	int iterations;
 	BufferedWindow *bufferedWindow;
 	int targetWidth, targetHeight;
+
+	Callback iterationCompletionCallback;
+	void* iterationCompletionCallbackArg;
+	Callback renderCompletionCallback;
+	void* renderCompletionCallbackArg;
+	Callback alreadyRenderedCallback;
+	void* alreadyRenderedCallbackArg;
+
+	Callback errorOnResolutionChange;
+	void* errorOnResolutionChangeArg;
+	Callback errorOnIteration;
+	void* errorOnIterationArg;
 
 	static void renderProcess(BufferedRenderProcess *target);
 };
