@@ -3,6 +3,7 @@
 #include"../BufferedWindow/BufferedWindow.cuh"
 #include"../../../Namespaces/Device/Device.cuh"
 #include"../../Primitives/Compound/Pair/Pair.cuh"
+#include"../../Renderers/BufferedRenderProcess/BufferedRenderProcess.cuh"
 #include<mutex>
 #include<sstream>
 
@@ -42,12 +43,10 @@ namespace FrameBufferTest {
 			colorPixel(startBlock + blockIdx.x, blockDim.x, threadIdx.x, buffer, iteration);
 		}
 
-		class PerformanceTestRender : public Renderer {
+		class PerformanceTestRender : public BufferedRenderer {
 		private:
 			int renderingDeviceCount;
 			bool hostBlockSynchNeeded;
-
-			FrameBufferManager *front, *back;
 
 			FrameBuffer::BlockBank blockBank;
 			bool updateScreenFromDevice, renderSingleIteration;
@@ -78,11 +77,11 @@ namespace FrameBufferTest {
 				}
 			}
 			virtual bool prepareIteration() {
-				blockBank.reset(*back->cpuHandle());
+				blockBank.reset(*getFrameBuffer()->cpuHandle());
 				return true;
 			}
 			virtual void iterateCPU(const Info &info) {
-				FrameBuffer *buffer = back->cpuHandle();
+				FrameBuffer *buffer = getFrameBuffer()->cpuHandle();
 				if (buffer == NULL) { print("CPU ", info.deviceThreadId, ": BUFFER IS NULL\n"); return; }
 				int start, end, blockSize, iter;
 				iter = iteration();
@@ -92,23 +91,24 @@ namespace FrameBufferTest {
 						for (int i = 0; i < blockSize; i++)
 							colorPixel(block, blockSize, i, buffer, iter);
 			}
-			
+
 			virtual void iterateGPU(const Info &info) {
-				FrameBuffer *buffer = back->gpuHandle(info.device);
+				FrameBuffer *buffer = getFrameBuffer()->gpuHandle(info.device);
 				if (buffer == NULL) { print("GPU ", info.device, ": BUFFER IS NULL\n"); return; }
-				FrameBuffer *cpuBuffer = back->cpuHandle();
+				FrameBuffer *cpuBuffer = getFrameBuffer()->cpuHandle();
 
 				FrameBuffer::DeviceBlockManager *blockManager = info.getData<FrameBuffer::DeviceBlockManager>();
 				if (!blockManager->setBuffers(cpuBuffer, buffer, &blockBank)) {
-					print("GPU ", info.device, ": FAILED TO SET BUFFER\n"); return; }
+					print("GPU ", info.device, ": FAILED TO SET BUFFER\n"); return;
+				}
 
 				int iter = iteration();
 				bool synchNeeded = ((iter > 1) && hostBlockSynchNeeded);
 
 				int start = 0, end = 0, blockSize = cpuBuffer->getBlockSize();
 				while (blockManager->getBlocks(start, end, synchNeeded))
-					renderBlocks<<<(end - start), blockSize, 0, blockManager->getRenderStream()>>>(start, buffer, iter);
-				
+					renderBlocks << <(end - start), blockSize, 0, blockManager->getRenderStream() >> >(start, buffer, iter);
+
 				if (blockManager->errors() != 0) { print("GPU ", info.device, ": ERROR(S) OCCURED\n"); return; }
 				if (hostBlockSynchNeeded) if (!blockManager->synchBlockSynchStream()) { print("GPU ", info.device, ": BLOCK SYNCH FAILED\n"); return; }
 				else if (!blockManager->synchRenderStream()) { print("GPU ", info.device, ": RENDER STREAM SYNCH FAILED\n"); return; }
@@ -132,7 +132,7 @@ namespace FrameBufferTest {
 		public:
 			PerformanceTestRender(
 				const Renderer::ThreadConfiguration &configuration,
-				bool deviceWindow, bool singleIteration) : Renderer(configuration) {
+				bool deviceWindow, bool singleIteration) : BufferedRenderer(configuration) {
 				updateScreenFromDevice = deviceWindow;
 				renderSingleIteration = singleIteration;
 				renderingDeviceCount = threadConfiguration().numActiveDevices();
@@ -140,67 +140,60 @@ namespace FrameBufferTest {
 			}
 			~PerformanceTestRender() { killRenderThreads(); }
 
-			PerformanceTestRender& useBuffers(FrameBufferManager &frontBuffer, FrameBufferManager &backBuffer) {
-				front = &frontBuffer;
-				back = &backBuffer;
-				return (*this);
+
+		private:
+			volatile Count renderedFrames;
+			volatile Count lastRenderedFrames, lastDisplayedFrames;
+			volatile clock_t lastTime;
+			BufferedWindow *displayWindow;
+
+		public:
+
+
+			static void iterationCompletionCallback(void *testCase) {
+				PerformanceTestRender *self = ((PerformanceTestRender*)testCase);
+				self->renderedFrames++;
+				clock_t curTime = clock();
+				float deltaTime = (((float)(curTime - self->lastTime)) / CLOCKS_PER_SEC);
+				if (deltaTime >= 1.0f) {
+					Count rendered = self->renderedFrames;
+					Count displayed = self->displayWindow->framesDisplayed();
+					float fps = ((rendered - self->lastRenderedFrames) / deltaTime);
+					float screenFps = ((displayed - self->lastDisplayedFrames) / deltaTime);
+					self->lastRenderedFrames = rendered;
+					self->lastDisplayedFrames = displayed;
+					self->lastTime = curTime;
+					std::cout << "FPS: " << fps << " (displayed: " << screenFps << ")" << std::endl;
+				}
 			}
 
-			void test() {
+			static void printErrorOnIterate(void*) {
+			}
+
+			void test(FrameBufferManager &frontBuffer, FrameBufferManager &backBuffer) {
 				BufferedWindow bufferedWindow(hostBlockSynchNeeded ? 0 : BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE);
-				bufferedWindow.setBuffer(renderSingleIteration ? front : back);
-				{
-					volatile Count renderedFrames = 0;
-					Count lastRenderedFrames = 0, lastDisplayedFrames = 0;
-					clock_t lastTime = clock();
-					while (true) {
-						if (bufferedWindow.windowClosed()) break;
-						{
-							int windowWidth, windowHeight;
-							if (!bufferedWindow.getWindowResolution(windowWidth, windowHeight)) break;
-							int imageWidth, imageHeight;
-							back->cpuHandle()->getSize(&imageWidth, &imageHeight);
-							if (imageWidth != windowWidth || imageHeight != windowHeight) {
-								if (renderSingleIteration) bufferedWindow.setBuffer(NULL);
-								back->cpuHandle()->setResolution(windowWidth, windowHeight);
-								back->makeDirty();
-								if (renderSingleIteration) bufferedWindow.setBuffer(back);
-								resetIterations();
-							}
-						}
-						{
-							if (!iterate()) { print("Error: iterate() failed...\n"); break; }
-							renderedFrames++;
-							if (renderSingleIteration) {
-								if (bufferedWindow.trySetBuffer(back)) {
-									FrameBufferManager *tmp = back;
-									back = front; front = tmp;
-									bufferedWindow.notifyChange();
-								}
-								resetIterations();
-							}
-							else bufferedWindow.notifyChange();
-						}
-						{
-							clock_t curTime = clock();
-							float deltaTime = (((float)(curTime - lastTime)) / CLOCKS_PER_SEC);
-							if (deltaTime >= 1.0f) {
-								Count rendered = renderedFrames;
-								Count displayed = bufferedWindow.framesDisplayed();
-								float fps = ((rendered - lastRenderedFrames) / deltaTime);
-								float screenFps = ((displayed - lastDisplayedFrames) / deltaTime);
-								lastRenderedFrames = rendered;
-								lastDisplayedFrames = displayed;
-								lastTime = curTime;
-								std::cout << "FPS: " << fps << " (displayed: " << screenFps << ")" << std::endl;
-							}
-						}
-					}
-				}
+				BufferedRenderProcess bufferedRenderProcess;
+
+				bufferedRenderProcess.setRenderer(this);
+				if (renderSingleIteration) bufferedRenderProcess.setDoubleBuffers(&backBuffer, &frontBuffer);
+				else bufferedRenderProcess.setBuffer(&backBuffer);
+				bufferedRenderProcess.setInfinateTargetIterations();
+				bufferedRenderProcess.setTargetDisplayWindow(&bufferedWindow);
+				bufferedRenderProcess.setTargetResolutionToWindowSize();
+
+				renderedFrames = 0;
+				lastRenderedFrames = lastDisplayedFrames = 0;
+				displayWindow = &bufferedWindow;
+				lastTime = clock();
+				bufferedRenderProcess.setIterationCompletionCallback(iterationCompletionCallback, this);
+
+				bufferedRenderProcess.start();
+				while (!bufferedWindow.windowClosed()) std::this_thread::sleep_for(std::chrono::milliseconds(32));
+				bufferedRenderProcess.end();
 			}
 		};
 	}
-	
+
 	namespace Private {
 		void testPerformance(FrameBufferManager &front, FrameBufferManager &back, Flags flags) {
 			Renderer::ThreadConfiguration configuration;
@@ -214,9 +207,9 @@ namespace FrameBufferTest {
 			}
 			else configuration.configureEveryGPU(0);
 			PerformanceTestRender(
-				configuration, 
-				(flags & UPDATE_SCREEN_FROM_DEVICE) != 0, 
-				(flags & TEST_FOR_SINGLE_ITERATION) != 0).useBuffers(front, back).test();
+				configuration,
+				(flags & UPDATE_SCREEN_FROM_DEVICE) != 0,
+				(flags & TEST_FOR_SINGLE_ITERATION) != 0).test(front, back);
 		}
 	}
 }
