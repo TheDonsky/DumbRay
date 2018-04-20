@@ -31,9 +31,6 @@ BufferedRenderProcess::BufferedRenderProcess() {
 	alreadyRenderedCallback = NULL;
 	alreadyRenderedCallbackArg = NULL;
 
-	errorOnResolutionChange = NULL;
-	errorOnResolutionChangeArg = NULL;
-
 	errorOnIteration = NULL;
 	errorOnIterationArg = NULL;
 }
@@ -88,10 +85,6 @@ void BufferedRenderProcess::setRenderCompletionCallback(Callback callback, void 
 void BufferedRenderProcess::setAlreadyRenderedCallback(Callback callback, void *arg, bool lock) {
 	if (lock) lockSettings(); alreadyRenderedCallback = callback; alreadyRenderedCallbackArg = arg; if (lock) unlockSettings();
 }
-
-void BufferedRenderProcess::setErrorOnResolutionChange(Callback callback, void *arg, bool lock) {
-	if (lock) lockSettings(); errorOnResolutionChange = callback; errorOnResolutionChangeArg = arg; if (lock) unlockSettings();
-}
 void BufferedRenderProcess::setErrorOnIteration(Callback callback, void *arg, bool lock) {
 	if (lock) lockSettings(); errorOnIteration = callback; errorOnIterationArg = arg; if (lock) unlockSettings();
 }
@@ -127,9 +120,6 @@ void BufferedRenderProcess::renderProcess(BufferedRenderProcess *target) {
 		void* renderCompletionCallbackArg;
 		Callback alreadyRenderedCallback;
 		void* alreadyRenderedCallbackArg;
-
-		Callback errorOnResolutionChange;
-		void* errorOnResolutionChangeArg;
 		Callback errorOnIteration;
 		void* errorOnIterationArg;
 
@@ -153,8 +143,6 @@ void BufferedRenderProcess::renderProcess(BufferedRenderProcess *target) {
 			alreadyRenderedCallback = target->alreadyRenderedCallback;
 			alreadyRenderedCallbackArg = target->alreadyRenderedCallbackArg;
 
-			errorOnResolutionChange = target->errorOnResolutionChange;
-			errorOnResolutionChangeArg = target->errorOnResolutionChangeArg;
 			errorOnIteration = target->errorOnIteration;
 			errorOnIterationArg = target->errorOnIterationArg;
 
@@ -165,10 +153,7 @@ void BufferedRenderProcess::renderProcess(BufferedRenderProcess *target) {
 		/* __BACK_BUFFER_RESOLUTION_CHANGE__: */
 		if (backBuffer != NULL && backBuffer->cpuHandle() != NULL) {
 			if ((targetWidth < 0) || (targetHeight < 0) && (bufferedWindow != NULL)) {
-				if (!bufferedWindow->getWindowResolution(targetWidth, targetHeight)) {
-					if (errorOnResolutionChange != NULL) errorOnResolutionChange(errorOnResolutionChangeArg);
-					continue;
-				}
+				if (!bufferedWindow->getWindowResolution(targetWidth, targetHeight)) targetWidth = targetHeight = 32;
 			}
 			else {
 				targetWidth = max(abs(targetWidth), 1);
@@ -205,6 +190,7 @@ void BufferedRenderProcess::renderProcess(BufferedRenderProcess *target) {
 							else shouldSwap = false;
 						}
 						if (shouldSwap) swapBuffers = (!swapBuffers);
+						renderer->resetIterations();
 					}
 					if (iterationCompletionCallback != NULL) iterationCompletionCallback(iterationCompletionCallbackArg);
 					if ((renderer->iteration() == targetIterations) && (renderCompletionCallback != NULL)) renderCompletionCallback(renderCompletionCallbackArg);

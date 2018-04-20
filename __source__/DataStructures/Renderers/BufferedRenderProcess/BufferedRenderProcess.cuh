@@ -32,8 +32,6 @@ public:
 	void setIterationCompletionCallback(Callback callback, void *arg, bool lock = false);
 	void setRenderCompletionCallback(Callback callback, void *arg, bool lock = false);
 	void setAlreadyRenderedCallback(Callback callback, void *arg, bool lock = false);
-
-	void setErrorOnResolutionChange(Callback callback, void *arg, bool lock = false);
 	void setErrorOnIteration(Callback callback, void *arg, bool lock = false);
 
 	void synchSettings(bool alreadyLocked = false);
@@ -58,9 +56,6 @@ private:
 	void* renderCompletionCallbackArg;
 	Callback alreadyRenderedCallback;
 	void* alreadyRenderedCallbackArg;
-
-	Callback errorOnResolutionChange;
-	void* errorOnResolutionChangeArg;
 	Callback errorOnIteration;
 	void* errorOnIterationArg;
 
