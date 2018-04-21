@@ -367,7 +367,7 @@ inline bool FrameBuffer::DeviceBlockManager::getBlocks(int &start, int &end, boo
 	}
 	if (blockBank->getBlocks(batchBlocks, &lastStartBlock, &lastEndBlock)) {
 		if (refreshDeviceBlocks)
-			if (!hostBuffer->functions().updateDeviceBlocks(hostBuffer->object(), deviceBufferObject, lastStartBlock, lastEndBlock, &synchStream)) {
+			if (!hostBuffer->functions().updateDeviceBlocks(hostBuffer->object(), deviceBufferObject, lastStartBlock, lastEndBlock, &renderStream)) {
 				errorFlags |= CUDA_UPDATE_DEVICE_INSTANCE_FAILED;
 				return false;
 			}
