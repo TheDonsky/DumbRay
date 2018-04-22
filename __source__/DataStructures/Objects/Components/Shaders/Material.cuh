@@ -2,6 +2,9 @@
 #include"../../../Primitives/Compound/Photon/Photon.cuh"
 #include"../../../GeneralPurpose/Generic/Generic.cuh"
 #include"../../Components/DumbStructs.cuh"
+#include"../../../../Namespaces/Shapes/Shapes.cuh"
+
+
 
 
 
@@ -86,6 +89,44 @@ public:
 
 	inline Material *upload()const;
 	inline static Material* upload(const Material *source, int count = 1);
+};
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+template<typename HitType> struct Renderable;
+template<typename HitType>
+class TypeTools<Renderable<HitType> > {
+public:
+	typedef Renderable<HitType> RenderableType;
+	DEFINE_TYPE_TOOLS_CONTENT_FOR(RenderableType);
+};
+template<typename HitType>
+struct Renderable {
+	HitType object;
+	int materialId;
+
+	__dumb__ Renderable();
+	__dumb__ Renderable(const HitType &obj, int matId);
+
+	__dumb__ bool intersects(const Renderable &other)const;
+	__dumb__ bool intersects(const AABB &other)const;
+	__dumb__ bool cast(const Ray& r, bool clipBackface)const;
+	__dumb__ bool castPreInversed(const Ray& inversedRay, bool clipBackface)const;
+	__dumb__ bool cast(const Ray& ray, float &hitDistance, Vertex& hitPoint, bool clipBackface)const;
+	template<typename BoundType>
+	__dumb__ bool sharesPoint(const Renderable& b, const BoundType& commonPointBounds)const;
+	template<typename Shape>
+	__dumb__ Vertex intersectionCenter(const Shape &shape)const;
+	template<typename Shape>
+	__dumb__ AABB intersectionBounds(const Shape &shape)const;
+	__dumb__ Vertex massCenter()const;
+	__dumb__ AABB boundingBox()const;
+	__dumb__ void dump()const;
 };
 
 

@@ -15,7 +15,7 @@ namespace SceneHandlerTest {
 			Vector2 screenPoint = ((Vector2(threadIdx.x, blockIdx.x) / Vector2(blockDim.x, gridDim.x)) - Vector2(0.5f, 0.0f));
 			PhotonPack pack;
 			scene->cameras[0].lense.getScreenPhoton(screenPoint, pack);
-			RaycastHit<Shaded<BakedTriFace> > hit;
+			RaycastHit<Renderable<BakedTriFace> > hit;
 			scene->geometry.cast(pack[0].ray, hit);
 		}
 
@@ -61,10 +61,12 @@ namespace SceneHandlerTest {
 			scene.geometry.use<ShadedOctree<BakedTriFace> >();
 			ShadedOctree<BakedTriFace> &sceneGeometry = (*scene.geometry.getObject<ShadedOctree<BakedTriFace> >());
 #else
-			ShadedOctree<BakedTriFace> &sceneGeometry = scene.geometry;
+			Octree<Renderable<BakedTriFace> > &sceneGeometry = scene.geometry;
 #endif
 			for (int i = 0; i < meshes.size(); i++) {
-				sceneGeometry.push(meshes[i].bake());
+				BakedTriMesh baked = meshes[i].bake();
+				for (int j = 0; j < baked.size(); j++)
+					sceneGeometry.push(Renderable<BakedTriFace>(baked[j], -1));
 				std::cout << "\rPUSHED " << i;
 			}
 			std::cout <<

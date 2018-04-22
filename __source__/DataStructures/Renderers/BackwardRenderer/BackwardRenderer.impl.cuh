@@ -429,7 +429,7 @@ __dumb__ bool BackwardRenderer<HitType>::PixelRenderProcess::renderPixel(int &ra
 		if (photonToCast != NULL) {
 			if (raycastBudget <= 0) return false;
 			raycastBudget--;
-			RaycastHit<Shaded<HitType> > hit;
+			RaycastHit<Renderable<HitType> > hit;
 			if (context.scene->geometry.cast(photonToCast->ray, hit)) {
 				if (isBounce) {
 					// __PUSH_STACK__

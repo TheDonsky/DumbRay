@@ -5,6 +5,8 @@
 #include"../../GeneralPurpose/Handler/Handler.cuh"
 #include"../../GeneralPurpose/Matrix/Matrix.h"
 
+/*
+
 //#define SCENE_USE_GENERIC_RAYCASTER
 
 template<typename HitType> struct Scene;
@@ -24,14 +26,28 @@ struct Scene {
 	Stacktor<Light> lights;
 	Stacktor<Camera> cameras;
 
-	/** ########################################################################## **/
-	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
-	/** ########################################################################## **/
+	// ##########################################################################
+	// //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+	// ##########################################################################
 	DEFINE_CUDA_LOAD_INTERFACE_FOR(Scene);
 	TYPE_TOOLS_ADD_COMPONENT_GETTERS_3(Scene, geometry, lights, cameras);
 };
 
+*/
 
+template<typename HitType, typename RaycasterType> struct Scene;
+TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE(Scene, Stacktor<Material<HitType> >, RaycasterType, Stacktor<Light>, Stacktor<Camera>, typename HitType, typename RaycasterType);
+
+template<typename HitType, typename RaycasterType=Octree<Renderable<HitType> > >
+struct Scene {
+	Stacktor<Material<HitType> > materials;
+	RaycasterType geometry;
+	Stacktor<Light> lights;
+	Stacktor<Camera> cameras;
+
+	DEFINE_CUDA_LOAD_INTERFACE_FOR(Scene);
+	TYPE_TOOLS_ADD_COMPONENT_GETTERS_4(Scene, materials, geometry, lights, cameras);
+};
 
 
 

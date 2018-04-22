@@ -212,6 +212,33 @@ class TypeTools{
 		IMPLEMENT_CUDA_LOAD_INTERFACE_DISPOSE_BODY(Type); \
 	}
 
+#define IMPLEMENT_CUDA_LOAD_INTERFACE_FOR_TEMPLATE_TYPENAMES(Type, ...) \
+	template<__VA_ARGS__> \
+	/* Uploads unit to CUDA device and returns the clone address */ \
+	inline Type<__VA_ARGS__>* Type<__VA_ARGS__>::upload()const { \
+		IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_BODY(Type); \
+	} \
+	template<__VA_ARGS__> \
+	/* Uploads unit to the given location on the CUDA device (returns true, if successful; needs RAW data address) */ \
+	inline bool Type<__VA_ARGS__>::uploadAt(Type *address)const { \
+		IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_AT_BODY(Type); \
+	} \
+	template<__VA_ARGS__> \
+	/* Uploads given source array/unit to the given target location on CUDA device (returns true, if successful; needs RAW data address) */ \
+	inline bool Type<__VA_ARGS__>::upload(const Type *source, Type *target, int count) { \
+		IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_ARRAY_AT_BODY(Type); \
+	} \
+	template<__VA_ARGS__> \
+	/* Uploads given source array/unit to CUDA device and returns the clone address */ \
+	inline Type<__VA_ARGS__>* Type<__VA_ARGS__>::upload(const Type<__VA_ARGS__> *source, int count) { \
+		IMPLEMENT_CUDA_LOAD_INTERFACE_UPLOAD_ARRAY_BODY(Type); \
+	} \
+	template<__VA_ARGS__> \
+	/* Disposed given array/unit on CUDA device, making it ready to be free-ed (returns true, if successful) */ \
+	inline bool Type<__VA_ARGS__>::dispose(Type *arr, int count) { \
+		IMPLEMENT_CUDA_LOAD_INTERFACE_DISPOSE_BODY(Type); \
+	}
+
 
 
 #define COPY_TYPE_TOOLS_IMPLEMENTATION(Child, Perent) \

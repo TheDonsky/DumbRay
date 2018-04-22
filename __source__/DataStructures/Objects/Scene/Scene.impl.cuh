@@ -5,7 +5,7 @@
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-IMPLEMENT_CUDA_LOAD_INTERFACE_FOR_TEMPLATE(Scene);
+IMPLEMENT_CUDA_LOAD_INTERFACE_FOR_TEMPLATE_TYPENAMES(Scene, typename HitType, typename RaycasterType);
 
 
 
@@ -14,4 +14,4 @@ IMPLEMENT_CUDA_LOAD_INTERFACE_FOR_TEMPLATE(Scene);
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 /** TypeTools: **/
-TYPE_TOOLS_IMPLEMENT_3_PART_TEMPLATE(Scene, typename HitType);
+TYPE_TOOLS_IMPLEMENT_4_PART_TEMPLATE(Scene, typename HitType, typename RaycasterType);

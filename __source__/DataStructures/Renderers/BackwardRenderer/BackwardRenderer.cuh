@@ -67,7 +67,7 @@ protected:
 public:
 	struct PixelRenderProcess {
 		struct BounceObject {
-			RaycastHit<Shaded<HitType> > hit;
+			RaycastHit<Renderable<HitType> > hit;
 			Photon bounce;
 			ColorRGB color;
 			PhotonPack bounces;
