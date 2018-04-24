@@ -34,17 +34,17 @@ namespace BufferedRenderProcessTest {
 	};
 
 	void runTestGauntlet(
-		BufferedRenderer*(*bufferedRendererCreateFunction)(const Renderer::ThreadConfiguration &configuration),
-		FrameBufferManager *bufferA, FrameBufferManager *bufferB, uint32_t tests = TEST_RUN_FULL_GAUNTLET);
+		BufferedRenderer*(*bufferedRendererCreateFunction)(const Renderer::ThreadConfiguration &configuration, void *aux),
+		void *createFnAux, FrameBufferManager *bufferA, FrameBufferManager *bufferB, uint32_t tests = TEST_RUN_FULL_GAUNTLET);
 
 	template<typename BufferedRendererType>
-	inline BufferedRenderer *makeBufferedRenderer(const Renderer::ThreadConfiguration &configuration) {
+	inline BufferedRenderer *makeBufferedRenderer(const Renderer::ThreadConfiguration &configuration, void*) {
 		return new BufferedRendererType(configuration);
 	}
 
 	template<typename BufferedRendererType>
 	inline void runTestGauntlet(FrameBufferManager *bufferA, FrameBufferManager *bufferB, uint32_t tests = TEST_RUN_FULL_GAUNTLET) {
-		runTestGauntlet(makeBufferedRenderer<BufferedRendererType>, bufferA, bufferB, tests);
+		runTestGauntlet(makeBufferedRenderer<BufferedRendererType>, NULL, bufferA, bufferB, tests);
 	}
 }
 

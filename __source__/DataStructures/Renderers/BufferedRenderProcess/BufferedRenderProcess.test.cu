@@ -35,10 +35,10 @@ namespace BufferedRenderProcessTest {
 	}
 	namespace {
 		static void testBufferedRenderProcess(
-			BufferedRenderer*(*bufferedRendererCreateFunction)(const Renderer::ThreadConfiguration &configuration),
-			const Renderer::ThreadConfiguration &configuration, BufferedRenderProcess *process) {
+			BufferedRenderer*(*bufferedRendererCreateFunction)(const Renderer::ThreadConfiguration &configuration, void *aux),
+			void *createFnAux, const Renderer::ThreadConfiguration &configuration, BufferedRenderProcess *process) {
 
-			BufferedRenderer *renderer = bufferedRendererCreateFunction(configuration);
+			BufferedRenderer *renderer = bufferedRendererCreateFunction(configuration, createFnAux);
 			BufferedWindow bufferedWindow(
 				((configuration.numHostThreads() > 0) || (configuration.numActiveDevices() > 1)) ? 
 				0 : BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE);
@@ -56,8 +56,8 @@ namespace BufferedRenderProcessTest {
 	}
 
 	void runTestGauntlet(
-		BufferedRenderer*(*bufferedRendererCreateFunction)(const Renderer::ThreadConfiguration &configuration),
-		FrameBufferManager *bufferA, FrameBufferManager *bufferB, uint32_t tests) {
+		BufferedRenderer*(*bufferedRendererCreateFunction)(const Renderer::ThreadConfiguration &configuration, void *aux),
+		void *createFnAux, FrameBufferManager *bufferA, FrameBufferManager *bufferB, uint32_t tests) {
 
 		BufferedRenderProcess bufferedRenderProcess;
 		bufferedRenderProcess.setInfinateTargetIterations();
@@ -69,60 +69,60 @@ namespace BufferedRenderProcessTest {
 		if ((tests & TEST_MULTI_ITER_CPU_ONLY) != NULL) {
 			configuration.configureCPU(Renderer::ThreadConfiguration::ALL);
 			configuration.configureEveryGPU(Renderer::ThreadConfiguration::NONE);
-			Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_CPU_ONLY", bufferedRendererCreateFunction, configuration, &bufferedRenderProcess);
+			Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_CPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 		}
 		if (configuration.numDevices() > 0) {
 			if ((tests & TEST_MULTI_ITER_GPU_ONLY) != NULL) {
 				configuration.configureCPU(Renderer::ThreadConfiguration::NONE);
 				configuration.configureEveryGPU(2);
-				Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_GPU_ONLY", bufferedRendererCreateFunction, configuration, &bufferedRenderProcess);
+				Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_GPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}
 			if ((tests & TEST_MULTI_ITER_CPU_AND_GPU) != NULL) {
 				configuration.configureCPU(Renderer::ThreadConfiguration::ALL);
 				configuration.configureEveryGPU(2);
-				Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_CPU_AND_GPU", bufferedRendererCreateFunction, configuration, &bufferedRenderProcess);
+				Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_CPU_AND_GPU", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}
 		}
 		if ((tests & TEST_MULTI_ITER_1_CPU_ONLY) != NULL) {
 			configuration.configureCPU(Renderer::ThreadConfiguration::ONE);
 			configuration.configureEveryGPU(Renderer::ThreadConfiguration::NONE);
-			Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_1_CPU_ONLY", bufferedRendererCreateFunction, configuration, &bufferedRenderProcess);
+			Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_1_CPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 		}
 		if (((tests & TEST_MULTI_ITER_1_GPU_ONLY) != NULL) && (configuration.numDevices() > 1)) {
 			configuration.configureCPU(Renderer::ThreadConfiguration::NONE);
 			configuration.configureEveryGPU(0);
 			configuration.configureGPU(0, 2);
-			Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_1_GPU_ONLY", bufferedRendererCreateFunction, configuration, &bufferedRenderProcess);
+			Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_1_GPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 		}
 
 		bufferedRenderProcess.setDoubleBuffers(bufferA, bufferB);
 		if ((tests & TEST_SINGLE_ITER_CPU_ONLY) != NULL) {
 			configuration.configureCPU(Renderer::ThreadConfiguration::ALL);
 			configuration.configureEveryGPU(Renderer::ThreadConfiguration::NONE);
-			Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_CPU_ONLY", bufferedRendererCreateFunction, configuration, &bufferedRenderProcess);
+			Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_CPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 		}
 		if (configuration.numDevices() > 0) {
 			if ((tests & TEST_SINGLE_ITER_GPU_ONLY) != NULL) {
 				configuration.configureCPU(Renderer::ThreadConfiguration::NONE);
 				configuration.configureEveryGPU(2);
-				Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_GPU_ONLY", bufferedRendererCreateFunction, configuration, &bufferedRenderProcess);
+				Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_GPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}
 			if ((tests & TEST_SINGLE_ITER_CPU_AND_GPU) != NULL) {
 				configuration.configureCPU(Renderer::ThreadConfiguration::ALL);
 				configuration.configureEveryGPU(2);
-				Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_1_CPU_ONLY", bufferedRendererCreateFunction, configuration, &bufferedRenderProcess);
+				Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_1_CPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}
 		}
 		if ((tests & TEST_SINGLE_ITER_1_CPU_ONLY) != NULL) {
 			configuration.configureCPU(Renderer::ThreadConfiguration::ONE);
 			configuration.configureEveryGPU(Renderer::ThreadConfiguration::NONE);
-			Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_1_CPU_ONLY", bufferedRendererCreateFunction, configuration, &bufferedRenderProcess);
+			Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_1_CPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 		}
 		if (((tests & TEST_SINGLE_ITER_1_GPU_ONLY) != NULL) && (configuration.numDevices() > 1)) {
 			configuration.configureCPU(Renderer::ThreadConfiguration::NONE);
 			configuration.configureEveryGPU(0);
 			configuration.configureGPU(0, 2);
-			Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_1_GPU_ONLY", bufferedRendererCreateFunction, configuration, &bufferedRenderProcess);
+			Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_1_GPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 		}
 	}
 }
