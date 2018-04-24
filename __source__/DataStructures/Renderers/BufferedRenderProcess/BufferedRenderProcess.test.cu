@@ -2,7 +2,6 @@
 #include "../../../Namespaces/Tests/Tests.h"
 #include <string>
 
-
 namespace BufferedRenderProcessTest {
 	void FramerateLogger::start() {
 		renderedFrames = 0;
