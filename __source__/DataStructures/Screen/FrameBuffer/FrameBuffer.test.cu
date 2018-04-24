@@ -5,6 +5,7 @@
 #include"../../Primitives/Compound/Pair/Pair.cuh"
 #include"../../Renderers/BufferedRenderProcess/BufferedRenderProcess.cuh"
 #include"../../Renderers/BlockRenderer/BlockRenderer.cuh"
+#include"../../Renderers/BufferedRenderProcess/BufferedRenderProcess.test.cuh"
 #include<mutex>
 #include<sstream>
 
@@ -45,30 +46,6 @@ namespace FrameBufferTest {
 		}
 
 		class PerformanceTestRender : public BlockRenderer {
-		private:
-			bool renderSingleIteration;
-			volatile Count renderedFrames;
-			volatile Count lastRenderedFrames, lastDisplayedFrames;
-			volatile clock_t lastTime;
-			BufferedWindow *displayWindow;
-
-			static void iterationCompletionCallback(void *testCase) {
-				PerformanceTestRender *self = ((PerformanceTestRender*)testCase);
-				self->renderedFrames++;
-				clock_t curTime = clock();
-				float deltaTime = (((float)(curTime - self->lastTime)) / CLOCKS_PER_SEC);
-				if (deltaTime >= 1.0f) {
-					Count rendered = self->renderedFrames;
-					Count displayed = self->displayWindow->framesDisplayed();
-					float fps = ((rendered - self->lastRenderedFrames) / deltaTime);
-					float screenFps = ((displayed - self->lastDisplayedFrames) / deltaTime);
-					self->lastRenderedFrames = rendered;
-					self->lastDisplayedFrames = displayed;
-					self->lastTime = curTime;
-					std::cout << "FPS: " << fps << " (displayed: " << screenFps << ")" << std::endl;
-				}
-			}
-
 		protected:
 			virtual bool renderBlocksCPU(const Info &, FrameBuffer *buffer, int startBlock, int endBlock) {
 				int blockSize = buffer->getBlockSize();
@@ -85,50 +62,17 @@ namespace FrameBufferTest {
 
 		public:
 			PerformanceTestRender(
-				const Renderer::ThreadConfiguration &configuration, bool singleIteration) : BlockRenderer(configuration) {
-				renderSingleIteration = singleIteration;
+				const Renderer::ThreadConfiguration &configuration) : BlockRenderer(configuration) {
 			}
 			~PerformanceTestRender() { killRenderThreads(); }
-
-
-		public:
-			void test(FrameBufferManager &frontBuffer, FrameBufferManager &backBuffer) {
-				BufferedWindow bufferedWindow(automaticallySynchesHostBlocks() ? 0 : BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE);
-				BufferedRenderProcess bufferedRenderProcess;
-
-				bufferedRenderProcess.setRenderer(this);
-				if (renderSingleIteration) bufferedRenderProcess.setDoubleBuffers(&backBuffer, &frontBuffer);
-				else bufferedRenderProcess.setBuffer(&backBuffer);
-				bufferedRenderProcess.setInfinateTargetIterations();
-				bufferedRenderProcess.setTargetDisplayWindow(&bufferedWindow);
-				bufferedRenderProcess.setTargetResolutionToWindowSize();
-
-				renderedFrames = 0;
-				lastRenderedFrames = lastDisplayedFrames = 0;
-				displayWindow = &bufferedWindow;
-				lastTime = clock();
-				bufferedRenderProcess.setIterationCompletionCallback(iterationCompletionCallback, this);
-
-				bufferedRenderProcess.start();
-				while (!bufferedWindow.windowClosed()) std::this_thread::sleep_for(std::chrono::milliseconds(32));
-				bufferedRenderProcess.end();
-			}
 		};
 	}
 
 	namespace Private {
-		void testPerformance(FrameBufferManager &front, FrameBufferManager &back, Flags flags) {
-			Renderer::ThreadConfiguration configuration;
-			configuration.configureCPU(((flags & USE_CPU) != 0) ? Renderer::ThreadConfiguration::ALL : Renderer::ThreadConfiguration::NONE);
-			if (((flags & USE_GPU) != 0) && (configuration.numDevices() > 0)) {
-				if ((flags & TEST_SINGLE_GPU_ONLY) != 0) {
-					configuration.configureEveryGPU(0);
-					configuration.configureGPU(0, 2);
-				}
-				else configuration.configureEveryGPU(2);
-			}
-			else configuration.configureEveryGPU(0);
-			PerformanceTestRender(configuration, (flags & TEST_FOR_SINGLE_ITERATION) != 0).test(front, back);
+		void testPerformance(const std::string& bufferClassName, FrameBufferManager &front, FrameBufferManager &back) {
+			std::cout << "__________________________________________________" << std::endl;
+			std::cout << "TESTING PERFORMANCE OF " << bufferClassName << ": " << std::endl;
+			BufferedRenderProcessTest::runTestGauntlet<PerformanceTestRender>(&front, &back);
 		}
 	}
 }
