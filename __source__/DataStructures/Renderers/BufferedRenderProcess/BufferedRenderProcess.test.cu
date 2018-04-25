@@ -109,7 +109,7 @@ namespace BufferedRenderProcessTest {
 			if ((tests & TEST_SINGLE_ITER_CPU_AND_GPU) != NULL) {
 				configuration.configureCPU(Renderer::ThreadConfiguration::ALL);
 				configuration.configureEveryGPU(2);
-				Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_1_CPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
+				Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_CPU_AND_GPU", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}
 		}
 		if ((tests & TEST_SINGLE_ITER_1_CPU_ONLY) != NULL) {
