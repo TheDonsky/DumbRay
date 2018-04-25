@@ -1,6 +1,6 @@
 #pragma once
 #include "../Renderer/Renderer.cuh"
-#include "../../Screen/FrameBuffer/FrameBufferManager/FrameBufferManager.cuh"
+#include "../../Screen/FrameBuffer/FrameBuffer.cuh"
 
 
 

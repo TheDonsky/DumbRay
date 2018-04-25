@@ -4,6 +4,7 @@
 #include"../../Primitives/Compound/Pair/Pair.cuh"
 #include"../../../Namespaces/Device/Device.cuh"
 #include"../../GeneralPurpose/Semaphore/Semaphore.h"
+#include"../../GeneralPurpose/ReferenceManager/ReferenceManager.cuh"
 #include<mutex>
 #include<atomic>
 
@@ -217,3 +218,6 @@ public:
 
 
 #include"FrameBuffer.impl.cuh"
+typedef ReferenceManager<FrameBuffer> FrameBufferManager;
+
+

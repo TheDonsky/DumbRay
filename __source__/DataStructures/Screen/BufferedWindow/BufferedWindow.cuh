@@ -1,5 +1,5 @@
 #pragma once
-#include "../FrameBuffer/FrameBufferManager/FrameBufferManager.cuh"
+#include "../FrameBuffer/FrameBuffer.cuh"
 #include "../../../Namespaces/Windows/Windows.h"
 #include <thread>
 #include <atomic>

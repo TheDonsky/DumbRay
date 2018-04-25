@@ -1,5 +1,5 @@
 #pragma once
-#include"FrameBufferManager/FrameBufferManager.cuh"
+#include"FrameBuffer.cuh"
 #include "../../../Namespaces/Tests/Tests.h"
 
 

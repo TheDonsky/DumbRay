@@ -3,7 +3,7 @@
 #include "../Renderer/Renderer.cuh"
 #include "../../Objects/Scene/SceneHandler/SceneHandler.cuh"
 #include "../../../Namespaces/Device/Device.cuh"
-#include "../../Screen/FrameBuffer/FrameBufferManager/FrameBufferManager.cuh"
+#include "../../Screen/FrameBuffer/FrameBuffer.cuh"
 
 
 #define BACKWARD_RENDERER_MAX_BOUNCES 64
