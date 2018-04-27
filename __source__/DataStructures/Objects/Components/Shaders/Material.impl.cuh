@@ -240,4 +240,3 @@ inline bool TypeTools<Renderable<HitType> >::disposeDevArray(Renderable<HitType>
 	for (int i = 0; i < count; i++) if (!TypeTools<HitType>::disposeDevArray(&((arr + i)->object), 1)) return false;
 	return true;
 }
-

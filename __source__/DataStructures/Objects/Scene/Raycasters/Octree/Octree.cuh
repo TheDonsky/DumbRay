@@ -141,6 +141,7 @@ public:
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
 	DEFINE_CUDA_LOAD_INTERFACE_FOR(Octree);
+	typedef const ElemType* ElemReference;
 
 
 
@@ -151,7 +152,7 @@ private:
 	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 	/** ########################################################################## **/
 	Stacktor<TreeNode> tree;
-	Stacktor<Stacktor<const ElemType*, OCTREE_VOXEL_LOCAL_CAPACITY> > nodeData;
+	Stacktor<Stacktor<ElemReference, OCTREE_VOXEL_LOCAL_CAPACITY> > nodeData;
 	Stacktor<ElemType> data;
 
 
@@ -164,7 +165,7 @@ private:
 
 	/** ========================================================== **/
 	__device__ __host__ inline void fixTreeNodePointers(const TreeNode *falseRoot);
-	__device__ __host__ inline void fixNodeDataPointers(const ElemType *falseRoot);
+	__device__ __host__ inline void fixNodeDataPointers(ElemReference falseRoot);
 
 	/** ========================================================== **/
 	__device__ __host__ inline void pushData(const ElemType &object);
@@ -178,7 +179,7 @@ private:
 	__device__ __host__ inline void reduceNode(int index);
 
 	/** ========================================================== **/
-	__device__ __host__ __noinline__ void put(const ElemType *elem, int nodeIndex, int depth);
+	__device__ __host__ __noinline__ void put(ElemReference elem, int nodeIndex, int depth);
 
 	/** ========================================================== **/
 	struct CastFrame{

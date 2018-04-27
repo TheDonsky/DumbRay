@@ -501,7 +501,7 @@ inline bool Stacktor<Type, localCapacity>::dispose(Stacktor *arr, int count){
 	// Cleanup:
 	register int nBlocks = StacktorPrivateKernels::getBlockCount(count);
 	register int nThreads = StacktorPrivateKernels::getThreadCount();
-	StacktorPrivateKernels::clear<Type, localCapacity><<<nBlocks, nThreads, 0, stream>>>(arr, count);
+	StacktorPrivateKernels::clear<Type, localCapacity><<<nBlocks, nThreads, 0, stream>>>((Stacktor*)arr, (int)count);
 	
 	// Dealling with arrays:
 	char junk[sizeof(Stacktor<Type, localCapacity>)];
