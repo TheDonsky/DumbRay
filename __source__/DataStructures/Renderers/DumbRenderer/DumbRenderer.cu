@@ -7,10 +7,12 @@ DumbRenderer::DumbRenderer(
 	const BlockConfiguration &blockSettings,
 	FrameBufferManager *buffer,
 	SceneType *scene,
-	CameraManager *camera) 
+	CameraManager *camera,
+	BoxingMode boxingMode)
 	: BlockRenderer(configuration, blockSettings, buffer) {
 	setScene(scene);
 	setCamera(camera);
+	setBoxingMode(boxing);
 }
 
 void DumbRenderer::setScene(SceneType *scene) { sceneManager = scene; }
@@ -19,12 +21,15 @@ DumbRenderer::SceneType* DumbRenderer::getScene()const { return sceneManager; }
 void DumbRenderer::setCamera(CameraManager *camera) { cameraManager = camera; }
 DumbRenderer::CameraManager* DumbRenderer::getCamera()const { return cameraManager; }
 
+void DumbRenderer::setBoxingMode(BoxingMode mode) { boxing = mode; }
+DumbRenderer::BoxingMode DumbRenderer::getBoxingMode()const { return boxing; }
 
 
 bool DumbRenderer::renderBlocksCPU(
 	const Info &info, FrameBuffer *buffer, int startBlock, int endBlock) {
 	PixelRenderProcess::SceneConfiguration configuration;
-	if (!configuration.host(getScene(), getCamera(), buffer)) return false;
+	float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
+	if (!configuration.host(getScene(), getCamera(), buffer, boxing, blending)) return false;
 	PixelRenderProcess pixelRenderProcess;
 	pixelRenderProcess.configure(configuration);
 	int blockSize = buffer->getBlockSize();
@@ -52,7 +57,8 @@ bool DumbRenderer::renderBlocksGPU(
 	const Info &info, FrameBuffer *host, FrameBuffer *device, 
 	int startBlock, int endBlock, cudaStream_t &renderStream) {
 	PixelRenderProcess::SceneConfiguration configuration;
-	if (!configuration.device(getScene(), getCamera(), device, info.device)) return false;
+	float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
+	if (!configuration.device(getScene(), getCamera(), device, host, boxing, info.device, blending)) return false;
 	DumbRendererPrivateKernels::renderBlocks
 		<<<(endBlock - startBlock), host->getBlockSize(), 0, renderStream>>>
 		(configuration, startBlock);
@@ -61,17 +67,23 @@ bool DumbRenderer::renderBlocksGPU(
 
 
 bool DumbRenderer::PixelRenderProcess::SceneConfiguration::host(
-	SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer) {
+	SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, BoxingMode boxingMode, float blending) {
 	context.host(scene);
 	camera = cameraManager->cpuHandle();
 	buffer = frameBuffer;
+	boxing = boxingMode;
+	frameBuffer->getSize(&width, &height);
+	blendingAmount = blending;
 	return (!hasError());
 }
 bool DumbRenderer::PixelRenderProcess::SceneConfiguration::device(
-	SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, int deviceId) {
+	SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, FrameBuffer *hostFrameBuffer, BoxingMode boxingMode, int deviceId, float blending) {
 	context.device(scene, deviceId);
 	camera = cameraManager->gpuHandle(deviceId);
 	buffer = frameBuffer;
+	boxing = boxingMode;
+	hostFrameBuffer->getSize(&width, &height);
+	blendingAmount = blending;
 	return (!hasError());
 }
 bool DumbRenderer::PixelRenderProcess::SceneConfiguration::hasError() {
@@ -85,12 +97,9 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::setPixel(int blockId,
 	if (configuration.buffer->blockPixelLocation(blockId, pixelId, &pixelX, &pixelY)) {
 		block = blockId;
 		pixelInBlock = pixelId;
-		reset(); return true;
+		return true;
 	}
 	else return false;
-}
-__device__ __host__ void DumbRenderer::PixelRenderProcess::reset() {
-	// __TODO__: 
 }
 
 __device__ __host__ void DumbRenderer::PixelRenderProcess::render() {
@@ -100,5 +109,17 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::render() {
 #else
 	Color color(0, 0, 1, 1);
 #endif
-	configuration.buffer->setBlockPixelColor(block, pixelInBlock, color);
+	register BoxingMode boxing = configuration.boxing;
+	register float width = configuration.width;
+	register float height = configuration.height;
+	float pixelSize;
+	if (boxing == BOXING_MODE_HEIGHT_BASED) pixelSize = (1.0f / height);
+	else if (boxing == BOXING_MODE_WIDTH_BASED) pixelSize = (1.0f / width);
+	else if (boxing == BOXING_MODE_MIN_BASED) pixelSize = (1.0f / ((height <= width) ? height : width));
+	else if (boxing == BOXING_MODE_MAX_BASED) pixelSize = (1.0f / ((height >= width) ? height : width));
+	else pixelSize = 1.0f;
+	Vector2 offset((pixelX - (width / 2.0f)) * pixelSize, ((height / 2.0f) - pixelY) * pixelSize);
+	if (configuration.blendingAmount >= 1.0f)
+		configuration.buffer->setBlockPixelColor(block, pixelInBlock, color);
+	else configuration.buffer->blendBlockPixelColor(block, pixelInBlock, color, configuration.blendingAmount);
 }
