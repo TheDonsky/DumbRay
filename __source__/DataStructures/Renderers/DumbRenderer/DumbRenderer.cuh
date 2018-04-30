@@ -21,7 +21,8 @@ public:
 		FrameBufferManager *buffer = NULL,
 		SceneType *scene = NULL,
 		CameraManager *camera = NULL,
-		BoxingMode boxingMode = BOXING_MODE_HEIGHT_BASED);
+		BoxingMode boxingMode = BOXING_MODE_HEIGHT_BASED,
+		int maxBounces = 3);
 
 	void setScene(SceneType *scene);
 	SceneType* getScene()const;
@@ -31,6 +32,11 @@ public:
 
 	void setBoxingMode(BoxingMode mode);
 	BoxingMode getBoxingMode()const;
+
+	void setMaxBounces(int maxBounces);
+	int getMaxBounces()const;
+
+	static int maxBouncesLimit();
 
 
 protected:
@@ -42,6 +48,7 @@ private:
 	volatile SceneType volatile *sceneManager;
 	volatile CameraManager volatile *cameraManager;
 	volatile BoxingMode boxing;
+	volatile int bounceLimit;
 
 public:
 	class PixelRenderProcess {
@@ -53,9 +60,10 @@ public:
 			BoxingMode boxing;
 			int width, height;
 			float blendingAmount;
+			int maxBounces;
 
-			bool host(SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, BoxingMode boxingMode, float blending);
-			bool device(SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, FrameBuffer *hostFrameBuffer, BoxingMode boxingMode, int deviceId, float blending);
+			bool host(SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, BoxingMode boxingMode, float blending, int bounces);
+			bool device(SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, FrameBuffer *hostFrameBuffer, BoxingMode boxingMode, int deviceId, float blending, int bounces);
 			bool hasError();
 		};
 
@@ -69,5 +77,30 @@ public:
 		SceneConfiguration configuration;
 		int block, pixelInBlock;
 		int pixelX, pixelY;
+
+		enum RayType {
+			GEOMETRY_RAY,
+			LIGHT_RAY
+		};
+
+		struct BounceLayer {
+			Color color;
+			Ray layerRay;
+			float sampleWeight;
+			float absoluteWeight;
+			int lightIndex;
+			RaycastHit<SceneType::GeometryUnit> geometry;
+			RaySamples bounces;
+
+			__device__ __host__ inline void setup(const SampleRay &sample, float absWeight) {
+				color = Color(0.0f, 0.0f, 0.0f, 0.0f);
+				layerRay = sample.ray;
+				sampleWeight = sample.sampleWeight;
+				absoluteWeight = sampleWeight * absWeight;
+				lightIndex = 0;
+				geometry.object = NULL;
+				bounces.sampleCount = 0;
+			}
+		};
 	};
 };
