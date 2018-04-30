@@ -246,7 +246,7 @@ inline void BackwardRenderer<HitType>::iterateGPU(const Info &info) {
 	if (cudaHostGetDevicePointer(&renderEndedDevice, threadData.renderEnded, 0) != cudaSuccess) return;
 	Scene<HitType> *scene = config.scene->getHandleGPU(info.device);
 	FrameBuffer &cpuBuffer = (*frameBuffer->cpuHandle());
-	FrameBuffer *buffer = frameBuffer->gpuHandle(info.device, true);
+	FrameBuffer *buffer = frameBuffer->gpuHandle(info.device);
 	if (buffer == NULL) return;
 	
 	int maxBounce = __DumbRay_BACKWARD_RENDERER_PRIVATE_NAMESPACE__

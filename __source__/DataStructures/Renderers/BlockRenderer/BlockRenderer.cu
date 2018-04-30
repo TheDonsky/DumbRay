@@ -30,14 +30,22 @@ const BlockRenderer::BlockConfiguration &BlockRenderer::blockRendererConfigurati
 bool BlockRenderer::automaticallySynchesHostBlocks()const { return hostBlockSynchNeeded; }
 
 
-bool BlockRenderer::setupSharedData(const Info &info, void *& sharedData) { return true; }
+bool BlockRenderer::setupSharedData(const Info &info, void *& sharedData) { 
+	/*
+	size_t stackSize;
+	if (cudaDeviceGetLimit(&stackSize, cudaLimitStackSize) != cudaSuccess) return false;
+	const int neededStackSize = 8192;
+	if (stackSize < neededStackSize) if (cudaDeviceSetLimit(cudaLimitStackSize, neededStackSize) != cudaSuccess) return false;
+	//*/
+	return true; 
+}
 bool BlockRenderer::setupData(const Info &info, void *& data) {
 	// __TODO__: (maybe) record the errors somehow...
 	if (info.isGPU()) {
 		FrameBuffer::DeviceBlockManager *manager = new FrameBuffer::DeviceBlockManager(
 			info.device, (hostBlockSynchNeeded ?
 				FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET :
-				FrameBuffer::DeviceBlockManager::CUDA_MANUALLY_SYNCH_HOST_BLOCKS), 
+				FrameBuffer::DeviceBlockManager::CUDA_MANUALLY_SYNCH_HOST_BLOCKS),
 			blockConfiguration.blockCutPerGpuSM());
 		if (manager == NULL) return false;	// ALLOCATION FAILURE...
 		else if (manager->errors() != 0) { delete manager; return false; }	// INTERNAL ERRORS...
@@ -69,7 +77,7 @@ void BlockRenderer::iterateGPU(const Info &info) {
 	if (host == NULL) return;
 	FrameBuffer *device = getFrameBuffer()->gpuHandle(info.device);
 	if (device == NULL) return;
-	
+
 	FrameBuffer::DeviceBlockManager *blockManager = threadData[info.globalThreadId].blockManager;
 	if (blockManager == NULL) return; // NORMALLY, THIS SHOULD NOT HAPPEN AT ALL...
 	if (!blockManager->setBuffers(host, device, &blockBank)) return;

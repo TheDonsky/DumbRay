@@ -592,7 +592,13 @@ inline bool Stacktor<Type, localCapacity>::upload(const Stacktor *source, Stackt
 #else
 		if (cudaHostAlloc((void**)&exJunk, sizeof(Type) * exCap, cudaHostAllocDefault) != cudaSuccess) return false;
 #endif
-		if (cudaMalloc((void**)&exAlloc, sizeof(Type) * exCap) != cudaSuccess){ delete[] exJunk; return(false); }
+		if (cudaMalloc((void**)&exAlloc, sizeof(Type) * exCap) != cudaSuccess){ 
+#ifndef USE_PINNED_MEMORY
+			delete[] exJunk;
+#else
+			cudaFreeHost(exJunk);
+#endif
+			return(false); }
 	}
 	Type *exHosAlloc = (Type*)exJunk;
 

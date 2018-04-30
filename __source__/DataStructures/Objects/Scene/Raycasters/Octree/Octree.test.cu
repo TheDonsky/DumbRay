@@ -19,8 +19,8 @@ namespace OctreeTest {
 		// ############# PIXEL COLOR: #############
 		// ########################################
 		//#define USE_NORMAL_COLOR
-		__device__ __host__ inline static void colorPixel(const Octree<> &octree, Color &pixel, const Transform &trans, int i, int j, int width, int height, int frame) {
-			Octree<>::RaycastHit hit;
+		__device__ __host__ inline static void colorPixel(const Octree<Renderable<BakedTriFace> > &octree, Color &pixel, const Transform &trans, int i, int j, int width, int height, int frame) {
+			Octree<Renderable<BakedTriFace> >::RaycastHit hit;
 			Vector3 dir((float)(j - width / 2), (float)(height / 2 - i), (float)(width / 2));
 			Ray r = trans.ray(dir.normalized());
 			if (octree.cast(r, hit)) {
@@ -35,7 +35,7 @@ namespace OctreeTest {
 				/*/
 				Photon ph(trans.frontRay(), ColorRGB(1, 1, 1));
 				//*/
-				pixel = shad.cast(ShaderHitInfo<BakedTriFace> { hit.object, ph, hit.hitPoint, r.origin }).observed.color;
+				pixel = shad.cast(ShaderHitInfo<BakedTriFace> { &hit.object->object, ph, hit.hitPoint, r.origin }).observed.color;
 #endif
 			}
 			else {
@@ -77,7 +77,7 @@ namespace OctreeTest {
 		// ########################################
 		// ######### DEVICE RENDER KERNEL: ########
 		// ########################################
-		__global__ static void color(const Octree<> *octree, Color *image, const Transform trans, int width, int height, int frame) {
+		__global__ static void color(const Octree<Renderable<BakedTriFace> > *octree, Color *image, const Transform trans, int width, int height, int frame) {
 			/*
 			// This should not compile:
 			Octree<> oct = Octree<>();
@@ -113,8 +113,8 @@ namespace OctreeTest {
 		// ########################################
 		// ######## OCTREE CONSTRUCTION: ##########
 		// ########################################
-		inline static Octree<> constructOctree(const Stacktor<PolyMesh> &meshes, Octree<> *&devOctree) {
-			Octree<> octree;
+		inline static Octree<Renderable<BakedTriFace> > constructOctree(const Stacktor<PolyMesh> &meshes, Octree<Renderable<BakedTriFace> > *&devOctree) {
+			Octree<Renderable<BakedTriFace> > octree;
 			Vertex minVert = meshes[0].vertex(0);
 			Vertex maxVert = meshes[0].vertex(0);
 			for (int i = 0; i < meshes.size(); i++)
@@ -134,7 +134,8 @@ namespace OctreeTest {
 				BakedTriMesh mesh;
 				meshes[i].bake(mesh);
 				//*
-				octree.push(mesh);
+				for (int j = 0; j < mesh.size(); j++)
+					octree.push(Renderable<BakedTriFace>(mesh[j], 0));
 				std::cout << "PUSHED " << i << std::endl;
 				/*/
 				octree.put(mesh);
@@ -152,14 +153,14 @@ namespace OctreeTest {
 			devOctree = octree.upload();
 			if (devOctree != NULL) std::cout << "OCTREE UPLOADED" << std::endl;
 			else std::cout << "OCTREE UPLOAD FAILED" << std::endl;
-			Octree<> tmpClone = octree;
+			//Octree<Renderable<BakedTriFace> > tmpClone = octree;
 			return octree;
 		}
 
 
 		class OctreeTestRenderContext {
 		private:
-			Octree<> octree, *devOctree;
+			Octree<Renderable<BakedTriFace> > octree, *devOctree;
 
 			char windowData[sizeof(Windows::Window)];
 			Matrix<Color> *image, *imageBack;
@@ -272,7 +273,7 @@ namespace OctreeTest {
 			// ########################################
 			// ######### HOST RENDER ROUTINE: #########
 			// ########################################
-			inline static void cpuRenderThread(const Octree<> *octree, Matrix<Color> *image, Transform trans, int step, int startI, int frame) {
+			inline static void cpuRenderThread(const Octree<Renderable<BakedTriFace> > *octree, Matrix<Color> *image, Transform trans, int step, int startI, int frame) {
 				/*
 				const int width = image->width();
 				const int height = image->height();
@@ -394,7 +395,7 @@ namespace OctreeTest {
 			// ########################################
 			inline ~OctreeTestRenderContext() {
 				if (devOctree != NULL) {
-					if (Octree<>::dispose(devOctree)) std::cout << "DEVICE OCTREE DIPOSED SUCCESSFULY" << std::endl;
+					if (Octree<Renderable<BakedTriFace> >::dispose(devOctree)) std::cout << "DEVICE OCTREE DIPOSED SUCCESSFULY" << std::endl;
 					else std::cout << "ERROR DISPOSING OF DEVICE OCTREE" << std::endl;
 					cudaFree(devOctree);
 				}

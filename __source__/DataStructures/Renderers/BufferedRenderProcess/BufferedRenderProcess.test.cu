@@ -54,6 +54,8 @@ namespace BufferedRenderProcessTest {
 		}
 	}
 
+#define NUM_THREADS_PER_GPU 1
+	
 	void runTestGauntlet(
 		BufferedRenderer*(*bufferedRendererCreateFunction)(const Renderer::ThreadConfiguration &configuration, void *aux),
 		void *createFnAux, FrameBufferManager *bufferA, FrameBufferManager *bufferB, uint32_t tests) {
@@ -73,12 +75,12 @@ namespace BufferedRenderProcessTest {
 		if (configuration.numDevices() > 0) {
 			if ((tests & TEST_MULTI_ITER_GPU_ONLY) != NULL) {
 				configuration.configureCPU(Renderer::ThreadConfiguration::NONE);
-				configuration.configureEveryGPU(2);
+				configuration.configureEveryGPU(NUM_THREADS_PER_GPU);
 				Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_GPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}
 			if ((tests & TEST_MULTI_ITER_CPU_AND_GPU) != NULL) {
 				configuration.configureCPU(Renderer::ThreadConfiguration::ALL);
-				configuration.configureEveryGPU(2);
+				configuration.configureEveryGPU(NUM_THREADS_PER_GPU);
 				Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_CPU_AND_GPU", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}
 		}
@@ -90,7 +92,7 @@ namespace BufferedRenderProcessTest {
 		if (((tests & TEST_MULTI_ITER_1_GPU_ONLY) != NULL) && (configuration.numDevices() > 1)) {
 			configuration.configureCPU(Renderer::ThreadConfiguration::NONE);
 			configuration.configureEveryGPU(0);
-			configuration.configureGPU(0, 2);
+			configuration.configureGPU(0, NUM_THREADS_PER_GPU);
 			Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_1_GPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 		}
 
@@ -103,12 +105,12 @@ namespace BufferedRenderProcessTest {
 		if (configuration.numDevices() > 0) {
 			if ((tests & TEST_SINGLE_ITER_GPU_ONLY) != NULL) {
 				configuration.configureCPU(Renderer::ThreadConfiguration::NONE);
-				configuration.configureEveryGPU(2);
+				configuration.configureEveryGPU(NUM_THREADS_PER_GPU);
 				Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_GPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}
 			if ((tests & TEST_SINGLE_ITER_CPU_AND_GPU) != NULL) {
 				configuration.configureCPU(Renderer::ThreadConfiguration::ALL);
-				configuration.configureEveryGPU(2);
+				configuration.configureEveryGPU(NUM_THREADS_PER_GPU);
 				Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_CPU_AND_GPU", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}
 		}
@@ -120,7 +122,7 @@ namespace BufferedRenderProcessTest {
 		if (((tests & TEST_SINGLE_ITER_1_GPU_ONLY) != NULL) && (configuration.numDevices() > 1)) {
 			configuration.configureCPU(Renderer::ThreadConfiguration::NONE);
 			configuration.configureEveryGPU(0);
-			configuration.configureGPU(0, 2);
+			configuration.configureGPU(0, NUM_THREADS_PER_GPU);
 			Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_1_GPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 		}
 	}

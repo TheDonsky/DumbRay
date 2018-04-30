@@ -39,9 +39,9 @@ protected:
 
 
 private:
-	SceneType *sceneManager;
-	CameraManager *cameraManager;
-	BoxingMode boxing;
+	SceneType volatile *sceneManager;
+	CameraManager volatile *cameraManager;
+	volatile BoxingMode boxing;
 
 public:
 	class PixelRenderProcess {

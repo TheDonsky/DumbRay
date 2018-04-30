@@ -17,6 +17,8 @@ public:
 	__dumb__ void getPhotons(const Vector2 &screenSpacePosition, PhotonPack &result)const;
 	__dumb__ void getColor(const Vector2 &screenSpacePosition, Photon photon, Color &result)const;
 
+	__dumb__ void getPixelSamples(const Vector2 &screenSpacePosition, float pixelSize, RaySamples &samples)const;
+
 	// For upload:
 	DEFINE_CUDA_LOAD_INTERFACE_FOR(Camera);
 private:

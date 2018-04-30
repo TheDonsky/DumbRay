@@ -18,6 +18,12 @@ __dumb__ void Camera::getColor(const Vector2 &screenSpacePosition, Photon photon
 }
 
 
+__dumb__ void Camera::getPixelSamples(const Vector2 &screenSpacePosition, float pixelSize, RaySamples &samples)const {
+	lense.getPixelSamples(screenSpacePosition, pixelSize, &samples);
+	for (int i = 0; i < samples.sampleCount; i++) samples.samples[i].ray >>= transform;
+}
+
+
 
 
 

@@ -23,6 +23,8 @@ public:
 	__dumb__ Photon toScreenSpace(const void *lense, const Photon &photon)const;
 	__dumb__ void getColor(const void *lense, const Vector2 &screenSpacePosition, Photon photon, Color &result)const;
 
+	__dumb__ void getPixelSamples(const void *lense, const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples)const;
+
 
 
 private:
@@ -30,12 +32,17 @@ private:
 	Photon(*toScreenSpaceFunction)(const void* lense, const Photon &photon);
 	void(*getColorFunction)(const void *lense, const Vector2 &screenSpacePosition, Photon photon, Color &result);
 
+	void(*getPixelSamplesFn)(const void *lense, const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples);
+
 	template<typename LenseType>
 	__dumb__ static void getScreenPhotonGeneric(const void* lense, const Vector2 &screenSpacePosition, PhotonPack &result);
 	template<typename LenseType>
 	__dumb__ static Photon toScreenSpaceGeneric(const void* lense, const Photon &photon);
 	template<typename LenseType>
 	__dumb__ static void getColorGeneric(const void *lense, const Vector2 &screenSpacePosition, Photon photon, Color &result);
+
+	template<typename LenseType>
+	__dumb__ static void getPixelSamplesGeneric(const void *lense, const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples);
 };
 
 
@@ -51,6 +58,7 @@ public:
 	__dumb__ Photon toScreenSpace(const Photon &photon)const; 
 	__dumb__ void getColor(const Vector2 &screenSpacePosition, Photon photon, Color &result)const;
 
+	__dumb__ void getPixelSamples(const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples)const;
 
 	inline Lense *upload()const;
 	inline static Lense* upload(const Lense *source, int count = 1);

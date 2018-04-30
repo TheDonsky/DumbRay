@@ -1,6 +1,7 @@
 #pragma once
 #include "../Stacktor/Stacktor.cuh"
 #include <mutex>
+#include <thread>
 
 
 
@@ -74,6 +75,9 @@ private:
 	// WE RESTRICT COPY-CONSTRUCTION FOR THIS ONE...
 	inline ManagedHandler(const ManagedHandler &other) {}
 	inline ManagedHandler &operator=(const ManagedHandler &other) { return (*this); }
+
+	inline static void cleanDeviceInstanceThread(ManagedHandler *self, int deviceId);
+	inline bool cleanDeviceInstanceNoLock(int index);
 };
 
 

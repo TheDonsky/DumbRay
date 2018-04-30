@@ -38,7 +38,7 @@ Uploads/updates the item to the given GPU and selects it's context.
 */
 inline bool ManagedHandler<Type>::uploadToGPU(int index, bool overrideExisting) {
 	std::lock_guard<std::mutex> guard(lock);
-	if (selectGPU(index)) {
+	//if (selectGPU(index)) {
 		if (deviceData[index] != NULL) {
 			if (overrideExisting) {
 				if (!TypeTools<Type>::disposeDevArray(deviceData[index], 1)) return false;
@@ -69,8 +69,8 @@ inline bool ManagedHandler<Type>::uploadToGPU(int index, bool overrideExisting) 
 			deviceData[index] = NULL;
 		}
 		return success;
-	}
-	else return false;
+	//}
+	//else return false;
 }
 
 template <typename Type>
@@ -79,18 +79,10 @@ Deallocates the GPU instance (leaves context set).
 */
 inline bool ManagedHandler<Type>::cleanGPU(int index) {
 	std::lock_guard<std::mutex> guard(lock);
-	if (selectGPU(index)) {
-		if (deviceData[index] != NULL) {
-			if (!TypeTools<Type>::disposeDevArray(deviceData[index], 1)) return false;
-			else if (cudaFree(deviceData[index]) != cudaSuccess) return false;
-			else {
-				deviceData[index] = NULL;
-				return true;
-			}
-		}
-		else return true;
-	}
-	else return false;
+	//if (selectGPU(index)) {
+		return cleanDeviceInstanceNoLock(index);
+	//}
+	//else return false;
 }
 
 template <typename Type>
@@ -106,7 +98,30 @@ template <typename Type>
 Deallocates every GPU instance (which context will stay selected, is undefined).
 */
 inline void ManagedHandler<Type>::cleanEveryGPU() {
-	for (int i = 0; i < deviceData.size(); i++) cleanGPU(i);
+	if (deviceData.size() <= 0) return;
+	std::lock_guard<std::mutex> guard(lock);
+	std::thread *threads = new std::thread[deviceData.size()];
+	for (int i = 0; i < deviceData.size(); i++) threads[i] = std::thread(cleanDeviceInstanceThread, this, i);
+	for (int i = 0; i < deviceData.size(); i++) threads[i].join();
+	delete[] threads;
+	//for (int i = 0; i < deviceData.size(); i++) cleanGPU(i);
+}
+
+template <typename Type>
+inline void ManagedHandler<Type>::cleanDeviceInstanceThread(ManagedHandler *self, int deviceId) {
+	if (self->selectGPU(deviceId)) self->cleanDeviceInstanceNoLock(deviceId);
+}
+template <typename Type>
+inline bool ManagedHandler<Type>::cleanDeviceInstanceNoLock(int index) {
+	if (deviceData[index] != NULL) {
+		if (!TypeTools<Type>::disposeDevArray(deviceData[index], 1)) return false;
+		else if (cudaFree(deviceData[index]) != cudaSuccess) return false;
+		else {
+			deviceData[index] = NULL;
+			return true;
+		}
+	}
+	else return true;
 }
 
 template <typename Type>

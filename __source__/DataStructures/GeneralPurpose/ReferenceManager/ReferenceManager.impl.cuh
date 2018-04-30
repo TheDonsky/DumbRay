@@ -16,21 +16,22 @@ inline ReferenceManager<Object>::~ReferenceManager() {
 }
 
 template<typename Object>
-inline Object* ReferenceManager<Object>::gpuHandle(int index, bool blockedAlready) {
+inline Object* ReferenceManager<Object>::gpuHandle(int index) {
 	const int count = handler.gpuCount();
 	if (count > 0 && index >= 0 && index < count) {
 		Object *rv = handler.getHandleGPU(index);
 		if (((info[index] & DIRTY) != 0) || rv == NULL) {
-			if (!blockedAlready) lock.lock();
+			lock.lock();
 			handler.uploadToGPU(index, ((info[index] & DIRTY) != 0));
-			if (!blockedAlready) lock.unlock();
-			rv = handler.getHandleGPU(index);
 			info[index] &= (~((int)DIRTY));
+			lock.unlock();
+			rv = handler.getHandleGPU(index);
 		}
 		return rv;
 	}
 	else return NULL;
 }
+/*
 template<typename Object>
 inline const Object* ReferenceManager<Object>::gpuHandle(int index)const {
 	const int count = handler.gpuCount();
@@ -38,6 +39,7 @@ inline const Object* ReferenceManager<Object>::gpuHandle(int index)const {
 		return handler.getHandleGPU(index);
 	else return NULL;
 }
+//*/
 
 template<typename Object>
 inline Object* ReferenceManager<Object>::cpuHandle() {
@@ -57,13 +59,13 @@ template<typename Object>
 template<typename Function, typename... Args>
 inline void ReferenceManager<Object>::editObject(Function function, Args&... args) {
 	lockEdit();
-	editBufferLocked(function, args...);
+	editObjectLocked(function, args...);
 	unlockEdit();
 }
 template<typename Object>
 template<typename Function, typename... Args>
 inline void ReferenceManager<Object>::editObjectLocked(Function function, Args&... args) {
-	function(frameBuffer, args...);
+	function(object, args...);
 	makeDirty();
 }
 template<typename Object>

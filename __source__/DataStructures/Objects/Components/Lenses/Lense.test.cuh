@@ -21,6 +21,8 @@ namespace LenseTest {
 			}
 			__dumb__ Photon toScreenSpace(const Photon &)const { return Photon(); }
 			__dumb__ void getColor(const Vector2 &, Photon, Color &)const { }
+
+			__dumb__ void getPixelSamples(const Vector2 &, float, RaySamples *samples)const { samples->sampleCount = 0; }
 		};
 	}
 }

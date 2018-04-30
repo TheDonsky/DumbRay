@@ -9,8 +9,8 @@ public:
 	inline ReferenceManager();
 	inline ~ReferenceManager();
 
-	inline Object* gpuHandle(int index, bool blockedAlready = false);
-	inline const Object* gpuHandle(int index)const;
+	inline Object* gpuHandle(int index);
+	//inline const Object* gpuHandle(int index)const;
 
 	inline Object* cpuHandle();
 	inline const Object* cpuHandle()const;

@@ -24,3 +24,8 @@ __dumb__ void DefaultPerspectiveLense::getColor(const Vector2 &screenSpacePositi
 	result = photon.color;
 	// __TODO__???
 }
+
+__dumb__ void DefaultPerspectiveLense::getPixelSamples(const Vector2 &screenSpacePosition, float, RaySamples *samples)const {
+	samples->sampleCount = 1;
+	samples->samples[0] = SampleRay(Ray(Vector3(0.0f, 0.0f, 0.0f), Vector3(screenSpacePosition.x, screenSpacePosition.y, x).normalized()), 1.0f);
+}
