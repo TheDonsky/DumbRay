@@ -16,17 +16,17 @@ inline ReferenceManager<Object>::~ReferenceManager() {
 }
 
 template<typename Object>
-inline Object* ReferenceManager<Object>::gpuHandle(int index) {
+inline Object* ReferenceManager<Object>::gpuHandle(int index, bool blockedAlready) {
 	const int count = handler.gpuCount();
 	if (count > 0 && index >= 0 && index < count) {
+		if (!blockedAlready) lock.lock();
 		Object *rv = handler.getHandleGPU(index);
 		if (((info[index] & DIRTY) != 0) || rv == NULL) {
-			lock.lock();
 			handler.uploadToGPU(index, ((info[index] & DIRTY) != 0));
 			info[index] &= (~((int)DIRTY));
-			lock.unlock();
 			rv = handler.getHandleGPU(index);
 		}
+		if (!blockedAlready) lock.unlock();
 		return rv;
 	}
 	else return NULL;

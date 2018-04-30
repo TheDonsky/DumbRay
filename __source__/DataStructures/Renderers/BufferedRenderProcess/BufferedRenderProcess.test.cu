@@ -54,7 +54,7 @@ namespace BufferedRenderProcessTest {
 		}
 	}
 
-#define NUM_THREADS_PER_GPU 1
+#define NUM_THREADS_PER_GPU 2
 	
 	void runTestGauntlet(
 		BufferedRenderer*(*bufferedRendererCreateFunction)(const Renderer::ThreadConfiguration &configuration, void *aux),

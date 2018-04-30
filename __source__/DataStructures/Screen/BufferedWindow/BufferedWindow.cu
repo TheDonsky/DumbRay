@@ -62,11 +62,11 @@ void BufferedWindow::bufferedWindowThread(BufferedWindow *bufferedWindow) {
 			break;
 		}
 		if (bufferedWindow->bufferManager == NULL) continue;
-		FrameBuffer *cpuHandle = bufferedWindow->bufferManager->cpuHandle();
+		FrameBuffer *cpuHandle = ((FrameBufferManager*)bufferedWindow->bufferManager)->cpuHandle();
 		if (cpuHandle == NULL) continue;
 		if (deviceSynchNeeded)
 			if (!cpuHandle->updateHostBlocks(
-				bufferedWindow->bufferManager->gpuHandle(bufferedWindow->deviceId), 0, cpuHandle->getBlockCount())) continue;
+				((FrameBufferManager*)bufferedWindow->bufferManager)->gpuHandle(bufferedWindow->deviceId), 0, cpuHandle->getBlockCount())) continue;
 		bufferedWindow->window().updateFromHost(*cpuHandle);
 		bufferedWindow->numFramesDisplayed++;
 	}

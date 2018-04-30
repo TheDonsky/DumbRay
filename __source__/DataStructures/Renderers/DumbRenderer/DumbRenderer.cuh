@@ -39,8 +39,8 @@ protected:
 
 
 private:
-	SceneType volatile *sceneManager;
-	CameraManager volatile *cameraManager;
+	volatile SceneType volatile *sceneManager;
+	volatile CameraManager volatile *cameraManager;
 	volatile BoxingMode boxing;
 
 public:

@@ -68,7 +68,7 @@ public:
 
 
 private:
-	std::mutex lock;
+	//std::mutex lock;
 	const Type*data;
 	Stacktor<Type*> deviceData;
 
@@ -77,7 +77,7 @@ private:
 	inline ManagedHandler &operator=(const ManagedHandler &other) { return (*this); }
 
 	inline static void cleanDeviceInstanceThread(ManagedHandler *self, int deviceId);
-	inline bool cleanDeviceInstanceNoLock(int index);
+	inline static void createDeviceInstandeThread(ManagedHandler *self, int deviceId, bool overrideExisting);
 };
 
 
