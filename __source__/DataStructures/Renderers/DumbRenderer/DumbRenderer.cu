@@ -42,10 +42,8 @@ bool DumbRenderer::renderBlocksCPU(
 	pixelRenderProcess.configure(configuration);
 	int blockSize = buffer->getBlockSize();
 	for (int blockId = startBlock; blockId < endBlock; blockId++)
-		for (int pixelId = 0; pixelId < blockSize; pixelId++) {
-			if (!pixelRenderProcess.setPixel(blockId, pixelId)) continue;
-			pixelRenderProcess.render();
-		}
+		for (int pixelId = 0; pixelId < blockSize; pixelId++)
+			pixelRenderProcess.renderPixel(blockId, pixelId);
 	return true;
 }
 
@@ -55,8 +53,7 @@ namespace {
 			DumbRenderer::PixelRenderProcess::SceneConfiguration configuration, int startBlock) {
 			DumbRenderer::PixelRenderProcess pixelRenderProcess;
 			pixelRenderProcess.configure(configuration);
-			if (!pixelRenderProcess.setPixel(startBlock + blockIdx.x, threadIdx.x)) return;
-			pixelRenderProcess.render();
+			pixelRenderProcess.renderPixel(startBlock + blockIdx.x, threadIdx.x);
 		}
 	}
 }
@@ -105,58 +102,120 @@ bool DumbRenderer::PixelRenderProcess::SceneConfiguration::hasError() {
 __device__ __host__ void DumbRenderer::PixelRenderProcess::configure(const SceneConfiguration &config) {
 	configuration = config;
 }
-__device__ __host__ bool DumbRenderer::PixelRenderProcess::setPixel(int blockId, int pixelId) {
-	if (configuration.buffer->blockPixelLocation(blockId, pixelId, &pixelX, &pixelY)) {
-		block = blockId;
-		pixelInBlock = pixelId;
-		return true;
-	}
-	else return false;
-}
 
-__device__ __host__ void DumbRenderer::PixelRenderProcess::render() {
-	// Relative pixel location and size:
+__device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int blockId, int pixelId) {
+	// ###################################################################
+	/* Pixel location detection: */
+	int pixelX, pixelY;
+	if (!configuration.buffer->blockPixelLocation(blockId, pixelId, &pixelX, &pixelY)) return;
+
+
+
+	// ###################################################################
+	/* Relative pixel location and size: */
+
+	// Extructing some parameters:
 	register BoxingMode boxing = configuration.boxing;
 	register float width = configuration.width;
 	register float height = configuration.height;
+
+	// Pixel size (relative to lense):
 	float pixelSize;
 	if (boxing == BOXING_MODE_HEIGHT_BASED) pixelSize = (1.0f / height);
 	else if (boxing == BOXING_MODE_WIDTH_BASED) pixelSize = (1.0f / width);
 	else if (boxing == BOXING_MODE_MIN_BASED) pixelSize = (1.0f / ((height <= width) ? height : width));
 	else if (boxing == BOXING_MODE_MAX_BASED) pixelSize = (1.0f / ((height >= width) ? height : width));
 	else pixelSize = 1.0f;
+	
+	// Pixel position (Relative to lense center):
 	Vector2 offset((pixelX - (width / 2.0f)) * pixelSize, ((height / 2.0f) - pixelY) * pixelSize);
+	
+
+
+
+
+	// ###################################################################
+	/* Ray tracing logic: */
+
+	// __________________________________________________
+	// Getting samples for the ray:
 	RaySamples cameraPixelSamples;
 	configuration.camera->getPixelSamples(offset, pixelSize, cameraPixelSamples);
+	
+	// Resulting pixel color:
 	Color color = Color(0.0f, 0.0f, 0.0f, 0.0f);
-	//*
-	BounceLayer bounceLayers[DUMB_RENDERER_BOUNCE_LIMIT];
+	
+	// Layers for each bounce:
+	BounceLayer bounceLayers[DUMB_RENDERER_BOUNCE_LIMIT + 1];
 	PhotonSamples lightRays;
 	int currentLayer = -1;
 	int maxLayer = configuration.maxBounces;
+
+
+	// __________________________________________________
+	// Actual render loop:
 	while (true) {
+		// ----------------------------------------------
+
+		// If current layer is 'negative', it means that the render has not started yet, 
+		// or it ended, or there are still some camera samples left to investigate:
 		if (currentLayer < 0) {
+			// If there are no more camera samples, we end the render process:
 			if (cameraPixelSamples.sampleCount <= 0) break;
+
+			// Else, we set the first layer up with a camera sample and decrease the counter:
 			cameraPixelSamples.sampleCount--;
 			currentLayer = 0;
 			bounceLayers[currentLayer].setup(
 				cameraPixelSamples.samples[cameraPixelSamples.sampleCount], 1.0f);
 			lightRays.sampleCount = 0;
 		}
+
+		// For convenience, current bounce layer will be reffered to as 'layer':
 		BounceLayer &layer = bounceLayers[currentLayer];
 		
+
+		// ----------------------------------------------
+
+		// We may need to cast the ray either to investigate the direction of the layer,
+		// or illuminate it. Regardless, we'll need a reference to a ray to cast (this way we decrease diverency):
 		const Ray *rayToCast;
-		bool isLightRay = false;
+
+		// We may need to call the shader's getReflectedColor for aome amount of photons:
+		int numIlluminationPhotons = 0;
+
+		// In case there's no geometry set, rayToCast is the layer ray:
 		if (layer.geometry.object == NULL) rayToCast = (&layer.layerRay);
+		
+		// If geometry is already set and we have uncast photons, 
+		// we will simply cast one of them and decrease the counter:
 		else if (lightRays.sampleCount > 0) {
 			lightRays.sampleCount--;
 			rayToCast = &lightRays.samples[lightRays.sampleCount].ray;
 		}
+
+
+		// ----------------------------------------------
+
+		// If we came through here without an obvious ray to cast, 
+		// we try to extract more light samples:
 		else if (layer.lightIndex < configuration.context.lights->size()) {
 			// __TODO__: add light samples here...
+			bool castShadows = true;
+			configuration.context.lights->operator[](layer.lightIndex).getVertexPhotons(
+				layer.geometry.hitPoint, &lightRays, &castShadows);
 			layer.lightIndex++;
-			continue;
+
+			if (castShadows) continue;
+			else {
+				numIlluminationPhotons = lightRays.sampleCount;
+				lightRays.sampleCount = 0;
+				rayToCast = NULL;
+			}
 		}
+
+		// With geometry already investigated and no direct illumination photons left,
+		// all we have to do is to either go on and setup the indirect sample if it's still pending:
 		else if (layer.bounces.sampleCount > 0) {
 			layer.bounces.sampleCount--;
 			currentLayer++;
@@ -165,62 +224,94 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::render() {
 			lightRays.sampleCount = 0;
 			continue;
 		}
+
+		// In case, there are no more indirect samples requested, all can do is to go down a layer:
 		else {
 			if (currentLayer > 0) {
-				// __TODO__: illuminate the underlying geometry...
+				// Illuminate the underlying geometry:
+				BounceLayer &layerBelow = bounceLayers[currentLayer - 1];
+				ShaderReflectedColorRequest<SceneType::SurfaceUnit> request;
+				request.object = &layerBelow.geometry.object->object;
+				request.photon = Photon(Ray(layerBelow.geometry.hitPoint, -layer.layerRay.direction), layer.color);
+				request.hitPoint = layerBelow.geometry.hitPoint;
+				request.observerDirection = (-layerBelow.layerRay.direction);
+				layerBelow.color += (configuration.context.materials->operator[](
+					layerBelow.geometry.object->materialId).getReflectedColor(request) * layer.sampleWeight);
 			}
 			else {
-				// __TODO__: add color to the final pixel...
+				// Add color to the final pixel (__TODO__: actually, the camera should transform the color before applying):
+				color += (layer.color * layer.sampleWeight);
 			}
 			currentLayer--;
 			continue;
 		}
-		RaycastHit<SceneType::GeometryUnit> hit;
-		if (configuration.context.geometry->cast(*rayToCast, hit, false)) {
-			if (rayToCast == (&layer.layerRay)) {
-				layer.geometry = hit;
-				if (currentLayer < maxLayer) {
-					// __TODO__: Request for bounces...
-				}
+		
 
-				// TMP (HAS TO BE REMOVED...):
-#ifdef __CUDA_ARCH__
-				Color col(0, 1, 0, 1);
-#else
-				Color col(0, 0, 1, 1);
-#endif
-				color += (col * layer.sampleWeight);
+		
+		// ----------------------------------------------
+		// Raycast:
+		if (rayToCast != NULL) {
+			// If we have a ray to cast, we should be here at some point:
+			RaycastHit<SceneType::GeometryUnit> hit;
+			if (configuration.context.geometry->cast(*rayToCast, hit, false)) {
+				// If raycast hit something and it was a geometry ray,
+				// we need to set the layer up:
+				if (rayToCast == (&layer.layerRay)) {
+					layer.geometry = hit;
+					// If we are allawed to further request indirect illumination,
+					// here's the time:
+					if (currentLayer < maxLayer) {
+						ShaderInirectSamplesRequest<SceneType::SurfaceUnit> request;
+						request.absoluteSampleWeight = layer.absoluteWeight;
+						request.hitDistance = hit.hitDistance;
+						request.hitPoint = hit.hitPoint;
+						request.object = &hit.object->object;
+						request.ray = (*rayToCast);
+						configuration.context.materials->operator[](
+							hit.object->materialId).requestIndirectSamples(request, &layer.bounces);
+						for (int i = 0; i < layer.bounces.sampleCount; i++)
+							layer.bounces.samples[i].ray.origin += (layer.bounces.samples[i].ray.direction * (8.0f * VECTOR_EPSILON));
+					}
+					continue;
+				}
+				// If the ray was an illumination ray and it hit the same old object or point, we count it as a light:
+				else if (
+					(hit.object == layer.geometry.object) || 
+					((hit.hitPoint - layer.geometry.hitPoint).sqrMagnitude() <= (4.0f * VECTOR_EPSILON))) {
+					numIlluminationPhotons = 1;
+				}
+				// If no illumination occured whatsoever, there's no point continuing the cycle:
+				else continue;
+			}
+			// If raycast failed and it was a geometry ray, we have to give up on the current layer:
+			else if (rayToCast == (&layer.layerRay)) {
+				currentLayer--;
 				continue;
 			}
-			else {
-				// __TODO__: illuminate the pixel...
-			}
+			// If raycast failed and it was a light ray, we probably don't care about it all that much,
+			// even though ity should never happen in theory:
+			else continue;
 		}
-		else if (rayToCast == (&layer.layerRay)) {
-			currentLayer--;
-			// __TODO__: MAYBE... Nothing?
-			continue;
-		}
-		else {
-			// __TODO__: Probably nothing...
-			continue;
-		}
-	}
-	/*/
-	for (int i = 0; i < cameraPixelSamples.sampleCount; i++) {
-		RaycastHit<SceneType::GeometryUnit> hit;
-		if (configuration.context.geometry->cast(cameraPixelSamples.samples[i].ray, hit, false)) {
-#ifdef __CUDA_ARCH__
-			Color col(0, 1, 0, 1);
-#else
-			Color col(0, 0, 1, 1);
-#endif
-			color += (col * cameraPixelSamples.samples[i].sampleWeight);
+
+
+
+		// ----------------------------------------------
+		// Illumination:
+		const SceneType::MaterialType &layerMaterial = configuration.context.materials->operator[](layer.geometry.object->materialId);
+		for (int i = 0; i < numIlluminationPhotons; i++) {
+			ShaderReflectedColorRequest<SceneType::SurfaceUnit> request;
+			request.object = &layer.geometry.object->object;
+			request.photon = lightRays.samples[lightRays.sampleCount + i];
+			request.hitPoint = layer.geometry.hitPoint;
+			request.observerDirection = (-layer.layerRay.direction);
+			layer.color += layerMaterial.getReflectedColor(request);
 		}
 	}
-	//*/
+
 	
+	// ###################################################################
+	// SETTING FINAL COLOR
 	if (configuration.blendingAmount >= 1.0f)
-		configuration.buffer->setBlockPixelColor(block, pixelInBlock, color);
-	else configuration.buffer->blendBlockPixelColor(block, pixelInBlock, color, configuration.blendingAmount);
+		configuration.buffer->setBlockPixelColor(blockId, pixelId, color);
+	else configuration.buffer->blendBlockPixelColor(blockId, pixelId, color, configuration.blendingAmount);
 }

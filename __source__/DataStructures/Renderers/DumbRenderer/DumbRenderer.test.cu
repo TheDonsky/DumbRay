@@ -23,9 +23,11 @@ namespace DumbRendererTest {
 						Color(1.0f, 1.0f, 1.0f, 1.0f)));
 				camera.cpuHandle()->lense.use<DefaultPerspectiveLense>();
 				camera.cpuHandle()->transform = Transform(
-					Vertex(-32.0f, 32.0f, -128.0f),
-					Vector3(0.0f, 32.0f, 0.0f),
+					Vertex(0.0f, 0.0f, 0.0f),
+					Vector3(48.0f, 32.0f, 0.0f),
 					Vector3(1.0f, 1.0f, 1.0f));
+				camera.cpuHandle()->transform.setPosition(
+					camera.cpuHandle()->transform.back() * 128.0f);
 				Stacktor<PolyMesh> meshes;
 				MeshReaderTest::readMeshes(meshes);
 				for (int i = 0; i < meshes.size(); i++) {

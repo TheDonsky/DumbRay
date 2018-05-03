@@ -22,7 +22,7 @@ public:
 		SceneType *scene = NULL,
 		CameraManager *camera = NULL,
 		BoxingMode boxingMode = BOXING_MODE_HEIGHT_BASED,
-		int maxBounces = 3);
+		int maxBounces = 2);
 
 	void setScene(SceneType *scene);
 	SceneType* getScene()const;
@@ -45,8 +45,8 @@ protected:
 
 
 private:
-	volatile SceneType volatile *sceneManager;
-	volatile CameraManager volatile *cameraManager;
+	volatile SceneType *sceneManager;
+	volatile CameraManager *cameraManager;
 	volatile BoxingMode boxing;
 	volatile int bounceLimit;
 
@@ -68,15 +68,11 @@ public:
 		};
 
 		__device__ __host__ void configure(const SceneConfiguration &config);
-		__device__ __host__ bool setPixel(int blockId, int pixelId);
-
-		__device__ __host__ void render();
+		__device__ __host__ void renderPixel(int blockId, int pixelId);
 
 
 	private:
 		SceneConfiguration configuration;
-		int block, pixelInBlock;
-		int pixelX, pixelY;
 
 		enum RayType {
 			GEOMETRY_RAY,
@@ -86,9 +82,9 @@ public:
 		struct BounceLayer {
 			Color color;
 			Ray layerRay;
+			int lightIndex;
 			float sampleWeight;
 			float absoluteWeight;
-			int lightIndex;
 			RaycastHit<SceneType::GeometryUnit> geometry;
 			RaySamples bounces;
 
@@ -97,8 +93,8 @@ public:
 				layerRay = sample.ray;
 				sampleWeight = sample.sampleWeight;
 				absoluteWeight = sampleWeight * absWeight;
-				lightIndex = 0;
 				geometry.object = NULL;
+				lightIndex = 0;
 				bounces.sampleCount = 0;
 			}
 		};
