@@ -10,36 +10,14 @@
 /** ########################################################################## **/
 template<typename HitType>
 __dumb__ void Shader<HitType>::clean() {
-	//castFunction = NULL;
-	bounceFunction = NULL;
-	illuminateFunction = NULL;
-
 	requestIndirectSamplesFn = NULL;
 	getReflectedColorFn = NULL;
 }
 template<typename HitType>
 template<typename ShaderType>
 __dumb__ void Shader<HitType>::use() {
-	//castFunction = castGeneric<ShaderType>;
-	bounceFunction = bounceGeneric<ShaderType>;
-	illuminateFunction = illuminateGeneric<ShaderType>;
-
 	requestIndirectSamplesFn = requestIndirectSamplesGeneric<ShaderType>;
 	getReflectedColorFn = getReflectedColorGeneric<ShaderType>;
-}
-/*
-template<typename HitType>
-__dumb__ ShaderReport Shader<HitType>::cast(const void *shader, const ShaderHitInfo<HitType>& info)const {
-	return castFunction(shader, info);
-}
-*/
-template<typename HitType>
-__dumb__ void Shader<HitType>::bounce(const void *shader, const ShaderBounceInfo<HitType> &info, PhotonPack &result)const {
-	return bounceFunction(shader, info, result);
-}
-template<typename HitType>
-__dumb__ Photon Shader<HitType>::illuminate(const void *shader, const ShaderHitInfo<HitType>& info)const {
-	return illuminateFunction(shader, info);
 }
 
 template<typename HitType>
@@ -51,24 +29,6 @@ __dumb__ Color Shader<HitType>::getReflectedColor(const void *shader, const Shad
 	return getReflectedColorFn(shader, request);
 }
 
-
-/*
-template<typename HitType>
-template<typename ShaderType>
-__dumb__ ShaderReport Shader<HitType>::castGeneric(const void *shader, const ShaderHitInfo<HitType>& info) {
-	return ((ShaderType*)shader)->cast(info);
-}
-*/
-template<typename HitType>
-template<typename ShaderType>
-__dumb__  void Shader<HitType>::bounceGeneric(const void *shader, const ShaderBounceInfo<HitType> &info, PhotonPack &result) {
-	return ((ShaderType*)shader)->bounce(info, result);
-}
-template<typename HitType>
-template<typename ShaderType>
-__dumb__ Photon Shader<HitType>::illuminateGeneric(const void *shader, const ShaderHitInfo<HitType>& info)  {
-	return ((ShaderType*)shader)->illuminate(info);
-}
 
 template<typename HitType>
 template<typename ShaderType>
@@ -88,21 +48,6 @@ __dumb__ Color Shader<HitType>::getReflectedColorGeneric(const void *shader, con
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-/*
-template<typename HitType>
-__dumb__ ShaderReport Material<HitType>::cast(const ShaderHitInfo<HitType>& info)const {
-	return Generic<Shader<HitType> >::functions().cast(Generic<Shader<HitType> >::object(), info);
-}
-*/
-template<typename HitType>
-__dumb__ void Material<HitType>::bounce(const ShaderBounceInfo<HitType> &info, PhotonPack &result)const {
-	return Generic<Shader<HitType> >::functions().bounce(Generic<Shader<HitType> >::object(), info, result);
-}
-template<typename HitType>
-__dumb__ Photon Material<HitType>::illuminate(const ShaderHitInfo<HitType>& info)const {
-	return Generic<Shader<HitType> >::functions().illuminate(Generic<Shader<HitType> >::object(), info);
-}
-
 template<typename HitType>
 __dumb__ void Material<HitType>::requestIndirectSamples(const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples)const {
 	Generic<Shader<HitType> >::functions().requestIndirectSamples(Generic<Shader<HitType> >::object(), request, samples);

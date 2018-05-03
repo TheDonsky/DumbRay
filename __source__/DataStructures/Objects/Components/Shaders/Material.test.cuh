@@ -7,7 +7,8 @@
 namespace MaterialTest {
 	namespace Private {
 		__dumb__ void makeMaterialShout(const Material<BakedTriFace> &material) {
-			material.illuminate(ShaderHitInfo<BakedTriFace>());
+			RaySamples samples;
+			material.requestIndirectSamples(ShaderInirectSamplesRequest<BakedTriFace>(), &samples);
 		}
 		__global__ void materialShoutFromKernel(const Material<BakedTriFace> *material) {
 			makeMaterialShout(*material);
