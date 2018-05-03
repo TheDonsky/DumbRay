@@ -16,7 +16,8 @@ struct DumbScene {
 	typedef ReferenceManager<MaterialList> MaterialManager;
 	MaterialManager materials;
 
-	typedef Renderable<HitType> GeometryUnit;
+	typedef HitType SurfaceUnit;
+	typedef Renderable<SurfaceUnit> GeometryUnit;
 	typedef GeometryType Geometry;
 	typedef ReferenceManager<Geometry> GeometryManager;
 	GeometryManager geometry;
