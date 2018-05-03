@@ -17,17 +17,15 @@ public:
 	template<typename LightType>
 	__dumb__ void use();
 
-	__dumb__ void getPhoton(const void *lightSource, const Vertex &targetPoint, bool *noShadows, PhotonPack &result)const;
-	__dumb__ ColorRGB ambient(const void *lightSource, const Vertex &targetPoint)const;
+	__dumb__ void getVertexPhotons(const void *lightSource, const Vector3 &point, PhotonSamples *result, bool *castShadows)const;
+
+
 
 private:
-	void(*getPhotonFunction)(const void *lightSource, const Vertex &targetPoint, bool *noShadows, PhotonPack &result);
-	ColorRGB(*ambientFunction)(const void *lightSource, const Vertex &targetPoint);
+	void(*getVertexPhotonsFn)(const void *lightSource, const Vector3 &point, PhotonSamples *result, bool *castShadows);
 
 	template<typename LightType>
-	__dumb__ static void getPhotonAbstract(const void *lightSource, const Vertex &targetPoint, bool *noShadows, PhotonPack &result);
-	template<typename LightType>
-	__dumb__ static ColorRGB ambientAbstract(const void *lightSource, const Vertex &targetPoint);
+	__dumb__ static void getVertexPhotonsAbstract(const void *lightSource, const Vector3 &point, PhotonSamples *result, bool *castShadows);
 };
 
 
@@ -39,8 +37,7 @@ private:
 /** ########################################################################## **/
 class Light : public Generic<LightInterface> {
 public:
-	__dumb__ void getPhotons(const Vertex &targetPoint, bool *noShadows, PhotonPack &result)const;
-	__dumb__ ColorRGB ambient(const Vertex &targetPoint)const;
+	__dumb__ void getVertexPhotons(const Vector3 &point, PhotonSamples *result, bool *castShadows)const;
 
 	inline Light *upload()const;
 	inline static Light* upload(const Light *source, int count = 1);

@@ -8,29 +8,20 @@
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 __dumb__ void LightInterface::clean() {
-	getPhotonFunction = NULL;
-	ambientFunction = NULL;
+	getVertexPhotonsFn = NULL;
 }
 template<typename LightType>
 __dumb__ void LightInterface::use() {
-	getPhotonFunction = getPhotonAbstract<LightType>;
-	ambientFunction = ambientAbstract<LightType>;
+	getVertexPhotonsFn = getVertexPhotonsAbstract<LightType>;
 }
 
-__dumb__ void LightInterface::getPhoton(const void *lightSource, const Vertex &targetPoint, bool *noShadows, PhotonPack &result) const {
-	getPhotonFunction(lightSource, targetPoint, noShadows, result);
-}
-__dumb__ ColorRGB LightInterface::ambient(const void *lightSource, const Vertex &targetPoint) const {
-	return ambientFunction(lightSource, targetPoint);
+__dumb__ void LightInterface::getVertexPhotons(const void *lightSource, const Vector3 &point, PhotonSamples *result, bool *castShadows)const {
+	getVertexPhotonsFn(lightSource, point, result, castShadows);
 }
 
 template<typename LightType>
-__dumb__ void LightInterface::getPhotonAbstract(const void *lightSource, const Vertex &targetPoint, bool *noShadows, PhotonPack &result) {
-	((LightType*)lightSource)->getPhotons(targetPoint, noShadows, result);
-}
-template<typename LightType>
-__dumb__ ColorRGB LightInterface::ambientAbstract(const void *lightSource, const Vertex &targetPoint) {
-	return ((LightType*)lightSource)->ambient(targetPoint);
+__dumb__ void LightInterface::getVertexPhotonsAbstract(const void *lightSource, const Vector3 &point, PhotonSamples *result, bool *castShadows) {
+	((LightType*)lightSource)->getVertexPhotons(point, result, castShadows);
 }
 
 
@@ -40,11 +31,8 @@ __dumb__ ColorRGB LightInterface::ambientAbstract(const void *lightSource, const
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-__dumb__ void Light::getPhotons(const Vertex &targetPoint, bool *noShadows, PhotonPack &result) const {
-	functions().getPhoton(object(), targetPoint, noShadows, result);
-}
-__dumb__ ColorRGB Light::ambient(const Vertex &targetPoint) const {
-	return functions().ambient(object(), targetPoint);
+__dumb__ void Light::getVertexPhotons(const Vector3 &point, PhotonSamples *result, bool *castShadows)const {
+	return functions().getVertexPhotons(object(), point, result, castShadows);
 }
 
 inline Light* Light::upload()const {

@@ -7,8 +7,7 @@ struct SimpleDirectionalLight {
 	Photon photon;
 
 	__dumb__ SimpleDirectionalLight(Photon photon);
-	__dumb__ void getPhotons(const Vertex &targetPoint, bool *noShadows, PhotonPack &result)const;
-	__dumb__ ColorRGB ambient(const Vertex &targetPoint)const;
+	__dumb__ void getVertexPhotons(const Vector3 &point, PhotonSamples *result, bool *castShadows)const;
 };
 
 
