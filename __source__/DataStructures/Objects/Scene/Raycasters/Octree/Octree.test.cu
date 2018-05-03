@@ -35,7 +35,7 @@ namespace OctreeTest {
 				/*/
 				Photon ph(trans.frontRay(), ColorRGB(1, 1, 1));
 				//*/
-				pixel = shad.cast(ShaderHitInfo<BakedTriFace> { &hit.object->object, ph, hit.hitPoint, r.origin }).observed.color;
+				pixel = shad.cast(DefaultShader::ShaderHitInfo { &hit.object->object, ph, hit.hitPoint, r.origin }).observed.color;
 #endif
 			}
 			else {
