@@ -34,7 +34,7 @@ private:
 	};
 	std::mutex lock;
 	int *info;
-	Object object;
+	volatile Object object;
 	ManagedHandler<Object> handler;
 };
 

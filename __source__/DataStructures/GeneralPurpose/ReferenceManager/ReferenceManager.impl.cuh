@@ -43,11 +43,11 @@ inline const Object* ReferenceManager<Object>::gpuHandle(int index)const {
 
 template<typename Object>
 inline Object* ReferenceManager<Object>::cpuHandle() {
-	return (&object);
+	return ((Object*)(&object));
 }
 template<typename Object>
 inline const Object* ReferenceManager<Object>::cpuHandle()const {
-	return (&object);
+	return ((const Object*)(&object));
 }
 
 template<typename Object>
