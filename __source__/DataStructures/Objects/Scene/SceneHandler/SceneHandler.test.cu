@@ -13,10 +13,10 @@ namespace SceneHandlerTest {
 	namespace Private{
 		__global__ void kernel(const Scene<BakedTriFace> *scene) {
 			Vector2 screenPoint = ((Vector2(threadIdx.x, blockIdx.x) / Vector2(blockDim.x, gridDim.x)) - Vector2(0.5f, 0.0f));
-			PhotonPack pack;
-			scene->cameras[0].lense.getScreenPhoton(screenPoint, pack);
+			RaySamples pack;
+			scene->cameras[0].lense.getPixelSamples(screenPoint, 0.0f, &pack);
 			RaycastHit<Renderable<BakedTriFace> > hit;
-			scene->geometry.cast(pack[0].ray, hit);
+			scene->geometry.cast(pack.samples[0].ray, hit);
 		}
 
 		static void runKernels(const volatile bool *quit, const SceneHandler<BakedTriFace> *scene, int index, std::mutex *ioLock, Semaphore *initSem, std::mutex *exitLock) {
