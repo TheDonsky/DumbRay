@@ -11,7 +11,7 @@ public:
 	/*
 	Constructor.
 	*/
-	inline ManagedHandler(const Type& s);
+	inline ManagedHandler(const volatile Type& s);
 
 	/*
 	Destructor.
@@ -69,7 +69,7 @@ public:
 
 private:
 	//std::mutex lock;
-	const Type*data;
+	const volatile Type *data;
 	Stacktor<Type*> deviceData;
 
 	// WE RESTRICT COPY-CONSTRUCTION FOR THIS ONE...

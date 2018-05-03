@@ -7,7 +7,7 @@ template <typename Type>
 /*
 Constructor.
 */
-inline ManagedHandler<Type>::ManagedHandler(const Type &s) {
+inline ManagedHandler<Type>::ManagedHandler(const volatile Type &s) {
 	data = (&s);
 	int deviceCount;
 	if (cudaGetDeviceCount(&deviceCount) == cudaSuccess)
@@ -54,11 +54,11 @@ inline bool ManagedHandler<Type>::uploadToGPU(int index, bool overrideExisting) 
 		}
 		char garbage[sizeof(Type)];
 		Type *hosClone = ((Type*)garbage);
-		bool success = TypeTools<Type>::prepareForCpyLoad(data, hosClone, deviceData[index], 1);
+		bool success = TypeTools<Type>::prepareForCpyLoad((const Type*)data, hosClone, deviceData[index], 1);
 		if (success) {
 			success = (cudaMemcpyAsync(deviceData[index], hosClone, sizeof(Type), cudaMemcpyHostToDevice, stream) == cudaSuccess);
 			if (cudaStreamSynchronize(stream) != cudaSuccess) success = false;
-			if (!success) TypeTools<Type>::undoCpyLoadPreparations(data, hosClone, deviceData[index], 1);
+			if (!success) TypeTools<Type>::undoCpyLoadPreparations((const Type*)data, hosClone, deviceData[index], 1);
 		}
 		if (cudaStreamDestroy(stream) != cudaSuccess) {
 			if (success) TypeTools<Type>::disposeDevArray(deviceData[index], 1);
@@ -156,7 +156,7 @@ template <typename Type>
 Returns CPU handle.
 */
 inline const Type* ManagedHandler<Type>::getHandleCPU()const {
-	return data;
+	return (const Type*)data;
 }
 
 template <typename Type>
