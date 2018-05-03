@@ -19,5 +19,5 @@ public:
 
 
 private:
-	volatile FrameBufferManager volatile *manager;
+	volatile FrameBufferManager *manager;
 };
