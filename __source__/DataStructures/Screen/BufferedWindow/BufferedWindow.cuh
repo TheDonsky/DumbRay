@@ -50,7 +50,7 @@ private:
 	std::mutex bufferLock;
 	std::condition_variable bufferCond;
 	
-	volatile FrameBufferManager volatile *bufferManager;
+	volatile FrameBufferManager *bufferManager;
 	std::atomic<size_t> numFramesDisplayed;
 
 	std::thread windowThread;
