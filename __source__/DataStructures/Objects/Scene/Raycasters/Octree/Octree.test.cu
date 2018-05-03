@@ -56,8 +56,8 @@ namespace OctreeTest {
 		}
 		//*/
 
-#define OCTREE_TEST_KERNELS_BLOCK_WIDTH 16
-#define OCTREE_TEST_KERNELS_BLOCK_HEIGHT 8
+#define OCTREE_TEST_KERNELS_BLOCK_WIDTH 8
+#define OCTREE_TEST_KERNELS_BLOCK_HEIGHT 16
 		// ########################################
 		// ### DEVICE RENDER KERNEL DIMENSIONS: ###
 		// ########################################

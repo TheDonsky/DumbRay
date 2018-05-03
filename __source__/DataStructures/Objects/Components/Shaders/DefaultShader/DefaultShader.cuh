@@ -11,6 +11,10 @@ public:
 	__dumb__ void bounce(const ShaderBounceInfo<HitType> &info, PhotonPack &result)const;
 	__dumb__ Photon illuminate(const ShaderHitInfo<HitType>& info)const;
 
+	__dumb__ void requestIndirectSamples(const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples)const;
+	__dumb__ Color getReflectedColor(const ShaderReflectedColorRequest<HitType> &request)const;
+
+
 private:
 	ColorRGB albedo;
 	float diff;

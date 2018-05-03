@@ -10,6 +10,10 @@ public:
 	__dumb__ void bounce(const ShaderBounceInfo<BakedTriFace> &info, PhotonPack &result)const;
 	__dumb__ Photon illuminate(const ShaderHitInfo<BakedTriFace>& info)const;
 
+	__dumb__ void requestIndirectSamples(const ShaderInirectSamplesRequest<BakedTriFace> &request, RaySamples *samples)const;
+	__dumb__ Color getReflectedColor(const ShaderReflectedColorRequest<BakedTriFace> &request)const;
+
+
 private:
 	int garbage;
 };

@@ -12,3 +12,7 @@ __dumb__ ShaderReport DummyShader::cast(const ShaderHitInfo<BakedTriFace> &)cons
 }
 __dumb__ void DummyShader::bounce(const ShaderBounceInfo<BakedTriFace> &, PhotonPack &)const { }
 __dumb__ Photon DummyShader::illuminate(const ShaderHitInfo<BakedTriFace>&)const { return Photon(); }
+
+__dumb__ void DummyShader::requestIndirectSamples(const ShaderInirectSamplesRequest<BakedTriFace> &request, RaySamples *samples)const { }
+__dumb__ Color DummyShader::getReflectedColor(const ShaderReflectedColorRequest<BakedTriFace> &request)const { return Color(); }
+

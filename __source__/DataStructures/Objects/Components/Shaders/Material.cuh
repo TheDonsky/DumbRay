@@ -3,6 +3,7 @@
 #include"../../../GeneralPurpose/Generic/Generic.cuh"
 #include"../../Components/DumbStructs.cuh"
 #include"../../../../Namespaces/Shapes/Shapes.cuh"
+#include"../../Scene/Raycasters/Raycaster.cuh"
 
 
 
@@ -31,6 +32,43 @@ struct ShaderReport {
 	Photon bounce;
 };
 
+template<typename HitType>
+struct ShaderInirectSamplesRequest {
+	// Object, that was hit
+	const HitType *object;
+
+	// Ray, that hit the object
+	Ray ray;
+
+	// Distance to the hit point
+	float hitDistance; 
+	
+	// Hit point
+	Vector3 hitPoint;
+	
+	// Relative contribution of all output samples
+	float absoluteSampleWeight;
+};
+
+template<typename HitType>
+struct ShaderReflectedColorRequest {
+	// Object, that was hit
+	const HitType *object;
+	
+	// Photon, that hit the object
+	Photon photon;
+
+	// Distance to the hit point
+	float hitDistance;
+
+	// Hit point
+	Vector3 hitPoint;
+
+	// The direction to the observer:
+	// (The result will be interpreted as Photon(Ray(hitPoint, observerDirection), Color(whatever the shader returns)) towards the observer)
+	Vector3 observerDirection;
+};
+
 
 
 
@@ -48,11 +86,18 @@ public:
 	__dumb__ void bounce(const void *shader, const ShaderBounceInfo<HitType> &info, PhotonPack &result)const;
 	__dumb__ Photon illuminate(const void *shader, const ShaderHitInfo<HitType>& info)const;
 
+	__dumb__ void requestIndirectSamples(const void *shader, const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples)const;
+	__dumb__ Color getReflectedColor(const void *shader, const ShaderReflectedColorRequest<HitType> &request)const;
+
 
 private:
 	//ShaderReport(*castFunction)(const void *shader, const ShaderHitInfo<HitType>&info);
 	void(*bounceFunction)(const void *shader, const ShaderBounceInfo<HitType> &info, PhotonPack &result);
 	Photon(*illuminateFunction)(const void *shader, const ShaderHitInfo<HitType>&info);
+
+	void(*requestIndirectSamplesFn)(const void *shader, const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples);
+	Color(*getReflectedColorFn)(const void *shader, const ShaderReflectedColorRequest<HitType> &request);
+
 	/*
 	template<typename ShaderType>
 	__dumb__ static ShaderReport castGeneric(const void *shader, const ShaderHitInfo<HitType>& info);
@@ -61,6 +106,11 @@ private:
 	__dumb__ static void bounceGeneric(const void *shader, const ShaderBounceInfo<HitType> &info, PhotonPack &result);
 	template<typename ShaderType>
 	__dumb__ static Photon illuminateGeneric(const void *shader, const ShaderHitInfo<HitType>& info);
+
+	template<typename ShaderType>
+	__dumb__ static void requestIndirectSamplesGeneric(const void *shader, const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples);
+	template<typename ShaderType>
+	__dumb__ static Color getReflectedColorGeneric(const void *shader, const ShaderReflectedColorRequest<HitType> &request);
 };
 
 
@@ -85,6 +135,9 @@ public:
 	//__dumb__ ShaderReport cast(const ShaderHitInfo<HitType>& info)const;
 	__dumb__ void bounce(const ShaderBounceInfo<HitType> &info, PhotonPack &result)const;
 	__dumb__ Photon illuminate(const ShaderHitInfo<HitType>& info)const;
+
+	__dumb__ void requestIndirectSamples(const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples)const;
+	__dumb__ Color getReflectedColor(const ShaderReflectedColorRequest<HitType> &request)const;
 
 
 	inline Material *upload()const;

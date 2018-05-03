@@ -40,3 +40,24 @@ template<typename HitType>
 __dumb__ Photon DefaultShaderGeneric<HitType>::illuminate(const ShaderHitInfo<HitType>& info)const {
 	return cast(info).observed;
 }
+
+template<typename HitType>
+__dumb__ void DefaultShaderGeneric<HitType>::requestIndirectSamples(const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples)const {
+	ShaderHitInfo<HitType> info = {
+		request.object,
+		Photon(request.ray, Color(1.0f, 1.0f, 1.0f, 1.0f)),
+		request.hitPoint,
+		request.hitPoint + Vector3(1.0f, 1.0f, 1.0f) };
+	ShaderReport report = cast(info);
+	samples->set(SampleRay(report.bounce.ray, report.bounce.energy() / 4.0f));
+}
+template<typename HitType>
+__dumb__ Color DefaultShaderGeneric<HitType>::getReflectedColor(const ShaderReflectedColorRequest<HitType> &request)const {
+	ShaderHitInfo<HitType> info = { 
+		request.object, 
+		request.photon,
+		request.hitPoint, 
+		request.hitPoint + request.observerDirection };
+	return cast(info).observed.color;
+}
+
