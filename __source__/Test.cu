@@ -4,7 +4,6 @@
 #include"DataStructures/Objects/Scene/Raycasters/Octree/Octree.test.cuh"
 #include"DataStructures/GeneralPurpose/Generic/Generic.test.cuh"
 #include"DataStructures/Objects/Components/Lenses/Lense.test.cuh"
-//#include"DataStructures/Renderers/BackwardTracer/BackwardTracer.test.cuh"
 #include"DataStructures/GeneralPurpose/Handler/Handler.test.cuh"
 #include"DataStructures/Objects/Components/Shaders/Material.test.cuh"
 #include"DataStructures/GeneralPurpose/TypeTools/TypeTools.test.cuh"
@@ -31,8 +30,6 @@ namespace {
 		tests["scene_handler"] = { "Basic test for SceneHandler structure", SceneHandlerTest::test };
 		tests["renderer"] = { "Basic test for standrad Renderer pipeline", RendererTest::test };
 		tests["type_tools"] = { "General tests for TypeTools and it's default implementations", TypeToolsTest::test };
-		//tests["backward_tracer"] = { std::string("Test for BackwardTracer\n") 
-		//	+ "    (legacy; can and most likely, will cause freeze and/or a crash)", BackwardTracerTest::test };
 		tests["handler"] = { "General test for generic Handler type", HandlerTest::test };
 		tests["generic"] = { "General test for Generic interface", GenericTest::test };
 		tests["lense_test_memory"] = { "Simple test for Lense", LenseTest::testMemory };
@@ -91,71 +88,12 @@ namespace {
 #include"DataStructures/Objects/Scene/Scene.cuh"
 #include"DataStructures/Objects/Components/Lenses/DefaultPerspectiveLense/DefaultPerspectiveLense.cuh"
 #include"DataStructures/Objects/Scene/Raycasters/ShadedOctree/ShadedOctree.cuh"
-#include"DataStructures/Renderers/BackwardRenderer/BackwardRenderer.cuh"
 #include"DataStructures/Screen/FrameBuffer/MemoryMappedFrameBuffer/MemoryMappedFrameBuffer.cuh"
 #include"DataStructures/Screen/FrameBuffer/FrameBuffer.cuh"
 #include"Namespaces/Windows/Windows.h"
 #include"DataStructures/Objects/Scene/Lights/SimpleDirectionalLight/SimpleDirectionalLight.cuh"
 #include<time.h>
 #include<iomanip>
-void testBackwardRenderer() {
-	std::cout << "Concurrent blocks: " << Device::multiprocessorCount() << std::endl;
-	while (true) {
-		FrameBufferManager frameBuffer;
-		frameBuffer.cpuHandle()->use<MemoryMappedFrameBuffer>();
-		frameBuffer.cpuHandle()->setResolution(1920, 1080);
-		{
-			Scene<BakedTriFace> scene;
-			scene.lights.flush(1);
-			Vector3 direction = Vector3(0.2f, -0.4f, 0.7f).normalized();
-			scene.lights[0].use<SimpleDirectionalLight>(
-				Photon(Ray(-direction * 10000.0f, direction), 
-					Color(1.0f, 1.0f, 1.0f)));
-			scene.cameras.flush(1);
-			scene.cameras[0].transform.setPosition(Vector3(0, 0, -128));
-			scene.cameras[0].lense.use<DefaultPerspectiveLense>(60.0f);
-			SceneHandler<BakedTriFace> sceneHandler(scene);
-			BackwardRenderer<BakedTriFace>::Configuration configuration(sceneHandler);
-			BackwardRenderer<BakedTriFace> renderer(configuration,
-				Renderer::ThreadConfiguration::cpuOnly());
-			renderer.setFrameBuffer(frameBuffer);
-			Windows::Window window;
-			const int n = 256;
-			std::cout <<
-				"__________________________________________" << std::endl
-				<< "WAIT...";
-			clock_t start = clock();
-			for (int i = 0; i < n; i++) {
-				if (i > 0 && i % 32 == 0)
-					std::cout << ".";
-				/*
-				if (i % 16 == 0) {
-					window.updateFrameHost(
-						frameBuffer.cpuHandle()->getData(), 1920, 1080);
-					renderer.resetIterations();
-					memset(frameBuffer.cpuHandle()->getData(), 0, 1920 * 1080 * sizeof(Color));
-				}
-				//*/
-				renderer.iterate();
-			}
-			clock_t deltaTime = (clock() - start);
-			double time = (((double)deltaTime) / CLOCKS_PER_SEC);
-			double iterationClock = (((double)deltaTime) / n);
-			double iterationTime = (time / n);
-			std::cout << std::fixed << std::setprecision(8) << std::endl <<
-				"ITERATIONS:            " << n << std::endl <<
-				"TOTAL CLOCK:           " << deltaTime << std::endl <<
-				"TOTAL TIME:            " << time << "sec" << std::endl <<
-				"ITERATION CLOCK:       " << iterationClock << std::endl <<
-				"ITERATION TIME:        " << iterationTime << "sec" << std::endl <<
-				"ITERATIONS PER SECOND: " << (1.0 / iterationTime) << std::endl;
-		}
-		std::string s;
-		std::cout << "ENTER ANYTHING TO QUIT... ";
-		std::getline(std::cin, s);
-		if (s.length() > 0) break;
-	}
-}
 
 
 namespace {
