@@ -15,6 +15,7 @@ public:
 	Lense lense;
 
 	__dumb__ void getPixelSamples(const Vector2 &screenSpacePosition, float pixelSize, RaySamples &samples)const;
+	__dumb__ Color getPixelColor(const Vector2 &screenSpacePosition, const Photon &photon)const;
 
 	// For upload:
 	DEFINE_CUDA_LOAD_INTERFACE_FOR(Camera);

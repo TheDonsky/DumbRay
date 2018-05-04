@@ -14,12 +14,8 @@ class DefaultPerspectiveLense {
 public:
 	__dumb__ DefaultPerspectiveLense(float angle = 60.0f);
 
-	__dumb__ void getScreenPhoton(const Vector2 &screenSpacePosition, PhotonPack &result)const;
-	__dumb__ Photon toScreenSpace(const Photon &photon)const;
-	__dumb__ void getColor(const Vector2 &screenSpacePosition, const Photon &photon, Color &result)const;
-
 	__dumb__ void getPixelSamples(const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples)const;
-
+	__dumb__ Color getPixelColor(const Vector2 &screenSpacePosition, const Photon &photon)const;
 
 private:
 	float x;

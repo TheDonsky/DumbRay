@@ -19,14 +19,18 @@ public:
 	__dumb__ void use();
 
 	__dumb__ void getPixelSamples(const void *lense, const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples)const;
+	__dumb__ Color getPixelColor(const void *lense, const Vector2 &screenSpacePosition, const Photon &photon)const;
 
 
 
 private:
 	void(*getPixelSamplesFn)(const void *lense, const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples);
+	Color(*getPixelColorFn)(const void *lense, const Vector2 &screenSpacePosition, const Photon &photon);
 
 	template<typename LenseType>
 	__dumb__ static void getPixelSamplesGeneric(const void *lense, const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples);
+	template<typename LenseType>
+	__dumb__ static Color getPixelColorGeneric(const void *lense, const Vector2 &screenSpacePosition, const Photon &photon);
 };
 
 
@@ -39,6 +43,7 @@ private:
 class Lense : public Generic<LenseFunctionPack>{
 public:
 	__dumb__ void getPixelSamples(const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples)const;
+	__dumb__ Color getPixelColor(const Vector2 &screenSpacePosition, const Photon &photon)const;
 
 	inline Lense *upload()const;
 	inline static Lense* upload(const Lense *source, int count = 1);

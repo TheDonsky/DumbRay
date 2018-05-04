@@ -20,6 +20,9 @@ namespace LenseTest {
 #endif // !__CUDA_ARCH__
 				samples->sampleCount = 0; 
 			}
+
+			__dumb__ Color getPixelColor(const Vector2 &screenSpacePosition, const Photon &photon)const { return Color(0.0f, 0.0f, 0.0f, 0.0f); }
+
 		};
 	}
 }

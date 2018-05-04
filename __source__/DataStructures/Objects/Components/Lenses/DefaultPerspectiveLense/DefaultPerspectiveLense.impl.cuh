@@ -9,23 +9,8 @@ __dumb__ DefaultPerspectiveLense::DefaultPerspectiveLense(float angle) {
 	x = 0.5f / tan(radian);
 }
 
-__dumb__ void DefaultPerspectiveLense::getScreenPhoton(const Vector2 &screenSpacePosition, PhotonPack &result)const {
-	result.push(Photon(
-		Ray(Vector3(0.0f, 0.0f, 0.0f), 
-			Vector3(screenSpacePosition.x, screenSpacePosition.y, x).normalized()), 
-		ColorRGB(1.0f, 1.0f, 1.0f)));
-}
-__dumb__ Photon DefaultPerspectiveLense::toScreenSpace(const Photon &photon)const {
-	register Vector3 delta = photon.ray.origin;
-	register Vector3 direction = delta * (x / delta.y);
-	return Photon(Ray(Vector3(0.0f, 0.0f, 0.0f), direction), photon.color);
-}
-__dumb__ void DefaultPerspectiveLense::getColor(const Vector2 &screenSpacePosition, const Photon &photon, Color &result)const {
-	result = photon.color;
-	// __TODO__???
-}
-
 __dumb__ void DefaultPerspectiveLense::getPixelSamples(const Vector2 &screenSpacePosition, float, RaySamples *samples)const {
 	samples->sampleCount = 1;
 	samples->samples[0] = SampleRay(Ray(Vector3(0.0f, 0.0f, 0.0f), Vector3(screenSpacePosition.x, screenSpacePosition.y, x).normalized()), 1.0f);
 }
+__dumb__ Color DefaultPerspectiveLense::getPixelColor(const Vector2 &, const Photon &photon)const { return photon.color; }
