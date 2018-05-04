@@ -17,10 +17,16 @@ namespace DumbRendererTest {
 			inline Context() {
 				scene.materials.cpuHandle()->flush(1);
 				scene.materials.cpuHandle()->top().use<DefaultShader>();
-				scene.lights.cpuHandle()->flush(1);
-				scene.lights.cpuHandle()->top().use<SimpleDirectionalLight>(
-					Photon(Ray(Vertex(), Vertex(2, -2, 1).normalized()),
-						Color(1.0f, 1.0f, 1.0f, 1.0f)));
+				scene.lights.cpuHandle()->flush(3);
+				scene.lights.cpuHandle()->operator[](0).use<SimpleDirectionalLight>(
+					Photon(Ray(Vertex(), Vertex(1, -1, 0).normalized()),
+						Color(0.125f, 0.125f, 0.5f, 1.0f)));
+				scene.lights.cpuHandle()->operator[](1).use<SimpleDirectionalLight>(
+					Photon(Ray(Vertex(), Vertex(-0.5f, -1, 0.580611f).normalized()),
+						Color(0.125f, 0.5f, 0.125f, 1.0f)));
+				scene.lights.cpuHandle()->operator[](2).use<SimpleDirectionalLight>(
+					Photon(Ray(Vertex(), Vertex(-0.5f, -1, -0.580611f).normalized()),
+						Color(0.5f, 0.125f, 0.125f, 1.0f)));
 				camera.cpuHandle()->lense.use<DefaultPerspectiveLense>();
 				camera.cpuHandle()->transform = Transform(
 					Vertex(0.0f, 0.0f, 0.0f),

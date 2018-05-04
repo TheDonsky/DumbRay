@@ -143,19 +143,22 @@ __host__ inline void Octree<ElemType>::put(const ElemType &object){
 /** ========================================================== **/
 /*| cast |*/
 template<typename ElemType>
+// Validator makes sure, the provided face does not get hit:
+__device__ __host__ inline bool Octree<ElemType>::validateNotSameAsObject(const RaycastHit &hit, const Ray &, void *object) { return (hit.object != ((ElemType*)object)); }
+template<typename ElemType>
 // Casts a ray and returns RaycastHit (if ray hits nothing, hitDistance will be set to FLT_MAX)
-__device__ __host__ inline Octree<ElemType>::RaycastHit Octree<ElemType>::cast(const Ray &r, bool clipBackfaces, CastBreaker castBreaker)const{
+__device__ __host__ inline Octree<ElemType>::RaycastHit Octree<ElemType>::cast(const Ray &r, bool clipBackfaces, CastValidationFunction validator, void *validatorArg)const{
 	RaycastHit hit;
-	if (!cast(r, hit, clipBackfaces, castBreaker))
+	if (!cast(r, hit, clipBackfaces, validator, validatorArg))
 		hit.hitDistance = FLT_MAX;
 	return hit;
 }
 template<typename ElemType>
 // Casts a ray (returns true if the ray hits something; result is written in hit)
-__device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit &hit, bool clipBackfaces, CastBreaker castBreaker)const{
+__device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit &hit, bool clipBackfaces, CastValidationFunction validator, void *validatorArg)const{
 	const Ray inversedRay(r.origin, 1.0f / r.direction);
 	const register TreeNode *root = (tree + 0);
-	if (root->children == NULL) return castInLeaf(r, hit, 0, clipBackfaces, castBreaker);
+	if (root->children == NULL) return castInLeaf(r, hit, 0, clipBackfaces, validator, validatorArg);
 	if (!Shapes::castPreInversed<AABB>(inversedRay, (tree + 0)->bounds, false)) return false;
 	CastFrame stack[OCTREE_MAX_DEPTH + 1];
 	int i = 0;
@@ -171,7 +174,7 @@ __device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit 
 				if (Shapes::castPreInversed<AABB>(inversedRay, child->bounds, false)) {
 					const register TreeNode *children = child->children;
 					if (children == NULL) {
-						if (castInLeaf(r, hit, (int)(child - root), clipBackfaces, castBreaker)) return true;
+						if (castInLeaf(r, hit, (int)(child - root), clipBackfaces, validator, validatorArg)) return true;
 					}
 					else {
 						i++;
@@ -482,7 +485,7 @@ __device__ __host__ inline void Octree<ElemType>::configureCastFrame(CastFrame &
 	frame.curChild = 0;
 }
 template<typename ElemType>
-__device__ __host__ inline bool Octree<ElemType>::castInLeaf(const Ray &r, RaycastHit &hit, int index, bool clipBackfaces, CastBreaker castBreaker)const{
+__device__ __host__ inline bool Octree<ElemType>::castInLeaf(const Ray &r, RaycastHit &hit, int index, bool clipBackfaces, CastValidationFunction validator, void *validatorArg)const{
 	const Stacktor<ElemReference, OCTREE_VOXEL_LOCAL_CAPACITY> &nodeTris = nodeData[index];
 	if (nodeTris.size() <= 0) return false;
 	const AABB &bounds = tree[index].bounds;
@@ -495,6 +498,8 @@ __device__ __host__ inline bool Octree<ElemType>::castInLeaf(const Ray &r, Rayca
 		Vertex hitPoint;
 		float distance;
 		bool casted = Shapes::cast<ElemType>(r, *object, distance, hitPoint, clipBackfaces);
+		if (casted && (validator != NULL))
+			casted = validator(RaycastHit(*object, distance, hitPoint), r, validatorArg);
 		if (casted && distance < bestDistance && bounds.contains(hitPoint)){
 			bestDistance = distance;
 			bestHitPoint = hitPoint;

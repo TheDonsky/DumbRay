@@ -39,7 +39,7 @@ __dumb__ void DefaultShaderGeneric<HitType>::requestIndirectSamples(const Shader
 		request.hitPoint,
 		request.hitPoint + Vector3(1.0f, 1.0f, 1.0f) };
 	ShaderReport report = cast(info);
-	samples->set(SampleRay(report.bounce.ray, report.bounce.energy() / 4.0f));
+	samples->set(SampleRay(report.bounce.ray, 1.0f));
 }
 template<typename HitType>
 __dumb__ Color DefaultShaderGeneric<HitType>::getReflectedColor(const ShaderReflectedColorRequest<HitType> &request)const {

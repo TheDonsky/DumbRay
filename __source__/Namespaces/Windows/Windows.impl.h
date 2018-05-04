@@ -11,7 +11,7 @@ namespace Windows{
 #define WINDOWS_KERNELS_THREADS_PER_BLOCKS 128
 #define WINDOWS_KERNELS_UNITS_PER_THREAD 8
 		__device__ __host__ inline static COLORREF translateColor(const Color &c){
-			return RGB(((int)(c.b * 255)), ((int)(c.g * 255)), ((int)(c.r * 255)));
+			return RGB(((int)(max(min(c.b, 1.0f), 0.0f) * 255)), ((int)(max(min(c.g, 1.0f), 0.0f) * 255)), ((int)(max(min(c.r, 1.0f), 0.0f) * 255)));
 		}
 
 		__global__ static void translate(const Color *source, COLORREF *destination, int dataSize){

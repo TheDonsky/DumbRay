@@ -111,11 +111,13 @@ public:
 	/** ========================================================== **/
 	/*| cast |*/
 	// Function, that lets the cast terminate
-	typedef bool(*CastBreaker)(RaycastHit &hit, const Ray &ray, bool &rv);
+	typedef bool(*CastValidationFunction)(const RaycastHit &hit, const Ray &ray, void *aux);
+	// Validator makes sure, the provided face does not get hit:
+	__device__ __host__ inline static bool validateNotSameAsObject(const RaycastHit &hit, const Ray &ray, void *object);
 	// Casts a ray and returns RaycastHit (if ray hits nothing, hitDistance will be set to FLT_MAX)
-	__device__ __host__ inline RaycastHit cast(const Ray &r, bool clipBackfaces = true, CastBreaker castBreaker = NULL)const;
+	__device__ __host__ inline RaycastHit cast(const Ray &r, bool clipBackfaces = true, CastValidationFunction validator = NULL, void *validatorArg = NULL)const;
 	// Casts a ray (returns true if the ray hits something; result is written in hit)
-	__device__ __host__ inline bool cast(const Ray &r, RaycastHit &hit, bool clipBackfaces = true, CastBreaker castBreaker = NULL)const;
+	__device__ __host__ inline bool cast(const Ray &r, RaycastHit &hit, bool clipBackfaces = true, CastValidationFunction validator = NULL, void *validatorArg = NULL)const;
 
 
 
@@ -188,7 +190,7 @@ private:
 		char curChild;
 	};
 	__device__ __host__ inline static void configureCastFrame(CastFrame &frame, const TreeNode *children, const Ray &r);
-	__device__ __host__ inline bool castInLeaf(const Ray &r, RaycastHit &hit, int index, bool clipBackfaces, CastBreaker castBreaker)const;
+	__device__ __host__ inline bool castInLeaf(const Ray &r, RaycastHit &hit, int index, bool clipBackfaces, CastValidationFunction validator, void *validatorArg)const;
 
 
 

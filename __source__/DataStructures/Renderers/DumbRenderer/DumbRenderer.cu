@@ -206,12 +206,16 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int block
 				// We may need to cast the ray either to investigate the direction of the layer,
 				// or illuminate it. Regardless, we'll need a reference to a ray to cast (this way we decrease diverency):
 				const Ray *rayToCast;
+				void *restrictionObject = NULL;
 
 				// We may need to call the shader's getReflectedColor for aome amount of photons:
 				int numIlluminationPhotons = 0;
 
 				// In case there's no geometry set, rayToCast is the layer ray:
-				if (layer.geometry.object == NULL) rayToCast = (&layer.layerRay);
+				if (layer.geometry.object == NULL) {
+					rayToCast = (&layer.layerRay);
+					if (currentLayer > 0) restrictionObject = ((void*)bounceLayers[currentLayer - 1].geometry.object);
+				}
 
 				// If geometry is already set and we have uncast photons, 
 				// we will simply cast one of them and decrease the counter:
@@ -281,7 +285,8 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int block
 				if (rayToCast != NULL) {
 					// If we have a ray to cast, we should be here at some point:
 					RaycastHit<SceneType::GeometryUnit> hit;
-					if (configuration.context.geometry->cast(*rayToCast, hit, false)) {
+					if (configuration.context.geometry->cast(
+						*rayToCast, hit, false, Octree<SceneType::GeometryUnit>::validateNotSameAsObject, restrictionObject)) {
 						// If raycast hit something and it was a geometry ray,
 						// we need to set the layer up:
 						if (rayToCast == (&layer.layerRay)) {
@@ -297,15 +302,13 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int block
 								request.ray = (*rayToCast);
 								configuration.context.materials->operator[](
 									hit.object->materialId).requestIndirectSamples(request, &layer.bounces);
-								for (int i = 0; i < layer.bounces.sampleCount; i++)
-									layer.bounces.samples[i].ray.origin += (layer.bounces.samples[i].ray.direction * (8.0f * VECTOR_EPSILON));
 							}
 							continue;
 						}
 						// If the ray was an illumination ray and it hit the same old object or point, we count it as a light:
 						else if (
 							(hit.object == layer.geometry.object) ||
-							((hit.hitPoint - layer.geometry.hitPoint).sqrMagnitude() <= (4.0f * VECTOR_EPSILON))) {
+							((hit.hitPoint - layer.geometry.hitPoint).sqrMagnitude() <= (8.0f * VECTOR_EPSILON))) {
 							numIlluminationPhotons = 1;
 						}
 						// If no illumination occured whatsoever, there's no point continuing the cycle:
