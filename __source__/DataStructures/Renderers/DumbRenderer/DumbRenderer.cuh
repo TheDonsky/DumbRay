@@ -22,7 +22,9 @@ public:
 		SceneType *scene = NULL,
 		CameraManager *camera = NULL,
 		BoxingMode boxingMode = BOXING_MODE_HEIGHT_BASED,
-		int maxBounces = 2);
+		int maxBounces = 2,
+		int samplesPerPixelX = 1,
+		int samplesPerPixelY = 1);
 
 	void setScene(SceneType *scene);
 	SceneType* getScene()const;
@@ -38,6 +40,13 @@ public:
 
 	static int maxBouncesLimit();
 
+	void setSamplesPerPixelX(int value);
+	void setSamplesPerPixelY(int value);
+	void setSamplesPerPixel(int x, int y);
+	int getSamplesPerPixelX()const;
+	int getSamplesPerPixelY()const;
+
+
 
 protected:
 	bool renderBlocksCPU(const Info &info, FrameBuffer *buffer, int startBlock, int endBlock);
@@ -49,6 +58,7 @@ private:
 	volatile CameraManager *cameraManager;
 	volatile BoxingMode boxing;
 	volatile int bounceLimit;
+	volatile int fsaaX, fsaaY;
 
 public:
 	class PixelRenderProcess {
@@ -61,9 +71,14 @@ public:
 			int width, height;
 			float blendingAmount;
 			int maxBounces;
+			int fsaaX, fsaaY;
 
-			bool host(SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, BoxingMode boxingMode, float blending, int bounces);
-			bool device(SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, FrameBuffer *hostFrameBuffer, BoxingMode boxingMode, int deviceId, float blending, int bounces);
+			bool host(
+				SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, 
+				BoxingMode boxingMode, float blending, int bounces, int samplesX, int samplesY);
+			bool device(
+				SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, FrameBuffer *hostFrameBuffer, 
+				BoxingMode boxingMode, int deviceId, float blending, int bounces, int samplesX, int samplesY);
 			bool hasError();
 		};
 
