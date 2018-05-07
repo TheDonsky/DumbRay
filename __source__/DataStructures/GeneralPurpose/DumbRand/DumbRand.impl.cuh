@@ -48,7 +48,7 @@ __device__ __host__ inline DumbRand::UnsignedInt DumbRand::rangeUnsigned(Unsigne
 
 // Signed range between minimum (inclusive) and maximum (exclusive) values
 __device__ __host__ inline DumbRand::UnsignedInt DumbRand::rangeSigned(SignedInt minimum, SignedInt maximum) {
-	return ((getInt() % (maximum - minimum)) + minimum);
+	return ((((SignedInt)(get() >> 1)) % (maximum - minimum)) + minimum);
 }
 
 // Random float between 0 (inclusive) and 1 (inclusive):
