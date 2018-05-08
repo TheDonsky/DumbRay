@@ -60,7 +60,7 @@ __device__ __host__ inline Generic<FunctionPack>& Generic<FunctionPack>::operato
 template<typename FunctionPack>
 __device__ __host__ inline void Generic<FunctionPack>::swapWith(Generic &g) {
 	if ((&g) == this) return;
-	TypeTools<void*>::swap(dataPointer, g.dataPointer);
+	TypeTools<volatile void*>::swap(dataPointer, g.dataPointer);
 	TypeTools<FunctionPack>::swap(functionPack, g.functionPack);
 	TypeTools<MemoryManagementModule>::swap(memoryManagementModule, g.memoryManagementModule);
 }
@@ -69,7 +69,7 @@ template<typename FunctionPack>
 template<typename Type, typename... Args>
 __host__ inline Type* Generic<FunctionPack>::use(const Args&... args) {
 	clean();
-	dataPointer = (void*)(new Type(args...));
+	dataPointer = (volatile void*)(new Type(args...));
 	if (dataPointer == NULL) return NULL;
 	functionPack.template use<Type>();
 	memoryManagementModule.use<Type>();
@@ -94,11 +94,11 @@ __device__ __host__ inline const FunctionPack& Generic<FunctionPack>::functions(
 }
 template<typename FunctionPack>
 __device__ __host__ inline void* Generic<FunctionPack>::object() {
-	return dataPointer;
+	return (void*)dataPointer;
 }
 template<typename FunctionPack>
 __device__ __host__ inline const void* Generic<FunctionPack>::object()const {
-	return dataPointer;
+	return (const void*)dataPointer;
 }
 template<typename FunctionPack>
 template<typename Type>
@@ -211,13 +211,13 @@ __host__ inline bool Generic<FunctionPack>::MemoryManagementModule::prepareForCp
 	
 	bool success = TypeTools<Type>::prepareForCpyLoad(source->getObject<Type>(), ((Type*)hostCloneDummy), hosClone->getObject<Type>(), 1);
 	if (success) {
-		success = (cudaMemcpyAsync(hosClone->dataPointer, (void*)hostCloneDummy, sizeof(Type), cudaMemcpyHostToDevice, stream) == cudaSuccess);
+		success = (cudaMemcpyAsync((void*)hosClone->dataPointer, (void*)hostCloneDummy, sizeof(Type), cudaMemcpyHostToDevice, stream) == cudaSuccess);
 		if (cudaStreamSynchronize(stream) != cudaSuccess) success = false;
 		if (!success) TypeTools<Type>::undoCpyLoadPreparations(source->getObject<Type>(), ((Type*)hostCloneDummy), hosClone->getObject<Type>(), 1);
 	}
 	
 	if (!success) {
-		cudaFree(hosClone->dataPointer);
+		cudaFree((void*)hosClone->dataPointer);
 		hosClone->dataPointer = NULL;
 	}
 	else {
@@ -233,7 +233,7 @@ __host__ inline bool Generic<FunctionPack>::MemoryManagementModule::disposeOnDev
 	if (!g.memoryManagementModule.isClone) return false;
 	if (g.dataPointer != NULL) {
 		if (!TypeTools<Type>::disposeDevArray(g.getObject<Type>(), 1)) return false;
-		if (cudaFree(g.dataPointer) != cudaSuccess) return false;
+		if (cudaFree((void*)g.dataPointer) != cudaSuccess) return false;
 		g.dataPointer = NULL;
 		g.setNULL();
 	}
