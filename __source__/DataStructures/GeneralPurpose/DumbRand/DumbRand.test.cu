@@ -49,12 +49,12 @@ namespace DumbRandTest {
 			delete[] counts;
 		}
 
-		__device__ __host__ inline static DumbRand::UnsignedInt getUnsigned(DumbRand &generator) { return generator.get(); }
-		__device__ __host__ inline static DumbRand::SignedInt getSigned(DumbRand &generator) { return generator.getInt(); }
+		__device__ __host__ inline static unsigned int getUnsigned(DumbRand &generator) { return generator.get(); }
+		__device__ __host__ inline static int getSigned(DumbRand &generator) { return generator.getInt(); }
 		__device__ __host__ inline static float getFloat(DumbRand &generator) { return generator.getFloat(); }
 		
-		__device__ __host__ inline static DumbRand::UnsignedInt getUnsignedRange(DumbRand &generator, uint32_t start, uint32_t end) { return generator.rangeUnsigned(start, end); }
-		__device__ __host__ inline static DumbRand::SignedInt getSignedRange(DumbRand &generator, int start, int end) { return generator.rangeSigned(start, end); }
+		__device__ __host__ inline static unsigned int getUnsignedRange(DumbRand &generator, uint32_t start, uint32_t end) { return generator.rangeUnsigned(start, end); }
+		__device__ __host__ inline static int getSignedRange(DumbRand &generator, int start, int end) { return generator.rangeSigned(start, end); }
 		__device__ __host__ inline static float getFloatRange(DumbRand &generator, float start, int end) { return generator.range(start, end); }
 
 		__global__ static void getOnKernel(DumbRand generator) {

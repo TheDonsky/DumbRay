@@ -15,34 +15,31 @@ Copying already existing rng-s may or may not be stupid, but this time, I'm some
 
 class DumbRand {
 public:
-	typedef uint32_t UnsignedInt;
-	typedef int32_t SignedInt;
-
 	// Default constructor (does absolutely nothing)
 	__device__ __host__ inline DumbRand();
 
 	// Constructor that seeds all five seed values
 	__device__ __host__ inline DumbRand(
-		UnsignedInt seedA, UnsignedInt seedB = 1, UnsignedInt seedC = 1, UnsignedInt seedD = 1, UnsignedInt seedE = 0);
+		unsigned int seedA, unsigned int seedB = 1, unsigned int seedC = 1, unsigned int seedD = 1, unsigned int seedE = 0);
 
 	// Seeds with all five seed values
 	__device__ __host__ inline void seed(
-		UnsignedInt seedA, UnsignedInt seedB = 1, UnsignedInt seedC = 1, UnsignedInt seedD = 1, UnsignedInt seedE = 0);
+		unsigned int seedA, unsigned int seedB = 1, unsigned int seedC = 1, unsigned int seedD = 1, unsigned int seedE = 0);
 
 	// Seeds with rand(:
 	inline void seed();
 
 	// Generates random unit
-	__device__ __host__ inline UnsignedInt get();
+	__device__ __host__ inline unsigned int get();
 
 	// Generates signed integer
-	__device__ __host__ inline SignedInt getInt();
+	__device__ __host__ inline int getInt();
 
 	// Unsigned range between minimum (inclusive) and maximum (exclusive) values
-	__device__ __host__ inline UnsignedInt rangeUnsigned(UnsignedInt minimum, UnsignedInt maximum);
+	__device__ __host__ inline unsigned int rangeUnsigned(unsigned int minimum, unsigned int maximum);
 
 	// Signed range between minimum (inclusive) and maximum (exclusive) values
-	__device__ __host__ inline UnsignedInt rangeSigned(SignedInt minimum, SignedInt maximum);
+	__device__ __host__ inline unsigned int rangeSigned(int minimum, int maximum);
 
 	// Random float between 0 (inclusive) and 1 (inclusive):
 	__device__ __host__ inline float getFloat();
@@ -50,11 +47,14 @@ public:
 	// Random float between minimum (inclusive) and maximum (includive) values
 	__device__ __host__ inline float range(float minimum, float maximum);
 
+	// Returns random bool (chance is the chance of true)
+	__device__ __host__ inline bool getBool(float chance);
+
 
 
 private:
 	static std::mutex lock;
-	UnsignedInt a, b, c, d, e;
+	unsigned int a, b, c, d, e;
 };
 
 
