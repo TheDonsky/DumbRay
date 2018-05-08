@@ -1,7 +1,6 @@
 #pragma once
 #include"../../GeneralPurpose/Generic/Generic.cuh"
 #include"../../Primitives/Pure/Color/Color.h"
-#include"../../Primitives/Compound/Pair/Pair.cuh"
 #include"../../../Namespaces/Device/Device.cuh"
 #include"../../GeneralPurpose/Semaphore/Semaphore.h"
 #include"../../GeneralPurpose/ReferenceManager/ReferenceManager.cuh"

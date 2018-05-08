@@ -14,6 +14,7 @@
 #include"DataStructures/Screen/FrameBuffer/FrameBuffer.test.cuh"
 #include"DataStructures/Renderers/DumbRenderer/DumbRenderer.test.cuh"
 #include"DataStructures/GeneralPurpose/DumbRand/DumbRand.test.cuh"
+#include"Namespaces/Images/Images.test.cuh"
 #include"Namespaces/Device/Device.cuh"
 #include <map>
 #include <string>
@@ -50,6 +51,7 @@ namespace {
 		tests["block_frame_buffer"] = { "Basic test for BlockBasedFrameBuffer", BlockBasedFrameBufferTest::test };
 		tests["dumb_renderer"] = { "Basic performance test for DumbRenderer", DumbRendererTest::testPerformance };
 		tests["dumb_rand"] = { "Simple tests for DumbRand", DumbRandTest::test };
+		tests["save_buffer_png"] = { "Simple tests for saving FrameBuffer as a png file", ImagesTest::testSavePng };
 		std::cout << "___________________________________________________________________" << std::endl;
 		std::cout << "WELCOME TO DumbRay TESTING MODULE" << std::endl << "(enter ? for further instructions or any test to run)" << std::endl;
 		while (true) {

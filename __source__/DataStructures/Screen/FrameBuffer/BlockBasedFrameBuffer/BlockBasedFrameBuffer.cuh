@@ -1,6 +1,5 @@
 #pragma once
 #include"../../../Primitives/Pure/Color/Color.h"
-#include"../../../Primitives/Compound/Pair/Pair.cuh"
 #include"../../../GeneralPurpose/Stacktor/Stacktor.cuh"
 #include"../../../GeneralPurpose/TypeTools/TypeTools.cuh"
 #include<mutex>
