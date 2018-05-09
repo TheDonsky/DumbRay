@@ -12,7 +12,7 @@ __dumb__ SimpleSoftDirectionalLight::SimpleSoftDirectionalLight(const Color shad
 __dumb__ void SimpleSoftDirectionalLight::getVertexPhotons(const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows)const {
 	(*castShadows) = true;
 	DumbRand &drand = (*request.context->entropy);
-	Vector3 offset = (Vector3(drand.range(-1.0f, 1.0f), drand.range(-1.0f, 1.0f), drand.range(-1.0f, 1.0f)).normalized() * soft * drand.getFloat());
+	Vector3 offset; drand.pointOnSphere(offset.x, offset.y, offset.z, soft * drand.getFloat());
 	Vector3 origin = (request.point - (dir * dist) + offset);
 	Vector3 direction = (request.point - origin);
 	result->set(Photon(Ray(origin, direction), color));

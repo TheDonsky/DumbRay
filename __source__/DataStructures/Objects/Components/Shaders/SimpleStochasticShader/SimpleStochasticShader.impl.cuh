@@ -12,7 +12,8 @@ __dumb__ SimpleStochasticShader::SimpleStochasticShader(const ColorRGB &color, f
 
 __dumb__ void SimpleStochasticShader::requestIndirectSamples(const ShaderInirectSamplesRequest<BakedTriFace> &request, RaySamples *samples)const {
 	DumbRand &drand = (*request.context->entropy);
-	register Vector3 direction = Vector3(drand.range(-1.0f, 1.0f), drand.range(-1.0f, 1.0f), drand.range(-1.0f, 1.0f)).normalized();
+	register Vector3 direction;
+	drand.pointOnSphere(direction.x, direction.y, direction.z);
 	if ((direction * request.object->vert.normal()) < 0) direction = -direction;
 
 	register Vector3 hitMasses = request.object->vert.getMases(request.hitPoint);

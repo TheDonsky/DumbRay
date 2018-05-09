@@ -52,6 +52,9 @@ public:
 	// Returns random bool (chance is the chance of true)
 	__device__ __host__ inline bool getBool(float chance);
 
+	// Generates a point on a sphere of given radius:
+	__device__ __host__ inline void pointOnSphere(float &x, float &y, float &z, float radius = 1.0f);
+
 
 
 private:
