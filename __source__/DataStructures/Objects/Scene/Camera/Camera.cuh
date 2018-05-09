@@ -14,8 +14,8 @@ public:
 	Transform transform;
 	Lense lense;
 
-	__dumb__ void getPixelSamples(const Vector2 &screenSpacePosition, float pixelSize, RaySamples &samples)const;
-	__dumb__ Color getPixelColor(const Vector2 &screenSpacePosition, const Photon &photon)const;
+	__dumb__ void getPixelSamples(const LenseGetPixelSamplesRequest &request, RaySamples *samples)const;
+	__dumb__ Color getPixelColor(LenseGetPixelColorRequest request)const;
 
 	// For upload:
 	DEFINE_CUDA_LOAD_INTERFACE_FOR(Camera);

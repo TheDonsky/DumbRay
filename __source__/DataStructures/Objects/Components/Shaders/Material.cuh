@@ -28,6 +28,9 @@ struct ShaderInirectSamplesRequest {
 	
 	// Relative contribution of all output samples
 	float absoluteSampleWeight;
+
+	// The render context in all of it's glory:
+	RenderContext *context;
 };
 
 template<typename HitType>
@@ -44,6 +47,12 @@ struct ShaderReflectedColorRequest {
 	// The direction to the observer:
 	// (The result will be interpreted as Photon(Ray(hitPoint, observerDirection), Color(whatever the shader returns)) towards the observer)
 	Vector3 observerDirection;
+
+	// Type of the photon:
+	PhotonType photonType;
+
+	// The render context in all of it's glory:
+	RenderContext *context;
 };
 
 

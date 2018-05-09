@@ -11,6 +11,38 @@
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
+struct LenseGetPixelSamplesRequest {
+	// Screen space position of the pixel:
+	Vector2 screenSpacePosition;
+
+	// Relative on screen size of the pixel:
+	float pixelSize;
+
+	// The render context in all of it's glory:
+	RenderContext *context;
+};
+struct LenseGetPixelColorRequest {
+	// Screen space position of the pixel:
+	Vector2 screenSpacePosition;
+
+	// Relative on screen size of the pixel:
+	float pixelSize;
+
+	// Photon, that was cast upon the pixel:
+	Photon photon;
+
+	// Type of the photon:
+	PhotonType photonType;
+
+	// The render context in all of it's glory:
+	RenderContext *context;
+};
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
 class LenseFunctionPack {
 public:
 	__dumb__ LenseFunctionPack();
@@ -18,19 +50,19 @@ public:
 	template<typename LenseType>
 	__dumb__ void use();
 
-	__dumb__ void getPixelSamples(const void *lense, const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples)const;
-	__dumb__ Color getPixelColor(const void *lense, const Vector2 &screenSpacePosition, const Photon &photon)const;
+	__dumb__ void getPixelSamples(const void *lense, const LenseGetPixelSamplesRequest &request, RaySamples *samples)const;
+	__dumb__ Color getPixelColor(const void *lense, const LenseGetPixelColorRequest &request)const;
 
 
 
 private:
-	void(*getPixelSamplesFn)(const void *lense, const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples);
-	Color(*getPixelColorFn)(const void *lense, const Vector2 &screenSpacePosition, const Photon &photon);
+	void(*getPixelSamplesFn)(const void *lense, const LenseGetPixelSamplesRequest &request, RaySamples *samples);
+	Color(*getPixelColorFn)(const void *lense, const LenseGetPixelColorRequest &request);
 
 	template<typename LenseType>
-	__dumb__ static void getPixelSamplesGeneric(const void *lense, const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples);
+	__dumb__ static void getPixelSamplesGeneric(const void *lense, const LenseGetPixelSamplesRequest &request, RaySamples *samples);
 	template<typename LenseType>
-	__dumb__ static Color getPixelColorGeneric(const void *lense, const Vector2 &screenSpacePosition, const Photon &photon);
+	__dumb__ static Color getPixelColorGeneric(const void *lense, const LenseGetPixelColorRequest &request);
 };
 
 
@@ -42,8 +74,8 @@ private:
 /** ########################################################################## **/
 class Lense : public Generic<LenseFunctionPack>{
 public:
-	__dumb__ void getPixelSamples(const Vector2 &screenSpacePosition, float pixelSize, RaySamples *samples)const;
-	__dumb__ Color getPixelColor(const Vector2 &screenSpacePosition, const Photon &photon)const;
+	__dumb__ void getPixelSamples(const LenseGetPixelSamplesRequest &request, RaySamples *samples)const;
+	__dumb__ Color getPixelColor(const LenseGetPixelColorRequest &request)const;
 
 	inline Lense *upload()const;
 	inline static Lense* upload(const Lense *source, int count = 1);

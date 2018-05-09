@@ -11,21 +11,36 @@
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
+struct LightVertexSampleRequest {
+	// Point to illuminate:
+	Vector3 point;
+
+	// The render context in all of it's glory:
+	RenderContext *context;
+};
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
 class LightInterface {
 public:
 	__dumb__ void clean();
 	template<typename LightType>
 	__dumb__ void use();
 
-	__dumb__ void getVertexPhotons(const void *lightSource, const Vector3 &point, PhotonSamples *result, bool *castShadows)const;
+	__dumb__ void getVertexPhotons(const void *lightSource, const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows)const;
 
 
 
 private:
-	void(*getVertexPhotonsFn)(const void *lightSource, const Vector3 &point, PhotonSamples *result, bool *castShadows);
+	void(*getVertexPhotonsFn)(const void *lightSource, const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows);
 
 	template<typename LightType>
-	__dumb__ static void getVertexPhotonsAbstract(const void *lightSource, const Vector3 &point, PhotonSamples *result, bool *castShadows);
+	__dumb__ static void getVertexPhotonsAbstract(const void *lightSource, const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows);
 };
 
 
@@ -37,7 +52,7 @@ private:
 /** ########################################################################## **/
 class Light : public Generic<LightInterface> {
 public:
-	__dumb__ void getVertexPhotons(const Vector3 &point, PhotonSamples *result, bool *castShadows)const;
+	__dumb__ void getVertexPhotons(const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows)const;
 
 	inline Light *upload()const;
 	inline static Light* upload(const Light *source, int count = 1);

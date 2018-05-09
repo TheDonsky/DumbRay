@@ -12,7 +12,7 @@ namespace LenseTest {
 				flush(77773000);
 			}
 
-			__dumb__ void getPixelSamples(const Vector2 &, float, RaySamples *samples)const { 
+			__dumb__ void getPixelSamples(const LenseGetPixelSamplesRequest &, RaySamples *samples)const {
 #ifndef __CUDA_ARCH__
 				printf("LenseTest::Private::Garbage::getScreenPhoton() called on HOST\n");
 #else
@@ -21,7 +21,7 @@ namespace LenseTest {
 				samples->sampleCount = 0; 
 			}
 
-			__dumb__ Color getPixelColor(const Vector2 &screenSpacePosition, const Photon &photon)const { return Color(0.0f, 0.0f, 0.0f, 0.0f); }
+			__dumb__ Color getPixelColor(const LenseGetPixelColorRequest &)const { return Color(0.0f, 0.0f, 0.0f, 0.0f); }
 
 		};
 	}
@@ -38,14 +38,14 @@ namespace LenseTest {
 				printf("Error: expected size was %d, got %d\n", 77773000, clone->getObject<Garbage>()->size());
 			else printf("Correct data on kernel\n");
 			RaySamples pack; 
-			clone->getPixelSamples(Vector2(0, 0), 0.0f, &pack);
+			clone->getPixelSamples(LenseGetPixelSamplesRequest(), &pack);
 		}
 
 		static void testMemory() {
 			Lense lense;
 			lense.use<Garbage>();
 			RaySamples pack;
-			lense.getPixelSamples(Vector2(0, 0), 0.0f, &pack);
+			lense.getPixelSamples(LenseGetPixelSamplesRequest(), &pack);
 			Lense *clone = NULL;
 			clone = lense.upload();
 			if (clone == NULL) {

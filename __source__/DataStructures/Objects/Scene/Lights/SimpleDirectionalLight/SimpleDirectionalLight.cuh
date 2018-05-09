@@ -7,7 +7,7 @@ struct SimpleDirectionalLight {
 	Photon photon;
 
 	__dumb__ SimpleDirectionalLight(Photon photon);
-	__dumb__ void getVertexPhotons(const Vector3 &point, PhotonSamples *result, bool *castShadows)const;
+	__dumb__ void getVertexPhotons(const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows)const;
 };
 
 

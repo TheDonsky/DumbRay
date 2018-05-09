@@ -14,7 +14,7 @@ namespace SceneHandlerTest {
 		__global__ void kernel(const Scene<BakedTriFace> *scene) {
 			Vector2 screenPoint = ((Vector2(threadIdx.x, blockIdx.x) / Vector2(blockDim.x, gridDim.x)) - Vector2(0.5f, 0.0f));
 			RaySamples pack;
-			scene->cameras[0].lense.getPixelSamples(screenPoint, 0.0f, &pack);
+			scene->cameras[0].lense.getPixelSamples(LenseGetPixelSamplesRequest(), &pack);
 			RaycastHit<Renderable<BakedTriFace> > hit;
 			scene->geometry.cast(pack.samples[0].ray, hit);
 		}

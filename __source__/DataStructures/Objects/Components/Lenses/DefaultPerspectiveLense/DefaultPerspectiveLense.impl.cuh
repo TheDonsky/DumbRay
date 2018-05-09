@@ -9,8 +9,11 @@ __dumb__ DefaultPerspectiveLense::DefaultPerspectiveLense(float angle) {
 	x = 0.5f / tan(radian);
 }
 
-__dumb__ void DefaultPerspectiveLense::getPixelSamples(const Vector2 &screenSpacePosition, float, RaySamples *samples)const {
+__dumb__ void DefaultPerspectiveLense::getPixelSamples(const LenseGetPixelSamplesRequest &request, RaySamples *samples)const {
 	samples->sampleCount = 1;
-	samples->samples[0] = SampleRay(Ray(Vector3(0.0f, 0.0f, 0.0f), Vector3(screenSpacePosition.x, screenSpacePosition.y, x).normalized()), 1.0f);
+	samples->samples[0] = SampleRay(Ray(Vector3(0.0f, 0.0f, 0.0f), Vector3(request.screenSpacePosition.x, request.screenSpacePosition.y, x).normalized()), 1.0f);
 }
-__dumb__ Color DefaultPerspectiveLense::getPixelColor(const Vector2 &, const Photon &photon)const { return photon.color; }
+__dumb__ Color DefaultPerspectiveLense::getPixelColor(const LenseGetPixelColorRequest &request)const { 
+	if (request.photonType == PHOTON_TYPE_DIRECT_ILLUMINATION) return Color(0.0f, 0.0f, 0.0f, 0.0f);
+	else return request.photon.color; 
+}

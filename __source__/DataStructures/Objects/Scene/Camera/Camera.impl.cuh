@@ -4,12 +4,13 @@
 
 
 
-__dumb__ void Camera::getPixelSamples(const Vector2 &screenSpacePosition, float pixelSize, RaySamples &samples)const {
-	lense.getPixelSamples(screenSpacePosition, pixelSize, &samples);
-	for (int i = 0; i < samples.sampleCount; i++) samples.samples[i].ray >>= transform;
+__dumb__ void Camera::getPixelSamples(const LenseGetPixelSamplesRequest &request, RaySamples *samples)const {
+	lense.getPixelSamples(request, samples);
+	for (int i = 0; i < samples->sampleCount; i++) samples->samples[i].ray >>= transform;
 }
-__dumb__ Color Camera::getPixelColor(const Vector2 &screenSpacePosition, const Photon &photon)const {
-	return lense.getPixelColor(screenSpacePosition, Photon(photon.ray << transform, photon.color));
+__dumb__ Color Camera::getPixelColor(LenseGetPixelColorRequest request)const {
+	request.photon.ray <<= transform;
+	return lense.getPixelColor(request);
 }
 
 

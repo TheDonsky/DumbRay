@@ -15,13 +15,13 @@ __dumb__ void LightInterface::use() {
 	getVertexPhotonsFn = getVertexPhotonsAbstract<LightType>;
 }
 
-__dumb__ void LightInterface::getVertexPhotons(const void *lightSource, const Vector3 &point, PhotonSamples *result, bool *castShadows)const {
-	getVertexPhotonsFn(lightSource, point, result, castShadows);
+__dumb__ void LightInterface::getVertexPhotons(const void *lightSource, const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows)const {
+	getVertexPhotonsFn(lightSource, request, result, castShadows);
 }
 
 template<typename LightType>
-__dumb__ void LightInterface::getVertexPhotonsAbstract(const void *lightSource, const Vector3 &point, PhotonSamples *result, bool *castShadows) {
-	((LightType*)lightSource)->getVertexPhotons(point, result, castShadows);
+__dumb__ void LightInterface::getVertexPhotonsAbstract(const void *lightSource, const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows) {
+	((LightType*)lightSource)->getVertexPhotons(request, result, castShadows);
 }
 
 
@@ -31,8 +31,8 @@ __dumb__ void LightInterface::getVertexPhotonsAbstract(const void *lightSource, 
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-__dumb__ void Light::getVertexPhotons(const Vector3 &point, PhotonSamples *result, bool *castShadows)const {
-	return functions().getVertexPhotons(object(), point, result, castShadows);
+__dumb__ void Light::getVertexPhotons(const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows)const {
+	return functions().getVertexPhotons(object(), request, result, castShadows);
 }
 
 inline Light* Light::upload()const {

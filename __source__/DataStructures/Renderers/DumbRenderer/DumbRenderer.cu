@@ -189,8 +189,13 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int block
 				(((float)fsaaI) + 0.5f) * pixelSampleW * pixelSize,
 				(((float)fsaaJ) + 0.5f) * pixelSampleH * pixelSize);
 			Vector2 screenSpacePosition = (offset + sampleOffset);
-			configuration.camera->getPixelSamples(
-				screenSpacePosition, pixelSize, cameraPixelSamples);
+
+			LenseGetPixelSamplesRequest cameraPixelSamplesRequest;
+			cameraPixelSamplesRequest.screenSpacePosition = screenSpacePosition;
+			cameraPixelSamplesRequest.pixelSize = pixelSize;
+			cameraPixelSamplesRequest.context = (&renderContext);
+			configuration.camera->getPixelSamples(cameraPixelSamplesRequest, &cameraPixelSamples);
+
 
 			// Resulting pixel color:
 			Color color(0.0f, 0.0f, 0.0f, 0.0f);
@@ -255,8 +260,11 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int block
 				else if (layer.lightIndex < configuration.context.lights->size()) {
 					// __TODO__: add light samples here...
 					bool castShadows = true;
+					LightVertexSampleRequest request;
+					request.point = layer.geometry.hitPoint;
+					request.context = (&renderContext);
 					configuration.context.lights->operator[](layer.lightIndex).getVertexPhotons(
-						layer.geometry.hitPoint, &lightRays, &castShadows);
+						request, &lightRays, &castShadows);
 					layer.lightIndex++;
 
 					if (castShadows) continue;
@@ -288,13 +296,20 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int block
 						request.photon = Photon(Ray(layerBelow.geometry.hitPoint, -layer.layerRay.direction), layer.color);
 						request.hitPoint = layerBelow.geometry.hitPoint;
 						request.observerDirection = (-layerBelow.layerRay.direction);
+						request.photonType = PHOTON_TYPE_INDIRECT_ILLUMINATION;
+						request.context = (&renderContext);
 						layerBelow.color += (configuration.context.materials->operator[](
 							layerBelow.geometry.object->materialId).getReflectedColor(request) * layer.sampleWeight);
 					}
 					else {
 						// Add color to the final pixel:
-						color += (configuration.camera->getPixelColor(
-							screenSpacePosition, Photon(Ray(layer.geometry.hitPoint, -layer.layerRay.direction), layer.color)) * layer.sampleWeight);
+						LenseGetPixelColorRequest request;
+						request.screenSpacePosition = screenSpacePosition;
+						request.pixelSize = pixelSize;
+						request.photon = Photon(Ray(layer.geometry.hitPoint, -layer.layerRay.direction), layer.color);
+						request.photonType = PHOTON_TYPE_INDIRECT_ILLUMINATION;
+						request.context = (&renderContext);
+						color += (configuration.camera->getPixelColor(request) * layer.sampleWeight);
 					}
 					currentLayer--;
 					continue;
@@ -323,6 +338,7 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int block
 								request.hitPoint = hit.hitPoint;
 								request.object = &hit.object->object;
 								request.ray = (*rayToCast);
+								request.context = (&renderContext);
 								configuration.context.materials->operator[](
 									hit.object->materialId).requestIndirectSamples(request, &layer.bounces);
 							}
@@ -358,6 +374,8 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int block
 					request.photon = lightRays.samples[lightRays.sampleCount + i];
 					request.hitPoint = layer.geometry.hitPoint;
 					request.observerDirection = (-layer.layerRay.direction);
+					request.photonType = PHOTON_TYPE_DIRECT_ILLUMINATION;
+					request.context = (&renderContext);
 					layer.color += layerMaterial.getReflectedColor(request);
 				}
 			}
