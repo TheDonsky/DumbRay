@@ -3,6 +3,7 @@
 #include "../BufferedRenderProcess/BufferedRenderProcess.test.cuh"
 #include "../../Screen/FrameBuffer/BlockBasedFrameBuffer/BlockBasedFrameBuffer.cuh"
 #include "../../Objects/Components/Shaders/DefaultShader/DefaultShader.cuh"
+#include "../../Objects/Components/Shaders/SimpleStochasticShader/SimpleStochasticShader.cuh"
 #include "../../Objects/Components/Lenses/DefaultPerspectiveLense/DefaultPerspectiveLense.cuh"
 #include "../../Objects/Components/Lenses/SimpleStochasticLense/SimpleStochasticLense.cuh"
 #include "../../Objects/Scene/Lights/SimpleDirectionalLight/SimpleDirectionalLight.cuh"
@@ -73,6 +74,6 @@ namespace DumbRendererTest {
 
 
 	void simpleNonInteractiveStochsticTest() {
-		simpleTestCase<DefaultShader, SimpleSoftDirectionalLight, SimpleStochasticLense>();
+		simpleTestCase<SimpleStochasticShader, SimpleSoftDirectionalLight, SimpleStochasticLense>();
 	}
 }

@@ -5,10 +5,10 @@
 
 namespace Images {
 	enum Error {
-		NO_ERROR = 0,
-		ERROR_FRAME_BUFFER_INVALID = 1,
-		ERROR_ALLOCATION_FAILED = 2,
-		ERROR_EXTERNAL_LIBRARY_FAILED = 3
+		IMAGES_NO_ERROR = 0,
+		IMAGES_ERROR_FRAME_BUFFER_INVALID = 1,
+		IMAGES_ERROR_ALLOCATION_FAILED = 2,
+		IMAGES_ERROR_EXTERNAL_LIBRARY_FAILED = 3
 	};
 
 	Error saveBufferPNG(const FrameBuffer &buffer, const std::string &filename);

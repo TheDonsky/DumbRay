@@ -1,6 +1,8 @@
 #include "BufferedRenderProcess.test.cuh"
 #include "../../../Namespaces/Tests/Tests.h"
+#include "../../../Namespaces/Images/Images.cuh"
 #include <string>
+#include <cctype>
 
 namespace BufferedRenderProcessTest {
 	void FramerateLogger::start() {
@@ -38,9 +40,8 @@ namespace BufferedRenderProcessTest {
 			void *createFnAux, const Renderer::ThreadConfiguration &configuration, BufferedRenderProcess *process) {
 
 			BufferedRenderer *renderer = bufferedRendererCreateFunction(configuration, createFnAux);
-			BufferedWindow bufferedWindow(
-				((configuration.numHostThreads() > 0) || (configuration.numActiveDevices() > 1)) ? 
-				0 : BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE);
+			bool shouldSynchFromDevice = (!((configuration.numHostThreads() > 0) || (configuration.numActiveDevices() > 1)));
+			BufferedWindow bufferedWindow(shouldSynchFromDevice ? BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE : 0);
 			process->setRenderer(renderer);
 			process->setTargetDisplayWindow(&bufferedWindow);
 			FramerateLogger logger;
@@ -50,6 +51,31 @@ namespace BufferedRenderProcessTest {
 			process->start();
 			while (!bufferedWindow.windowClosed()) std::this_thread::sleep_for(std::chrono::milliseconds(32));
 			process->end();
+			if ((renderer->getFrameBuffer() != NULL) && (renderer->getFrameBuffer()->cpuHandle() != NULL)) {
+				std::cout << "Enter name ending with \".png\" to save the render: ";
+				std::string rawLine;
+				std::getline(std::cin, rawLine);
+				int start = 0; while ((start < rawLine.length()) && std::isspace(rawLine[start])) start++;
+				int end = rawLine.size(); while ((end > 0) && std::isspace(rawLine[end - 1])) end--;
+				std::string line; for (int i = start; i < end; i++) line += rawLine[i];
+				if ((line.length() > 4) && line.substr(line.length() - 4) == ".png") {
+					std::cout << "Saving to \"" << line << "\"..." << std::endl;
+					bool failed = false;
+					if (shouldSynchFromDevice) {
+						if (cudaSetDevice(0) != cudaSuccess) failed = true;
+						else if (renderer->getFrameBuffer()->gpuHandle(0) == NULL) failed = true;
+						else if (!renderer->getFrameBuffer()->cpuHandle()->updateHostBlocks(
+							renderer->getFrameBuffer()->gpuHandle(0), 0, renderer->getFrameBuffer()->cpuHandle()->getBlockCount())) failed = true;
+					}
+					if (!failed) {
+						Images::Error error = Images::saveBufferPNG(*renderer->getFrameBuffer()->cpuHandle(), line);
+						if (error != Images::IMAGES_NO_ERROR)
+							std::cout << "Failed to save image. Error code: " << error << std::endl;
+						else std::cout << "Image saved successfuly;" << std::endl;
+					}
+					else std::cout << "Failed to load image from device..." << std::endl;
+				}
+			}
 			delete renderer;
 		}
 	}

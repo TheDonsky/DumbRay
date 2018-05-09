@@ -22,7 +22,7 @@ namespace Images {
 	Error saveBufferPNG(const FrameBuffer &buffer, const std::string &filename) {
 		int width, height;
 		buffer.getSize(&width, &height);
-		if (width < 0 || height < 0) return ERROR_FRAME_BUFFER_INVALID;
+		if (width < 0 || height < 0) return IMAGES_ERROR_FRAME_BUFFER_INVALID;
 		std::vector<unsigned char> bufferBytes;
 		bufferBytes.resize(width * height * 4, 0);
 		for (int y = 0; y < height; y++)
@@ -31,7 +31,7 @@ namespace Images {
 				translateToBytes(buffer.getColor(x, y), bufferBytes[pos], bufferBytes[pos + 1], bufferBytes[pos + 2], bufferBytes[pos + 3]);
 			}
 		unsigned int lodePngError = lodepng::encode(filename, bufferBytes, width, height);
-		if (lodePngError) return ERROR_EXTERNAL_LIBRARY_FAILED;
-		return NO_ERROR;
+		if (lodePngError) return IMAGES_ERROR_EXTERNAL_LIBRARY_FAILED;
+		return IMAGES_NO_ERROR;
 	}
 }

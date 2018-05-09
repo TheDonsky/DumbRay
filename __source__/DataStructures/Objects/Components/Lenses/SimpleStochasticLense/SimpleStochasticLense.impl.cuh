@@ -14,7 +14,9 @@ __dumb__ void SimpleStochasticLense::getPixelSamples(const LenseGetPixelSamplesR
 	DumbRand *dRand = request.context->entropy;
 	samples->samples[0] = SampleRay(
 		Ray(Vector3(0.0f, 0.0f, 0.0f), 
-			Vector3(request.screenSpacePosition.x + dRand->range(-off, off), request.screenSpacePosition.y + dRand->range(-off, off), x)),
+			Vector3(
+				request.screenSpacePosition.x + dRand->range(-off, off), 
+				request.screenSpacePosition.y + dRand->range(-off, off), x)),
 		1.0f);
 }
 __dumb__ Color SimpleStochasticLense::getPixelColor(const LenseGetPixelColorRequest &request)const {
