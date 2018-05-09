@@ -3,7 +3,9 @@
 #include"device_launch_parameters.h"
 #include<stdint.h>
 #include<stdlib.h>
+#include<vector>
 #include<mutex>
+
 
 /* 
 NOTE TO ANYONE WHO HAPPENS TO BE USING THIS:
@@ -57,6 +59,31 @@ private:
 	unsigned int a, b, c, d, e;
 };
 
+
+class DumbRandHolder {
+public:
+	DumbRandHolder();
+	~DumbRandHolder();
+
+	DumbRand *getCPU(int count, bool lock = true);
+	DumbRand *getGPU(int count, int gpuId, bool lock = true);
+
+
+private:
+	struct DumbRandReference {
+		enum Flags {
+			STREAM_CREATED = 1,
+		};
+		int count;
+		DumbRand *reference;
+		cudaStream_t stream;
+		uint8_t flags;
+		std::mutex lock;
+	};
+	DumbRandReference cpuReference;
+	int deviceCount;
+	DumbRandReference *gpuReferences;
+};
 
 
 #include"DumbRand.impl.cuh"

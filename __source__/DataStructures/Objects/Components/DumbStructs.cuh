@@ -1,6 +1,8 @@
 #pragma once
 #include"../../Primitives/Compound/Photon/Photon.cuh"
 #include"../../GeneralPurpose/Stacktor/Stacktor.cuh"
+#include"../../GeneralPurpose/DumbRand/DumbRand.cuh"
+
 
 
 typedef Stacktor<Photon, 16> PhotonPack;
@@ -40,3 +42,12 @@ struct SampleRay {
 
 typedef DumbSamples<Photon> PhotonSamples;
 typedef DumbSamples<SampleRay> RaySamples;
+
+enum PhotonType {
+	PHOTON_TYPE_DIRECT_ILLUMINATION,	// Set, if the photon was directly cast from the light source.
+	PHOTON_TYPE_INDIRECT_ILLUMINATION	// Set, if the photon is "back-casted" from the previously requested sample.
+};
+
+struct RenderContext {
+	DumbRand *entropy;
+};

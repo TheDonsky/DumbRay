@@ -2,6 +2,7 @@
 #include "../BlockRenderer/BlockRenderer.cuh"
 #include "../../Objects/Scene/DumbScene.cuh"
 #include "../../Objects/Scene/Camera/Camera.cuh"
+#include "../../GeneralPurpose/DumbRand/DumbRand.cuh"
 
 
 class DumbRenderer : public BlockRenderer {
@@ -83,11 +84,13 @@ public:
 		};
 
 		__device__ __host__ void configure(const SceneConfiguration &config);
+		__device__ __host__ void setContext(const RenderContext &context, int entropyOffset);
 		__device__ __host__ void renderPixel(int blockId, int pixelId);
 
 
 	private:
 		SceneConfiguration configuration;
+		RenderContext renderContext;
 
 		enum RayType {
 			GEOMETRY_RAY,

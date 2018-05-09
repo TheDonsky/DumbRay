@@ -44,11 +44,19 @@ int DumbRenderer::getSamplesPerPixelY()const { return fsaaY; }
 
 bool DumbRenderer::renderBlocksCPU(
 	const Info &info, FrameBuffer *buffer, int startBlock, int endBlock) {
+	DumbRandHolder *randHolder = getThreadData<DumbRandHolder>(info);
+	if (randHolder == NULL) return false;
+	DumbRand *entropy = randHolder->getCPU(1, false);
+	if (entropy == NULL) return false;
+	RenderContext renderContext;
+	renderContext.entropy = entropy;
+
 	PixelRenderProcess::SceneConfiguration configuration;
 	float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
 	if (!configuration.host(getScene(), getCamera(), buffer, boxing, blending, getMaxBounces(), fsaaX, fsaaY)) return false;
 	PixelRenderProcess pixelRenderProcess;
 	pixelRenderProcess.configure(configuration);
+	pixelRenderProcess.setContext(renderContext, 0);
 	int blockSize = buffer->getBlockSize();
 	for (int blockId = startBlock; blockId < endBlock; blockId++)
 		for (int pixelId = 0; pixelId < blockSize; pixelId++)
@@ -59,9 +67,10 @@ bool DumbRenderer::renderBlocksCPU(
 namespace {
 	namespace DumbRendererPrivateKernels {
 		__global__ static void renderBlocks(
-			DumbRenderer::PixelRenderProcess::SceneConfiguration configuration, int startBlock) {
+			DumbRenderer::PixelRenderProcess::SceneConfiguration configuration, RenderContext renderContext, int startBlock) {
 			DumbRenderer::PixelRenderProcess pixelRenderProcess;
 			pixelRenderProcess.configure(configuration);
+			pixelRenderProcess.setContext(renderContext, (blockIdx.x * blockDim.x) + threadIdx.x);
 			pixelRenderProcess.renderPixel(startBlock + blockIdx.x, threadIdx.x);
 		}
 	}
@@ -70,12 +79,20 @@ namespace {
 bool DumbRenderer::renderBlocksGPU(
 	const Info &info, FrameBuffer *host, FrameBuffer *device, 
 	int startBlock, int endBlock, cudaStream_t &renderStream) {
+	DumbRandHolder *randHolder = getThreadData<DumbRandHolder>(info);
+	if (randHolder == NULL) return false;
+	DumbRand *entropy = randHolder->getGPU(
+		(endBlock - startBlock) * host->getBlockSize(), info.device, false);
+	if (entropy == NULL) return false;
+	RenderContext renderContext;
+	renderContext.entropy = entropy;
+
 	PixelRenderProcess::SceneConfiguration configuration;
 	float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
 	if (!configuration.device(getScene(), getCamera(), device, host, boxing, info.device, blending, getMaxBounces(), fsaaX, fsaaY)) return false;
 	DumbRendererPrivateKernels::renderBlocks
 		<<<(endBlock - startBlock), host->getBlockSize(), 0, renderStream>>>
-		(configuration, startBlock);
+		(configuration, renderContext, startBlock);
 	if (cudaStreamSynchronize(renderStream) != cudaSuccess)
 		printf("error: %d\n", (int)cudaGetLastError());
 	return true;
@@ -116,6 +133,12 @@ bool DumbRenderer::PixelRenderProcess::SceneConfiguration::hasError() {
 
 __device__ __host__ void DumbRenderer::PixelRenderProcess::configure(const SceneConfiguration &config) {
 	configuration = config;
+}
+
+__device__ __host__ void DumbRenderer::PixelRenderProcess::setContext(const RenderContext &context, int entropyOffset) {
+	renderContext = context;
+	if (renderContext.entropy != NULL)
+		renderContext.entropy += entropyOffset;
 }
 
 __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int blockId, int pixelId) {

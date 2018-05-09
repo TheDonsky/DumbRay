@@ -87,14 +87,14 @@ private:
 		inline Type *getObject(DefaultArgs... defaultArgs) {
 			if (object == NULL) {
 				object = ((void*)new Type(defaultArgs...));
-				deleteFunction = deleteObject<Type>();
+				deleteFunction = deleteObject<Type>;
 			}
-			return object;
+			return ((Type*)object);
 		}
 
 		template<typename Type, typename... DefaultArgs>
 		inline Type *getObjectSafe(DefaultArgs... defaultArgs) {
-			DeleteFunction newDeleteFunction = deleteObject<Type>();
+			DeleteFunction newDeleteFunction = deleteObject<Type>;
 			if (newDeleteFunction != deleteFunction) {
 				if (deleteFunction != NULL) deleteFunction(object);
 				object = ((void*)new Type(defaultArgs...));
@@ -119,9 +119,9 @@ private:
 
 template<typename Type, typename... DefaultArgs>
 inline Type *BlockRenderer::getThreadData(const Info &info, DefaultArgs... defaultArgs) {
-	return threadData[info.globalThreadId].getObject(defaultArgs...);
+	return threadData[info.globalThreadId].getObject<Type>(defaultArgs...);
 }
 template<typename Type, typename... DefaultArgs>
 inline Type *BlockRenderer::getThreadDataSafe(const Info &info, DefaultArgs... defaultArgs) {
-	return threadData[info.globalThreadId].getObjectSafe(defaultArgs...);
+	return threadData[info.globalThreadId].getObjectSafe<Type>(defaultArgs...);
 }
