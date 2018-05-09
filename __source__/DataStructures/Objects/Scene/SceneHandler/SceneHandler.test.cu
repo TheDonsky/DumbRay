@@ -74,7 +74,7 @@ namespace SceneHandlerTest {
 			sceneGeometry.build();
 			scene.lights.flush(1);
 			Vector3 direction = Vector3(0.2f, -0.4f, 0.7f).normalized();
-			scene.lights[0].use<SimpleDirectionalLight>(Photon(Ray(-direction * 10000.0f, direction), Color(1.0f, 1.0f, 1.0f)));
+			scene.lights[0].use<SimpleDirectionalLight>(Color(1.0f, 1.0f, 1.0f), direction, 512.0f);
 			scene.cameras.flush(1);
 			scene.cameras[0].transform.setPosition(Vector3(0, 0, -128));
 			scene.cameras[0].lense.use<DefaultPerspectiveLense>(60.0f);

@@ -4,7 +4,9 @@
 #include "../../Screen/FrameBuffer/BlockBasedFrameBuffer/BlockBasedFrameBuffer.cuh"
 #include "../../Objects/Components/Shaders/DefaultShader/DefaultShader.cuh"
 #include "../../Objects/Components/Lenses/DefaultPerspectiveLense/DefaultPerspectiveLense.cuh"
+#include "../../Objects/Components/Lenses/SimpleStochasticLense/SimpleStochasticLense.cuh"
 #include "../../Objects/Scene/Lights/SimpleDirectionalLight/SimpleDirectionalLight.cuh"
+#include "../../Objects/Scene/Lights/SimpleSoftDirectionalLight/SimpleSoftDirectionalLight.cuh"
 #include "../../../Namespaces/MeshReader/MeshReader.test.h"
 #include "../../Objects/Scene/Raycasters/ShadedOctree/ShadedOctree.cuh"
 
@@ -14,20 +16,18 @@ namespace DumbRendererTest {
 			DumbRenderer::SceneType scene;
 			DumbRenderer::CameraManager camera;
 
-			inline Context() {
+			template<typename ShaderType, typename LightType, typename LenseType>
+			inline void init() {
 				scene.materials.cpuHandle()->flush(1);
-				scene.materials.cpuHandle()->top().use<DefaultShader>();
+				scene.materials.cpuHandle()->top().use<ShaderType>();
 				scene.lights.cpuHandle()->flush(3);
-				scene.lights.cpuHandle()->operator[](0).use<SimpleDirectionalLight>(
-					Photon(Ray(Vertex(), Vertex(1, -1, 0).normalized()),
-						Color(0.125f, 0.125f, 0.5f, 1.0f)));
-				scene.lights.cpuHandle()->operator[](1).use<SimpleDirectionalLight>(
-					Photon(Ray(Vertex(), Vertex(-0.5f, -1, 0.580611f).normalized()),
-						Color(0.125f, 0.5f, 0.125f, 1.0f)));
-				scene.lights.cpuHandle()->operator[](2).use<SimpleDirectionalLight>(
-					Photon(Ray(Vertex(), Vertex(-0.5f, -1, -0.580611f).normalized()),
-						Color(0.5f, 0.125f, 0.125f, 1.0f)));
-				camera.cpuHandle()->lense.use<DefaultPerspectiveLense>();
+				scene.lights.cpuHandle()->operator[](0).use<LightType>(
+					Color(0.125f, 0.125f, 0.5f, 1.0f), Vector3(1, -1, 0), 512.0f);
+				scene.lights.cpuHandle()->operator[](1).use<LightType>(
+					Color(0.125f, 0.5f, 0.125f, 1.0f), Vector3(-0.5f, -1, 0.580611f), 512.0f);
+				scene.lights.cpuHandle()->operator[](2).use<LightType>(
+					Color(0.5f, 0.125f, 0.125f, 1.0f), Vector3(-0.5f, -1, -0.580611f), 512.0f);
+				camera.cpuHandle()->lense.use<LenseType>();
 				camera.cpuHandle()->transform = Transform(
 					Vertex(0.0f, 0.0f, 0.0f),
 					Vector3(48.0f, 32.0f, 0.0f),
@@ -46,7 +46,7 @@ namespace DumbRendererTest {
 			}
 		};
 
-		BufferedRenderer *makeRenderer(
+		inline BufferedRenderer *makeRenderer(
 			const Renderer::ThreadConfiguration &configuration, void *contextAddr) {
 			Context *context = ((Context*)contextAddr);
 			DumbRenderer *renderer = new DumbRenderer(configuration);
@@ -54,18 +54,25 @@ namespace DumbRendererTest {
 			renderer->setCamera(&context->camera);
 			return renderer;
 		}
+
+		template<typename ShaderType, typename LightType, typename LenseType>
+		inline void simpleTestCase() {
+			Context context;
+			context.init<ShaderType, LightType, LenseType>();
+			FrameBufferManager bufferA, bufferB;
+			bufferA.cpuHandle()->use<BlockBuffer>();
+			bufferB.cpuHandle()->use<BlockBuffer>();
+			BufferedRenderProcessTest::runTestGauntlet(makeRenderer, ((void*)&context),
+				&bufferA, &bufferB, BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
+		}
 	}
 
-	struct JNDB : public BakedTriFace {
-		int index;
-	};
+	void simpleNonInteractiveTest() {
+		simpleTestCase<DefaultShader, SimpleDirectionalLight, DefaultPerspectiveLense>();
+	}
 
-	void testPerformance() {
-		Context context;
-		FrameBufferManager bufferA, bufferB;
-		bufferA.cpuHandle()->use<BlockBuffer>();
-		bufferB.cpuHandle()->use<BlockBuffer>();
-		BufferedRenderProcessTest::runTestGauntlet(makeRenderer, ((void*)&context), 
-			&bufferA, &bufferB, BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
+
+	void simpleNonInteractiveStochsticTest() {
+		simpleTestCase<DefaultShader, SimpleSoftDirectionalLight, SimpleStochasticLense>();
 	}
 }

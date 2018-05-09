@@ -54,7 +54,8 @@ namespace {
 		tests["int_map"] = { "Basic tests for IntMap", IntMapTest::test };
 		tests["mmaped_frame_buffer"] = { "Basic test for MemoryMappedFrameBuffer", MemoryMappedFrameBufferTest::test };
 		tests["block_frame_buffer"] = { "Basic test for BlockBasedFrameBuffer", BlockBasedFrameBufferTest::test };
-		tests["dumb_renderer"] = { "Basic performance test for DumbRenderer", DumbRendererTest::testPerformance };
+		tests["dumb_renderer_simple"] = { "Basic performance test for DumbRenderer", DumbRendererTest::simpleNonInteractiveTest };
+		tests["dumb_renderer_stochastic"] = { "Basic performance test with stochastic entities for DumbRenderer", DumbRendererTest::simpleNonInteractiveStochsticTest };
 		tests["dumb_rand"] = { "Simple tests for DumbRand", DumbRandTest::test };
 		tests["save_buffer_png"] = { "Simple tests for saving FrameBuffer as a png file", ImagesTest::testSavePng };
 		tests["test_checkerboard"] = { "Playground test of checkerboard rendering", CheckerboardTest::test };

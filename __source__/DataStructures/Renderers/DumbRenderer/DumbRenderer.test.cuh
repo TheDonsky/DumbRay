@@ -2,5 +2,6 @@
 
 
 namespace DumbRendererTest {
-	void testPerformance();
+	void simpleNonInteractiveTest();
+	void simpleNonInteractiveStochsticTest();
 }
