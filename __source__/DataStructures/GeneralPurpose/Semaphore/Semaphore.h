@@ -5,8 +5,8 @@
 class Semaphore {
 public:
 	Semaphore(unsigned int count = 0);
-	void wait(int count = 1);
-	void post(int count = 1);
+	void wait(unsigned int count = 1);
+	void post(unsigned int count = 1);
 	void set(unsigned int count);
 
 

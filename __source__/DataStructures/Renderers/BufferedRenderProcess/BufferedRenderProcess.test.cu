@@ -56,7 +56,7 @@ namespace BufferedRenderProcessTest {
 				std::string rawLine;
 				std::getline(std::cin, rawLine);
 				int start = 0; while ((start < rawLine.length()) && std::isspace(rawLine[start])) start++;
-				int end = rawLine.size(); while ((end > 0) && std::isspace(rawLine[end - 1])) end--;
+				int end = (int)rawLine.size(); while ((end > 0) && std::isspace(rawLine[end - 1])) end--;
 				std::string line; for (int i = start; i < end; i++) line += rawLine[i];
 				if ((line.length() > 4) && line.substr(line.length() - 4) == ".png") {
 					std::cout << "Saving to \"" << line << "\"..." << std::endl;

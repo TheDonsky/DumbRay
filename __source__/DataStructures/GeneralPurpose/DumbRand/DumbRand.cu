@@ -90,7 +90,7 @@ DumbRand *DumbRandHolder::getGPU(int count, int gpuId, bool lock) {
 		if (cudaStreamSynchronize(ref.stream) != cudaSuccess) success = false;
 		if (newRefsHost != NULL) delete[] newRefsHost;
 		if (ref.reference != NULL) {
-			success = cudaFree(ref.reference);
+			success = (cudaFree(ref.reference) == cudaSuccess);
 			ref.reference = NULL;
 			ref.count = 0;
 		}

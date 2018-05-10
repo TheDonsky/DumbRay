@@ -55,7 +55,7 @@ namespace DumbRandTest {
 		
 		__device__ __host__ inline static unsigned int getUnsignedRange(DumbRand &generator, uint32_t start, uint32_t end) { return generator.rangeUnsigned(start, end); }
 		__device__ __host__ inline static int getSignedRange(DumbRand &generator, int start, int end) { return generator.rangeSigned(start, end); }
-		__device__ __host__ inline static float getFloatRange(DumbRand &generator, float start, int end) { return generator.range(start, end); }
+		__device__ __host__ inline static float getFloatRange(DumbRand &generator, int start, int end) { return generator.range((float)start, (float)end); }
 
 		__global__ static void getOnKernel(DumbRand generator) {
 			generateAndPrint("Generating some unsigned numbers with DumbRand (Kernel):", "%u", generator, getUnsigned);
