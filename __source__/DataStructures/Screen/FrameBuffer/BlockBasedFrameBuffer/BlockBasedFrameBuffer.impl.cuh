@@ -182,7 +182,7 @@ inline bool BlockBasedFrameBuffer<blockW, blockH>::updateDeviceBlocks(
 		else return false;
 	}
 	bool streamPassed = (stream != NULL);
-	cudaStream_t localStream;
+	cudaStream_t localStream = NULL;
 	if (!streamPassed) {
 		if (cudaStreamCreate(&localStream) != cudaSuccess) return false;
 		stream = (&localStream);
@@ -209,7 +209,7 @@ inline bool BlockBasedFrameBuffer<blockW, blockH>::updateHostBlocks(
 		else return false;
 	}
 	bool streamPassed = (stream != NULL);
-	cudaStream_t localStream;
+	cudaStream_t localStream = NULL;
 	if (!streamPassed) {
 		if (cudaStreamCreate(&localStream) != cudaSuccess) return false;
 		stream = (&localStream);

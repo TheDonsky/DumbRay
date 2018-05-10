@@ -23,8 +23,8 @@ namespace {
 			Color *line = (color + (width * i));
 			for (int j = xStart + (checkerboard ? (i & 1) : 0); j < xEnd; j += dj) {
 				Color c(0, 0, 0);
-				for (float y = i; y < (float)(i + 1); y += (1.0f / (float)VER_SAMPLES))
-					for (float x = j; x < (float)(j + 1); x += (1.0f / (float)HOR_SAMPLES))
+				for (float y = (float)i; y < (float)(i + 1); y += (1.0f / (float)VER_SAMPLES))
+					for (float x = (float)j; x < (float)(j + 1); x += (1.0f / (float)HOR_SAMPLES))
 						c += Color(
 							cos(sin((y * x / frameVal) / 1024.0f + frameVal) + frameVal),
 							sin(tan(sin((x / y * frameVal) / 1024.0f + frameVal)) * (frameVal + x + y) / 128.0f),

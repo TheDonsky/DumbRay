@@ -1,7 +1,7 @@
 #include "DumbRenderer.cuh"
 
 
-#define DUMB_RENDERER_BOUNCE_LIMIT 128
+#define DUMB_RENDERER_BOUNCE_LIMIT 64
 
 
 DumbRenderer::DumbRenderer(
@@ -17,7 +17,7 @@ DumbRenderer::DumbRenderer(
 	: BlockRenderer(configuration, blockSettings, buffer) {
 	setScene(scene);
 	setCamera(camera);
-	setBoxingMode(boxing);
+	setBoxingMode(boxingMode);
 	setMaxBounces(maxBounces);
 	setSamplesPerPixel(samplesPerPixelX, samplesPerPixelY);
 }
@@ -51,11 +51,11 @@ bool DumbRenderer::renderBlocksCPU(
 	RenderContext renderContext;
 	renderContext.entropy = entropy;
 
-	PixelRenderProcess::SceneConfiguration configuration;
+	PixelRenderProcess::SceneConfiguration sceneConfiguration;
 	float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
-	if (!configuration.host(getScene(), getCamera(), buffer, boxing, blending, getMaxBounces(), fsaaX, fsaaY)) return false;
+	if (!sceneConfiguration.host(getScene(), getCamera(), buffer, boxing, blending, getMaxBounces(), fsaaX, fsaaY)) return false;
 	PixelRenderProcess pixelRenderProcess;
-	pixelRenderProcess.configure(configuration);
+	pixelRenderProcess.configure(sceneConfiguration);
 	pixelRenderProcess.setContext(renderContext, 0);
 	int blockSize = buffer->getBlockSize();
 	for (int blockId = startBlock; blockId < endBlock; blockId++)
@@ -87,12 +87,12 @@ bool DumbRenderer::renderBlocksGPU(
 	RenderContext renderContext;
 	renderContext.entropy = entropy;
 
-	PixelRenderProcess::SceneConfiguration configuration;
+	PixelRenderProcess::SceneConfiguration sceneConfiguration;
 	float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
-	if (!configuration.device(getScene(), getCamera(), device, host, boxing, info.device, blending, getMaxBounces(), fsaaX, fsaaY)) return false;
+	if (!sceneConfiguration.device(getScene(), getCamera(), device, host, boxing, info.device, blending, getMaxBounces(), fsaaX, fsaaY)) return false;
 	DumbRendererPrivateKernels::renderBlocks
 		<<<(endBlock - startBlock), host->getBlockSize(), 0, renderStream>>>
-		(configuration, renderContext, startBlock);
+		(sceneConfiguration, renderContext, startBlock);
 	if (cudaStreamSynchronize(renderStream) != cudaSuccess)
 		printf("error: %d\n", (int)cudaGetLastError());
 	return true;

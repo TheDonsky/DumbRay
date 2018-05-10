@@ -30,7 +30,7 @@ const BlockRenderer::BlockConfiguration &BlockRenderer::blockRendererConfigurati
 bool BlockRenderer::automaticallySynchesHostBlocks()const { return hostBlockSynchNeeded; }
 
 
-bool BlockRenderer::setupSharedData(const Info &info, void *& sharedData) { 
+bool BlockRenderer::setupSharedData(const Info &, void *&) { 
 	/*
 	size_t stackSize;
 	if (cudaDeviceGetLimit(&stackSize, cudaLimitStackSize) != cudaSuccess) return false;
@@ -39,7 +39,7 @@ bool BlockRenderer::setupSharedData(const Info &info, void *& sharedData) {
 	//*/
 	return true; 
 }
-bool BlockRenderer::setupData(const Info &info, void *& data) {
+bool BlockRenderer::setupData(const Info &info, void *&) {
 	// __TODO__: (maybe) record the errors somehow...
 	if (info.isGPU()) {
 		FrameBuffer::DeviceBlockManager *manager = new FrameBuffer::DeviceBlockManager(
@@ -83,7 +83,7 @@ void BlockRenderer::iterateGPU(const Info &info) {
 	if (!blockManager->setBuffers(host, device, &blockBank)) return;
 
 	bool synchNeeded = ((iteration() > 1) && hostBlockSynchNeeded);
-	int start = 0, end = 0, blockSize = host->getBlockSize();
+	int start = 0, end = 0;
 	cudaStream_t &renderStream = blockManager->getRenderStream();
 	while (blockManager->getBlocks(start, end, synchNeeded))
 		if (!renderBlocksGPU(info, host, device, start, end, renderStream)) return;
@@ -97,7 +97,7 @@ bool BlockRenderer::completeIteration() {
 	// __TODO__: return false if any error was detected...
 	return true;
 }
-bool BlockRenderer::clearData(const Info &info, void *& data) {
+bool BlockRenderer::clearData(const Info &info, void *&) {
 	// __TODO__: (maybe) record the errors somehow...
 	if (info.isGPU()) {
 		if (threadData[info.globalThreadId].blockManager == NULL) return false;
@@ -106,4 +106,4 @@ bool BlockRenderer::clearData(const Info &info, void *& data) {
 	}
 	return true;
 }
-bool BlockRenderer::clearSharedData(const Info &info, void *& sharedData) { return true; }
+bool BlockRenderer::clearSharedData(const Info &, void *&) { return true; }

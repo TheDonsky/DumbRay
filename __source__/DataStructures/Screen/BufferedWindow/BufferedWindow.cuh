@@ -39,8 +39,8 @@ private:
 	};
 	typedef uint16_t StateFlags;
 
-	BufferedWindow(const BufferedWindow &other) {};
-	BufferedWindow& operator=(const BufferedWindow &other) { return (*this); };
+	BufferedWindow(const BufferedWindow &) {};
+	BufferedWindow& operator=(const BufferedWindow &) { return (*this); };
 
 	OptionFlags options;
 	int deviceId;

@@ -69,7 +69,7 @@ template<typename FunctionPack>
 template<typename Type, typename... Args>
 __host__ inline Type* Generic<FunctionPack>::use(const Args&... args) {
 	clean();
-	dataPointer = (volatile void*)(new Type(args...));
+	dataPointer = (volatile void*)(new volatile Type(args...));
 	if (dataPointer == NULL) return NULL;
 	functionPack.template use<Type>();
 	memoryManagementModule.use<Type>();

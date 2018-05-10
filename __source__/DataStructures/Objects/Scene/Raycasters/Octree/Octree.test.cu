@@ -19,7 +19,7 @@ namespace OctreeTest {
 		// ############# PIXEL COLOR: #############
 		// ########################################
 		//#define USE_NORMAL_COLOR
-		__device__ __host__ inline static void colorPixel(const Octree<Renderable<BakedTriFace> > &octree, Color &pixel, const Transform &trans, int i, int j, int width, int height, int frame) {
+		__device__ __host__ inline static void colorPixel(const Octree<Renderable<BakedTriFace> > &octree, Color &pixel, const Transform &trans, int i, int j, int width, int height, int /*frame*/) {
 			Octree<Renderable<BakedTriFace> >::RaycastHit hit;
 			Vector3 dir((float)(j - width / 2), (float)(height / 2 - i), (float)(width / 2));
 			Ray r = trans.ray(dir.normalized());
