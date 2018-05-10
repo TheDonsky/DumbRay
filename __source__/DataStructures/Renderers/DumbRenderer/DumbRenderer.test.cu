@@ -18,7 +18,7 @@ namespace DumbRendererTest {
 			DumbRenderer::CameraManager camera;
 
 			template<typename ShaderType, typename LightType, typename LenseType>
-			inline void init() {
+			void init() {
 				scene.materials.cpuHandle()->flush(1);
 				scene.materials.cpuHandle()->top().use<ShaderType>();
 				scene.lights.cpuHandle()->flush(3);
@@ -49,22 +49,23 @@ namespace DumbRendererTest {
 
 		inline BufferedRenderer *makeRenderer(
 			const Renderer::ThreadConfiguration &configuration, void *contextAddr) {
-			Context *context = ((Context*)contextAddr);
+			volatile Context *context = ((volatile Context*)contextAddr);
 			DumbRenderer *renderer = new DumbRenderer(configuration);
-			renderer->setScene(&context->scene);
-			renderer->setCamera(&context->camera);
+			renderer->setScene(((DumbRenderer::SceneType*)&context->scene));
+			renderer->setCamera(((DumbRenderer::CameraManager*)&context->camera));
 			return renderer;
 		}
 
 		template<typename ShaderType, typename LightType, typename LenseType>
 		inline void simpleTestCase() {
-			Context context;
-			context.init<ShaderType, LightType, LenseType>();
+			volatile Context *context = new Context();
+			((Context*)context)->init<ShaderType, LightType, LenseType>();
 			FrameBufferManager bufferA, bufferB;
 			bufferA.cpuHandle()->use<BlockBuffer>();
 			bufferB.cpuHandle()->use<BlockBuffer>();
-			BufferedRenderProcessTest::runTestGauntlet(makeRenderer, ((void*)&context),
+			BufferedRenderProcessTest::runTestGauntlet(makeRenderer, ((void*)context),
 				&bufferA, &bufferB, BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
+			delete context;
 		}
 	}
 
