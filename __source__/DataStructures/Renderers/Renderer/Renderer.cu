@@ -8,6 +8,7 @@ Renderer::ThreadConfiguration::ThreadConfiguration(int cpuThreads, int threadsPe
 	if (cudaGetDeviceCount(&deviceCount) == cudaSuccess)
 		for (int i = 0; i < deviceCount; i++)
 			threadsPerGPU.push(0);
+	flags = 0;
 	configureCPU(cpuThreads);
 	configureEveryGPU(threadsPerDevice);
 }
@@ -19,13 +20,19 @@ Renderer::ThreadConfiguration Renderer::ThreadConfiguration::gpuOnly(int threads
 }
 void Renderer::ThreadConfiguration::configureCPU(int threads) {
 	threadsOnCPU = ((threads >= 0) ? threads : std::thread::hardware_concurrency());
+	if (threads == ALL_BUT_THREAD_PER_GPU) flags = 1;
+	else if (threads == ALL_BUT_GPU_THREADS) flags = 2;
+	else flags = 0;
+	fixCpuThreadCount();
 }
 void Renderer::ThreadConfiguration::configureGPU(int GPU, int threads) {
 	if (GPU < 0 || GPU >= threadsPerGPU.size()) return;
 	threadsPerGPU[GPU] = ((threads >= 0) ? threads : (-threads));
+	fixCpuThreadCount();
 }
 void Renderer::ThreadConfiguration::configureEveryGPU(int threads) {
 	for (int i = 0; i < threadsPerGPU.size(); i++) configureGPU(i, threads);
+	fixCpuThreadCount();
 }
 
 int Renderer::ThreadConfiguration::numActiveDevices()const {
@@ -38,6 +45,10 @@ int Renderer::ThreadConfiguration::numDevices()const {
 	return threadsPerGPU.size();
 }
 int Renderer::ThreadConfiguration::numDeviceThreads(int deviceId)const {
+	if (deviceId < 0 || deviceId >= threadsPerGPU.size()) return 0;
+	else return threadsPerGPU[deviceId];
+}
+int Renderer::ThreadConfiguration::numDeviceThreads()const {
 	int num = 0;
 	for (int i = 0; i < threadsPerGPU.size(); i++)
 		num += threadsPerGPU[i];
@@ -45,6 +56,12 @@ int Renderer::ThreadConfiguration::numDeviceThreads(int deviceId)const {
 }
 int Renderer::ThreadConfiguration::numHostThreads()const {
 	return threadsOnCPU;
+}
+
+void Renderer::ThreadConfiguration::fixCpuThreadCount() {
+	if (flags == 0) return;
+	else if (flags == 1) threadsOnCPU = (std::thread::hardware_concurrency() - numActiveDevices());
+	else if (flags == 2) threadsOnCPU = (std::thread::hardware_concurrency() - numDeviceThreads());
 }
 
 

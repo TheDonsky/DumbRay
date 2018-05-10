@@ -105,7 +105,7 @@ namespace BufferedRenderProcessTest {
 				Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_GPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}
 			if ((tests & TEST_MULTI_ITER_CPU_AND_GPU) != NULL) {
-				configuration.configureCPU(Renderer::ThreadConfiguration::ALL);
+				configuration.configureCPU(Renderer::ThreadConfiguration::ALL_BUT_GPU_THREADS);
 				configuration.configureEveryGPU(NUM_THREADS_PER_GPU);
 				Tests::runTest(testBufferedRenderProcess, "TEST_MULTI_ITER_CPU_AND_GPU", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}
@@ -135,7 +135,7 @@ namespace BufferedRenderProcessTest {
 				Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_GPU_ONLY", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}
 			if ((tests & TEST_SINGLE_ITER_CPU_AND_GPU) != NULL) {
-				configuration.configureCPU(Renderer::ThreadConfiguration::ALL);
+				configuration.configureCPU(Renderer::ThreadConfiguration::ALL_BUT_GPU_THREADS);
 				configuration.configureEveryGPU(NUM_THREADS_PER_GPU);
 				Tests::runTest(testBufferedRenderProcess, "TEST_SINGLE_ITER_CPU_AND_GPU", bufferedRendererCreateFunction, createFnAux, configuration, &bufferedRenderProcess);
 			}

@@ -15,7 +15,9 @@ public:
 		enum Configuration {
 			ALL = -1,	// Same as ONE for GPU; std::thread::hardware_concurrency() for CPU.
 			NONE = 0,	// No threads (deallocates CPU/GPU).
-			ONE = 1		// Single thread.
+			ONE = 1,	// Single thread.
+			ALL_BUT_THREAD_PER_GPU = -2,	// Applies to cpu only; removes a thread per active GPU.
+			ALL_BUT_GPU_THREADS = -3,		// Applies to cpu only; removes a thread per each GPU thread.
 		};
 
 	public:
@@ -62,6 +64,11 @@ public:
 		int numDeviceThreads(int deviceId)const;
 
 		/*
+		Total number of device threads:
+		*/
+		int numDeviceThreads()const;
+
+		/*
 		Number of host threads:
 		*/
 		int numHostThreads()const;
@@ -74,6 +81,8 @@ public:
 		friend class Renderer;
 		int threadsOnCPU;
 		Stacktor<int> threadsPerGPU;
+		uint8_t flags;
+		void fixCpuThreadCount();
 	};
 
 
