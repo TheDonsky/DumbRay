@@ -186,10 +186,10 @@ private:
 	/** ========================================================== **/
 	struct CastFrame{
 		const TreeNode *node;
-		char priorityChild;
+		//char priorityChild;
 		char curChild;
 	};
-	__device__ __host__ inline static void configureCastFrame(CastFrame &frame, const TreeNode *children, const Ray &r);
+	__device__ __host__ inline static void configureCastFrame(CastFrame &frame, const TreeNode *children/*, const Ray &r*/);
 	__device__ __host__ inline bool castInLeaf(const Ray &r, RaycastHit &hit, int index, bool clipBackfaces, CastValidationFunction validator, void *validatorArg)const;
 
 

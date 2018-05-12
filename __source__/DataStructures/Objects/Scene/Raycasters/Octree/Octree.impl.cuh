@@ -162,14 +162,20 @@ __device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit 
 	if (!Shapes::castPreInversed<AABB>(inversedRay, (tree + 0)->bounds, false)) return false;
 	CastFrame stack[OCTREE_MAX_DEPTH + 1];
 	int i = 0;
-	configureCastFrame(stack[0], root->children, r);
+
+	char canonicalOrder = ((r.direction.z < 0) ? 1 : 0);
+	if (r.direction.y < 0) canonicalOrder += 2;
+	if (r.direction.x < 0) canonicalOrder += 4;
+	
+	configureCastFrame(stack[0], root->children/*, r*/);
 	while (true){
 		if (i < 0) return false;
 		else{
 			CastFrame &frame = stack[i];
 			if (frame.curChild >= 8) i--;
 			else {
-				register char curChild = (frame.priorityChild ^ frame.curChild);
+				//register char curChild = (frame.priorityChild ^ frame.curChild);
+				register char curChild = (canonicalOrder ^ frame.curChild);
 				const register TreeNode *child = frame.node + curChild;
 				if (Shapes::castPreInversed<AABB>(inversedRay, child->bounds, false)) {
 					const register TreeNode *children = child->children;
@@ -178,7 +184,7 @@ __device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit 
 					}
 					else {
 						i++;
-						configureCastFrame(stack[i], children, r);
+						configureCastFrame(stack[i], children/*, r*/);
 					}
 				}
 				frame.curChild++;
@@ -477,24 +483,28 @@ __device__ __host__ __noinline__ void Octree<ElemType>::put(ElemReference elem, 
 
 /** ========================================================== **/
 template<typename ElemType>
-__device__ __host__ inline void Octree<ElemType>::configureCastFrame(CastFrame &frame, const TreeNode *children, const Ray &r) {
+__device__ __host__ inline void Octree<ElemType>::configureCastFrame(CastFrame &frame, const TreeNode *children/*, const Ray &r*/) {
 	frame.node = children;
+	/*
 	frame.priorityChild = ((r.direction.z < 0) ? 1 : 0);
 	if (r.direction.y < 0) frame.priorityChild += 2;
 	if (r.direction.x < 0) frame.priorityChild += 4;
+	*/
 	frame.curChild = 0;
 }
 template<typename ElemType>
 __device__ __host__ inline bool Octree<ElemType>::castInLeaf(const Ray &r, RaycastHit &hit, int index, bool clipBackfaces, CastValidationFunction validator, void *validatorArg)const{
 	const Stacktor<ElemReference, OCTREE_VOXEL_LOCAL_CAPACITY> &nodeTris = nodeData[index];
-	if (nodeTris.size() <= 0) return false;
+	const register int nodeTrisSize = nodeTris.size();
+	if (nodeTrisSize <= 0) return false;
+	const register ElemReference *elems = (nodeTris + 0);
 	const AABB &bounds = tree[index].bounds;
 
 	float bestDistance = FLT_MAX;
 	Vertex bestHitPoint;
 	const ElemType *bestHit = NULL;
-	for (int i = 0; i < nodeTris.size(); i++){
-		const ElemType *object = nodeTris[i];
+	for (int i = 0; i < nodeTrisSize; i++){
+		const ElemType *object = elems[i];
 		Vertex hitPoint;
 		float distance;
 		bool casted = Shapes::cast<ElemType>(r, *object, distance, hitPoint, clipBackfaces);
@@ -511,12 +521,7 @@ __device__ __host__ inline bool Octree<ElemType>::castInLeaf(const Ray &r, Rayca
 		hit.set(*bestHit, bestDistance, bestHitPoint);
 		return true;
 	}
-	/*
-	hit.set(*nodeTris[0], bestDistance, bestHitPoint);
-	return true;
-	/*/
 	else return false;
-	//*/
 }
 
 
