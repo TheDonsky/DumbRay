@@ -15,7 +15,7 @@ template<typename HitType>
 __dumb__ DefaultShaderGeneric<HitType>::ShaderReport DefaultShaderGeneric<HitType>::cast(const ShaderHitInfo &input)const {
 	ShaderReport report;
 	const HitType &object = (*input.object);
-	register Vector3 massCenter = object.vert.getMases(input.hitPoint);
+	register Vector3 massCenter = object.vert.getMasses(input.hitPoint);
 	register Vector3 normal = object.norm.massCenter(massCenter);
 
 	register Vector3 camDirection = (input.observer - input.hitPoint);

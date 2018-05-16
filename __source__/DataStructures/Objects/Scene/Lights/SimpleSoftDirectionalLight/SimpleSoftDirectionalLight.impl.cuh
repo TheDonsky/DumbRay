@@ -6,7 +6,7 @@ __dumb__ SimpleSoftDirectionalLight::SimpleSoftDirectionalLight(const Color shad
 	color = shade;
 	dir = direction.normalized();
 	dist = distance;
-	soft = softness;
+	soft = (dist * softness);
 }
 
 __dumb__ void SimpleSoftDirectionalLight::getVertexPhotons(const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows)const {

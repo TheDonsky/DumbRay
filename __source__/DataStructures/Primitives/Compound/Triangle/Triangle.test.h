@@ -5,7 +5,7 @@ namespace TriangleTest{
 #define ITERATIONS 200000
 	__global__ void testOnCuda(Triangle tri, Vertex x, int n, Vertex *res){
 		for (int i = 0; i < n; i++)
-			(*res) = tri.getMases(x);
+			(*res) = tri.getMasses(x);
 		if (threadIdx.x == 0 && blockIdx.x == 0) printf("(%f, %f, %f)\n", res->x, res->y, res->z);
 	}
 
@@ -20,7 +20,7 @@ namespace TriangleTest{
 			Vertex c((float)(rand() % MAX_COORD), (float)(rand() % MAX_COORD), (float)(rand() % MAX_COORD));
 			Triangle tri(a, b, c);
 			Vertex x = tri.projectVertex(Vector3((float)(rand() % MAX_COORD), (float)(rand() % MAX_COORD), (float)(rand() % MAX_COORD)));
-			Vertex m = tri.getMases(x);
+			Vertex m = tri.getMasses(x);
 			Vertex y = tri.massCenter(m);
 			float error = (y - x).magnitude();
 			if (maxDelta < error) maxDelta = error;
@@ -47,7 +47,7 @@ namespace TriangleTest{
 			std::cout << "Enter C: "; std::cin >> tri.c;
 			Vertex x;
 			std::cout << "Enter X: "; std::cin >> x;
-			Vertex m = tri.getMases(x);
+			Vertex m = tri.getMasses(x);
 			std::cout << "Masses: " << m << std::endl;
 			std::cout << "X:            " << x << std::endl;
 			std::cout << "Mass Center:  " << tri.massCenter(m) << std::endl;
@@ -55,7 +55,7 @@ namespace TriangleTest{
 			const int n = 100000000;
 			std::cout << "Doing the same " << n << " times" << std::endl;
 			t = clock();
-			for (int i = 0; i < n; i++) m = tri.getMases(x);
+			for (int i = 0; i < n; i++) m = tri.getMasses(x);
 			std::cout << "Clock: " << (clock() - t) << std::endl;
 			std::cout << m << std::endl;
 			

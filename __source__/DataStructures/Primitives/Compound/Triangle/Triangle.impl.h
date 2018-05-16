@@ -181,7 +181,7 @@ __dumb__ Triangle& Triangle::operator<<=(const Transform &t) {
 /** ========================================================== **/
 /*| Sorting |*/
 
-// Sorts the vertexes according to the given mases (acsending order)
+// Sorts the vertexes according to the given masses (acsending order)
 __dumb__ void Triangle::sortByMases(float am, float bm, float cm){
 	if (am > bm){
 		if (cm > am) MemManip::swap(a, b); // b a c
@@ -242,10 +242,10 @@ __dumb__ Vector3 Triangle::normal()const {
 __dumb__ Vector3 Triangle::projectVertex(const Vertex &v)const{
 	return(v + (a - v).normalOn((b - a) & (c - a)));
 }
-// Calculates the mases of the vertexes, given the mass center (rv.x for a, rv.y for b, rv.z for c)
+// Calculates the masses of the vertexes, given the mass center (rv.x for a, rv.y for b, rv.z for c)
 // Notes:	This assumes, the vertex provided is on the same plane as the triangle itself;
 //			Sum of the returned value's components will allways be 1.
-__dumb__ Vector3 Triangle::getMases(const Vertex &center)const{
+__dumb__ Vector3 Triangle::getMasses(const Vertex &center)const{
 	Vector3 ab = b - a;
 	Vector3 bc = c - b;
 	Vector3 ae = ab - ab.normalOn(bc);
@@ -274,10 +274,10 @@ __dumb__ Vector3 Triangle::getMases(const Vertex &center)const{
 
 	return(Vector3(aa, bb, cc) / (aa + bb + cc));
 }
-// Calculates the mases of the vertexes, given the mass center (rv.x for a, rv.y for b, rv.z for c)
+// Calculates the masses of the vertexes, given the mass center (rv.x for a, rv.y for b, rv.z for c)
 // Note: it's not nessessary for the center to be on the same plane with triangle
-__dumb__ Vector3 Triangle::getMasesArbitrary(const Vertex &center)const{
-	return(getMases(projectVertex(center)));
+__dumb__ Vector3 Triangle::getMassesArbitrary(const Vertex &center)const{
+	return(getMasses(projectVertex(center)));
 }
 // Tells, if the point is inside the triangle, or not (assuming, it's on the same plane with the triangle)
 __dumb__ bool Triangle::containsVertex(const Vertex &point)const{
@@ -313,15 +313,15 @@ __dumb__ bool Triangle::containsVertex(const Vertex &point)const{
 	else return (((hitNormal * ((p - b) & (c - b))) > -VECTOR_EPSILON) && ((hitNormal * ((p - c) & (a - c)) > -VECTOR_EPSILON)));
 	//*/
 }
-// Calculates the mass center of the triangle, if the sum of the components of the given vector of mases is 1
+// Calculates the mass center of the triangle, if the sum of the components of the given vector of masses is 1
 __dumb__ Vertex Triangle::massCenter(const Vector3 &masses)const{
 	return(a * masses.x + b*masses.y + c*masses.z);
 }
-// Calculates the mass center of the triangle, even if the sum of the components of the given vector of mases is not equal to 1
+// Calculates the mass center of the triangle, even if the sum of the components of the given vector of masses is not equal to 1
 __dumb__ Vertex Triangle::massCenterArbitrary(const Vector3 &masses)const{
 	return(massCenter(masses) / (masses.x + masses.y + masses.z));
 }
-// Calculates the mass center of the triangle (vertex mases will be considered equal)
+// Calculates the mass center of the triangle (vertex masses will be considered equal)
 __dumb__ Vertex Triangle::massCenter()const{
 	return((a + b + c) / 3);
 }

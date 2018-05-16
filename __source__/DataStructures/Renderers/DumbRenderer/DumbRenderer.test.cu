@@ -4,6 +4,7 @@
 #include "../../Screen/FrameBuffer/BlockBasedFrameBuffer/BlockBasedFrameBuffer.cuh"
 #include "../../Objects/Components/Shaders/DefaultShader/DefaultShader.cuh"
 #include "../../Objects/Components/Shaders/SimpleStochasticShader/SimpleStochasticShader.cuh"
+#include "../../Objects/Components/Shaders/DumbBasedShader/DumbBasedShader.cuh"
 #include "../../Objects/Components/Lenses/DefaultPerspectiveLense/DefaultPerspectiveLense.cuh"
 #include "../../Objects/Components/Lenses/SimpleStochasticLense/SimpleStochasticLense.cuh"
 #include "../../Objects/Scene/Lights/SimpleDirectionalLight/SimpleDirectionalLight.cuh"
@@ -17,24 +18,27 @@ namespace DumbRendererTest {
 			DumbRenderer::SceneType scene;
 			DumbRenderer::CameraManager camera;
 
-			template<typename ShaderType, typename LightType, typename LenseType>
-			void init() {
-				scene.materials.cpuHandle()->flush(1);
-				scene.materials.cpuHandle()->top().use<ShaderType>();
-				scene.lights.cpuHandle()->flush(3);
-				scene.lights.cpuHandle()->operator[](0).use<LightType>(
+			template<typename LightType>
+			static void addTripleLights(Context *self) {
+				int start = self->scene.lights.cpuHandle()->size();
+				self->scene.lights.cpuHandle()->flush(3);
+				self->scene.lights.cpuHandle()->operator[](start).use<LightType>(
 					Color(0.125f, 0.125f, 0.5f, 1.0f), Vector3(1, -1, 0), 512.0f);
-				scene.lights.cpuHandle()->operator[](1).use<LightType>(
+				self->scene.lights.cpuHandle()->operator[](start + 1).use<LightType>(
 					Color(0.125f, 0.5f, 0.125f, 1.0f), Vector3(-0.5f, -1, 0.580611f), 512.0f);
-				scene.lights.cpuHandle()->operator[](2).use<LightType>(
+				self->scene.lights.cpuHandle()->operator[](start + 2).use<LightType>(
 					Color(0.5f, 0.125f, 0.125f, 1.0f), Vector3(-0.5f, -1, -0.580611f), 512.0f);
-				camera.cpuHandle()->lense.use<LenseType>();
-				camera.cpuHandle()->transform = Transform(
-					Vertex(0.0f, 0.0f, 0.0f),
-					Vector3(48.0f, 32.0f, 0.0f),
-					Vector3(1.0f, 1.0f, 1.0f));
-				camera.cpuHandle()->transform.setPosition(
-					camera.cpuHandle()->transform.back() * 128.0f);
+			}
+
+			template<typename LightType>
+			static void addSingleLight(Context *self) {
+				int start = self->scene.lights.cpuHandle()->size();
+				self->scene.lights.cpuHandle()->flush(1);
+				self->scene.lights.cpuHandle()->operator[](start).use<LightType>(
+					Color(4.0f, 4.0f, 4.0f, 4.0f), Vector3(0.25f, -1.0f, -0.25f).normalized(), 512.0f);
+			}
+
+			void addObjects() {
 				Stacktor<PolyMesh> meshes;
 				MeshReaderTest::readMeshes(meshes);
 				for (int i = 0; i < meshes.size(); i++) {
@@ -44,6 +48,22 @@ namespace DumbRendererTest {
 							DumbRenderer::SceneType::GeometryUnit(bakedMesh[j], 0));
 				}
 				scene.geometry.cpuHandle()->build();
+			}
+
+			template<typename ShaderType, typename LenseType>
+			void init(void(*addLightsFn)(Context*)) {
+				scene.materials.cpuHandle()->flush(1);
+				scene.materials.cpuHandle()->top().use<ShaderType>();
+				addLightsFn(this);
+				camera.cpuHandle()->lense.use<LenseType>();
+				camera.cpuHandle()->transform = Transform(
+					Vertex(0.0f, 0.0f, 0.0f),
+					Vector3(48.0f, 32.0f, 0.0f),
+					Vector3(1.0f, 1.0f, 1.0f));
+				camera.cpuHandle()->transform.setPosition(
+					camera.cpuHandle()->transform.back() * 128.0f);
+				
+				addObjects();
 			}
 		};
 
@@ -56,10 +76,10 @@ namespace DumbRendererTest {
 			return renderer;
 		}
 
-		template<typename ShaderType, typename LightType, typename LenseType>
-		inline void simpleTestCase() {
+		template<typename ShaderType, typename LenseType>
+		inline void simpleTestCase(void(*addLightsFn)(Context*)) {
 			volatile Context *context = new Context();
-			((Context*)context)->init<ShaderType, LightType, LenseType>();
+			((Context*)context)->init<ShaderType, LenseType>(addLightsFn);
 			FrameBufferManager bufferA, bufferB;
 			bufferA.cpuHandle()->use<BlockBuffer>();
 			bufferB.cpuHandle()->use<BlockBuffer>();
@@ -70,11 +90,15 @@ namespace DumbRendererTest {
 	}
 
 	void simpleNonInteractiveTest() {
-		simpleTestCase<DefaultShader, SimpleDirectionalLight, DefaultPerspectiveLense>();
+		simpleTestCase<DefaultShader, DefaultPerspectiveLense>(Context::addTripleLights<SimpleDirectionalLight>);
 	}
 
 
 	void simpleNonInteractiveStochsticTest() {
-		simpleTestCase<SimpleStochasticShader, SimpleSoftDirectionalLight, SimpleStochasticLense>();
+		simpleTestCase<SimpleStochasticShader, SimpleStochasticLense>(Context::addTripleLights<SimpleSoftDirectionalLight>);
+	}
+
+	void testDumbRay() {
+		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(Context::addSingleLight<SimpleSoftDirectionalLight>);
 	}
 }

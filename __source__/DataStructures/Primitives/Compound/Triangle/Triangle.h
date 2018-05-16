@@ -114,7 +114,7 @@ struct Triangle{
 	/** ========================================================== **/
 	/*| Sorting |*/
 
-	// Sorts the vertexes according to the given mases (acsending order)
+	// Sorts the vertexes according to the given masses (acsending order)
 	__dumb__ void sortByMases(float am, float bm, float cm);
 	// Sorts the vertexes on an arbitrary axis (assuming, it's normalized)
 	__dumb__ void sortOnAxis(const Vector3 &v);
@@ -147,20 +147,20 @@ struct Triangle{
 
 	// Projects the vertex on the triangle plane
 	__dumb__ Vector3 projectVertex(const Vertex &v)const;
-	// Calculates the mases of the vertexes, given the mass center (rv.x for a, rv.y for b, rv.z for c)
+	// Calculates the masses of the vertexes, given the mass center (rv.x for a, rv.y for b, rv.z for c)
 	// Notes:	This assumes, the vertex provided is on the same plane as the triangle itself;
 	//			Sum of the returned value's components will allways be 1.
-	__dumb__ Vector3 getMases(const Vertex &center)const;
-	// Calculates the mases of the vertexes, given the mass center (rv.x for a, rv.y for b, rv.z for c)
+	__dumb__ Vector3 getMasses(const Vertex &center)const;
+	// Calculates the masses of the vertexes, given the mass center (rv.x for a, rv.y for b, rv.z for c)
 	// Note: it's not nessessary for the center to be on the same plane with triangle
-	__dumb__ Vector3 getMasesArbitrary(const Vertex &center)const;
+	__dumb__ Vector3 getMassesArbitrary(const Vertex &center)const;
 	// Tells, if the point is inside the triangle, or not (assuming, it's on the same plane with the triangle)
 	__dumb__ bool containsVertex(const Vertex &point)const;
-	// Calculates the mass center of the triangle, if the sum of the components of the given vector of mases is 1
+	// Calculates the mass center of the triangle, if the sum of the components of the given vector of masses is 1
 	__dumb__ Vertex massCenter(const Vector3 &masses)const;
-	// Calculates the mass center of the triangle, even if the sum of the components of the given vector of mases is not equal to 1
+	// Calculates the mass center of the triangle, even if the sum of the components of the given vector of masses is not equal to 1
 	__dumb__ Vertex massCenterArbitrary(const Vector3 &masses)const;
-	// Calculates the mass center of the triangle (vertex mases will be considered equal)
+	// Calculates the mass center of the triangle (vertex masses will be considered equal)
 	__dumb__ Vertex massCenter()const;
 
 	

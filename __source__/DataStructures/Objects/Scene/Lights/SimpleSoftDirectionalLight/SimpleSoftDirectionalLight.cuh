@@ -12,7 +12,7 @@ struct SimpleSoftDirectionalLight {
 	float soft;
 
 
-	__dumb__ SimpleSoftDirectionalLight(const Color shade, const Vector3 &direction, float distance, float softness = 32.0f);
+	__dumb__ SimpleSoftDirectionalLight(const Color shade, const Vector3 &direction, float distance, float softness = 0.125f);
 	__dumb__ void getVertexPhotons(const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows)const;
 };
 

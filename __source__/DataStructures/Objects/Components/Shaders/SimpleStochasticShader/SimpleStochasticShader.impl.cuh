@@ -16,14 +16,14 @@ __dumb__ void SimpleStochasticShader::requestIndirectSamples(const ShaderInirect
 	drand.pointOnSphere(direction.x, direction.y, direction.z);
 	if ((direction * request.object->vert.normal()) < 0) direction = -direction;
 
-	register Vector3 hitMasses = request.object->vert.getMases(request.hitPoint);
+	register Vector3 hitMasses = request.object->vert.getMasses(request.hitPoint);
 	register Vector3 hitNormal = request.object->norm.massCenter(hitMasses);
 	register Vector3 reflection = request.ray.direction.reflection(hitNormal);
 
 	samples->set(SampleRay(Ray(request.hitPoint, ((direction * diff) + (reflection * gloss)).normalized()), 1.0f));
 }
 __dumb__ Color SimpleStochasticShader::getReflectedColor(const ShaderReflectedColorRequest<BakedTriFace> &request)const {
-	register Vector3 hitMasses = request.object->vert.getMases(request.hitPoint);
+	register Vector3 hitMasses = request.object->vert.getMasses(request.hitPoint);
 	register Vector3 hitNormal = request.object->norm.massCenter(hitMasses);
 	register Vector3 reflection = request.photon.ray.direction.reflection(hitNormal);
 	
