@@ -297,6 +297,8 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int block
 						request.hitPoint = layerBelow.geometry.hitPoint;
 						request.observerDirection = (-layerBelow.layerRay.direction);
 						request.photonType = PHOTON_TYPE_INDIRECT_ILLUMINATION;
+						request.significance = layer.sampleSignificance;
+						request.sampleType = layer.sampleType;
 						request.context = (&renderContext);
 						layerBelow.color += (configuration.context.materials->operator[](
 							layerBelow.geometry.object->materialId).getReflectedColor(request) * layer.sampleWeight);
@@ -332,12 +334,14 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int block
 							// If we are allawed to further request indirect illumination,
 							// here's the time:
 							if (currentLayer < maxLayer) {
-								ShaderInirectSamplesRequest<SceneType::SurfaceUnit> request;
+								ShaderIndirectSamplesRequest<SceneType::SurfaceUnit> request;
 								request.absoluteSampleWeight = layer.absoluteWeight;
 								request.hitDistance = hit.hitDistance;
 								request.hitPoint = hit.hitPoint;
 								request.object = &hit.object->object;
 								request.ray = (*rayToCast);
+								request.significance = layer.sampleSignificance;
+								request.sampleType = layer.sampleType;
 								request.context = (&renderContext);
 								configuration.context.materials->operator[](
 									hit.object->materialId).requestIndirectSamples(request, &layer.bounces);
@@ -375,6 +379,8 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int block
 					request.hitPoint = layer.geometry.hitPoint;
 					request.observerDirection = (-layer.layerRay.direction);
 					request.photonType = PHOTON_TYPE_DIRECT_ILLUMINATION;
+					request.significance = 1.0f;
+					request.sampleType = 0;
 					request.context = (&renderContext);
 					layer.color += layerMaterial.getReflectedColor(request);
 				}

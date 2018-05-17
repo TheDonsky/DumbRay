@@ -21,7 +21,7 @@ __dumb__ void Shader<HitType>::use() {
 }
 
 template<typename HitType>
-__dumb__ void Shader<HitType>::requestIndirectSamples(const void *shader, const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples)const {
+__dumb__ void Shader<HitType>::requestIndirectSamples(const void *shader, const ShaderIndirectSamplesRequest<HitType> &request, RaySamples *samples)const {
 	requestIndirectSamplesFn(shader, request, samples);
 }
 template<typename HitType>
@@ -32,7 +32,7 @@ __dumb__ Color Shader<HitType>::getReflectedColor(const void *shader, const Shad
 
 template<typename HitType>
 template<typename ShaderType>
-__dumb__ void Shader<HitType>::requestIndirectSamplesGeneric(const void *shader, const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples) {
+__dumb__ void Shader<HitType>::requestIndirectSamplesGeneric(const void *shader, const ShaderIndirectSamplesRequest<HitType> &request, RaySamples *samples) {
 	return ((ShaderType*)shader)->requestIndirectSamples(request, samples);
 }
 template<typename HitType>
@@ -49,7 +49,7 @@ __dumb__ Color Shader<HitType>::getReflectedColorGeneric(const void *shader, con
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<typename HitType>
-__dumb__ void Material<HitType>::requestIndirectSamples(const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples)const {
+__dumb__ void Material<HitType>::requestIndirectSamples(const ShaderIndirectSamplesRequest<HitType> &request, RaySamples *samples)const {
 	Generic<Shader<HitType> >::functions().requestIndirectSamples(Generic<Shader<HitType> >::object(), request, samples);
 }
 template<typename HitType>

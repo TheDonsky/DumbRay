@@ -2,7 +2,15 @@
 
 
 namespace DumbRendererTest {
+	void simpleNonInteractiveTestFull();
+	void simpleNonInteractiveStochsticTestFull();
+	void testDumbBasedGoldFull();
+	void testDumbBasedGlossyFull();
+	void testDumbBasedMatteFull();
+
 	void simpleNonInteractiveTest();
 	void simpleNonInteractiveStochsticTest();
-	void testDumbRay();
+	void testDumbBasedGold();
+	void testDumbBasedGlossy();
+	void testDumbBasedMatte();
 }

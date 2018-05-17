@@ -13,12 +13,18 @@
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
 template<typename HitType>
-struct ShaderInirectSamplesRequest {
+struct ShaderIndirectSamplesRequest {
 	// Object, that was hit
 	const HitType *object;
 
 	// Ray, that hit the object
 	Ray ray;
+
+	// Significance value (defined by the shaders themselves...)
+	float significance;
+
+	// Sample type (defined by the shaders themselves...)
+	uint32_t sampleType;
 
 	// Distance to the hit point
 	float hitDistance; 
@@ -40,6 +46,12 @@ struct ShaderReflectedColorRequest {
 	
 	// Photon, that hit the object
 	Photon photon;
+
+	// Significance value (defined by the shaders themselves...)
+	float significance;
+
+	// Sample type (defined by the shaders themselves...)
+	uint32_t sampleType;
 
 	// Hit point
 	Vector3 hitPoint;
@@ -68,17 +80,17 @@ public:
 	template<typename ShaderType>
 	__dumb__ void use();
 
-	__dumb__ void requestIndirectSamples(const void *shader, const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples)const;
+	__dumb__ void requestIndirectSamples(const void *shader, const ShaderIndirectSamplesRequest<HitType> &request, RaySamples *samples)const;
 	__dumb__ Color getReflectedColor(const void *shader, const ShaderReflectedColorRequest<HitType> &request)const;
 
 
 private:
-	void(*requestIndirectSamplesFn)(const void *shader, const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples);
+	void(*requestIndirectSamplesFn)(const void *shader, const ShaderIndirectSamplesRequest<HitType> &request, RaySamples *samples);
 	Color(*getReflectedColorFn)(const void *shader, const ShaderReflectedColorRequest<HitType> &request);
 
 
 	template<typename ShaderType>
-	__dumb__ static void requestIndirectSamplesGeneric(const void *shader, const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples);
+	__dumb__ static void requestIndirectSamplesGeneric(const void *shader, const ShaderIndirectSamplesRequest<HitType> &request, RaySamples *samples);
 	template<typename ShaderType>
 	__dumb__ static Color getReflectedColorGeneric(const void *shader, const ShaderReflectedColorRequest<HitType> &request);
 };
@@ -102,7 +114,7 @@ public:
 template<typename HitType>
 class Material : public Generic<Shader<HitType> > {
 public:
-	__dumb__ void requestIndirectSamples(const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples)const;
+	__dumb__ void requestIndirectSamples(const ShaderIndirectSamplesRequest<HitType> &request, RaySamples *samples)const;
 	__dumb__ Color getReflectedColor(const ShaderReflectedColorRequest<HitType> &request)const;
 
 

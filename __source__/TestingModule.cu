@@ -54,9 +54,19 @@ namespace {
 		tests["int_map"] = { "Basic tests for IntMap", IntMapTest::test };
 		tests["mmaped_frame_buffer"] = { "Basic test for MemoryMappedFrameBuffer", MemoryMappedFrameBufferTest::test };
 		tests["block_frame_buffer"] = { "Basic test for BlockBasedFrameBuffer", BlockBasedFrameBufferTest::test };
+		
+		tests["dumb_renderer_simple_full"] = { "Basic performance test for DumbRenderer (full gauntlet)", DumbRendererTest::simpleNonInteractiveTestFull };
+		tests["dumb_renderer_stochastic_full"] = { "Basic performance test with stochastic entities for DumbRenderer (full gauntlet)", DumbRendererTest::simpleNonInteractiveStochsticTestFull };
+		tests["dumb_based_gold_full"] = { "A simple general test for dumb renderer with DumbBasedShader::roughGold (full gauntlet)", DumbRendererTest::testDumbBasedGoldFull };
+		tests["dumb_based_glossy_full"] = { "A simple general test for dumb renderer with DumbBasedShader::glossyFinish (full gauntlet)", DumbRendererTest::testDumbBasedGlossyFull };
+		tests["dumb_based_matte_full"] = { "A simple general test for dumb renderer with DumbBasedShader::matteFinish (full gauntlet)", DumbRendererTest::testDumbBasedMatteFull };
+
 		tests["dumb_renderer_simple"] = { "Basic performance test for DumbRenderer", DumbRendererTest::simpleNonInteractiveTest };
 		tests["dumb_renderer_stochastic"] = { "Basic performance test with stochastic entities for DumbRenderer", DumbRendererTest::simpleNonInteractiveStochsticTest };
-		tests["dumb_ray"] = { "A simple general test for dumb renderer", DumbRendererTest::testDumbRay };
+		tests["dumb_based_gold"] = { "A simple general test for dumb renderer with DumbBasedShader::roughGold", DumbRendererTest::testDumbBasedGold };
+		tests["dumb_based_glossy"] = { "A simple general test for dumb renderer with DumbBasedShader::glossyFinish", DumbRendererTest::testDumbBasedGlossy };
+		tests["dumb_based_matte"] = { "A simple general test for dumb renderer with DumbBasedShader::matteFinish", DumbRendererTest::testDumbBasedMatte };
+		
 		tests["dumb_rand"] = { "Simple tests for DumbRand", DumbRandTest::test };
 		tests["save_buffer_png"] = { "Simple tests for saving FrameBuffer as a png file", ImagesTest::testSavePng };
 		tests["test_checkerboard"] = { "Playground test of checkerboard rendering", CheckerboardTest::test };

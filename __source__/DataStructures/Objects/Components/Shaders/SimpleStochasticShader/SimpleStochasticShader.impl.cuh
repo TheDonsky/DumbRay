@@ -10,7 +10,7 @@ __dumb__ SimpleStochasticShader::SimpleStochasticShader(const ColorRGB &color, f
 	shine = shininess;
 }
 
-__dumb__ void SimpleStochasticShader::requestIndirectSamples(const ShaderInirectSamplesRequest<BakedTriFace> &request, RaySamples *samples)const {
+__dumb__ void SimpleStochasticShader::requestIndirectSamples(const ShaderIndirectSamplesRequest<BakedTriFace> &request, RaySamples *samples)const {
 	DumbRand &drand = (*request.context->entropy);
 	register Vector3 direction;
 	drand.pointOnSphere(direction.x, direction.y, direction.z);

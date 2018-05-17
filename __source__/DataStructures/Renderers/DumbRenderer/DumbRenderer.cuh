@@ -102,6 +102,8 @@ public:
 			Ray layerRay;
 			int lightIndex;
 			float sampleWeight;
+			float sampleSignificance;
+			uint32_t sampleType;
 			float absoluteWeight;
 			RaycastHit<SceneType::GeometryUnit> geometry;
 			RaySamples bounces;
@@ -110,6 +112,8 @@ public:
 				color = Color(0.0f, 0.0f, 0.0f, 0.0f);
 				layerRay = sample.ray;
 				sampleWeight = sample.sampleWeight;
+				sampleSignificance = sample.significance;
+				sampleType = sample.type;
 				absoluteWeight = sampleWeight * absWeight;
 				geometry.object = NULL;
 				lightIndex = 0;

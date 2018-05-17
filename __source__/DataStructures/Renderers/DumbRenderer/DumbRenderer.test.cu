@@ -51,9 +51,9 @@ namespace DumbRendererTest {
 			}
 
 			template<typename ShaderType, typename LenseType>
-			void init(void(*addLightsFn)(Context*)) {
+			void init(void(*addLightsFn)(Context*), const ShaderType &shader) {
 				scene.materials.cpuHandle()->flush(1);
-				scene.materials.cpuHandle()->top().use<ShaderType>();
+				scene.materials.cpuHandle()->top().use<ShaderType>(shader);
 				addLightsFn(this);
 				camera.cpuHandle()->lense.use<LenseType>();
 				camera.cpuHandle()->transform = Transform(
@@ -77,28 +77,62 @@ namespace DumbRendererTest {
 		}
 
 		template<typename ShaderType, typename LenseType>
-		inline void simpleTestCase(void(*addLightsFn)(Context*)) {
+		inline void simpleTestCase(void(*addLightsFn)(Context*), const ShaderType &shader, uint32_t tests) {
 			volatile Context *context = new Context();
-			((Context*)context)->init<ShaderType, LenseType>(addLightsFn);
+			((Context*)context)->init<ShaderType, LenseType>(addLightsFn, shader);
 			FrameBufferManager bufferA, bufferB;
 			bufferA.cpuHandle()->use<BlockBuffer>();
 			bufferB.cpuHandle()->use<BlockBuffer>();
 			BufferedRenderProcessTest::runTestGauntlet(makeRenderer, ((void*)context),
-				&bufferA, &bufferB, BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
+				&bufferA, &bufferB, tests);
 			delete context;
 		}
 	}
 
-	void simpleNonInteractiveTest() {
-		simpleTestCase<DefaultShader, DefaultPerspectiveLense>(Context::addTripleLights<SimpleDirectionalLight>);
+	void simpleNonInteractiveTestFull() {
+		simpleTestCase<DefaultShader, DefaultPerspectiveLense>(
+			Context::addTripleLights<SimpleDirectionalLight>, DefaultShader(), BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
 	}
 
+	void simpleNonInteractiveStochsticTestFull() {
+		simpleTestCase<SimpleStochasticShader, SimpleStochasticLense>(
+			Context::addTripleLights<SimpleSoftDirectionalLight>, SimpleStochasticShader(), BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
+	}
+
+	void testDumbBasedGoldFull() {
+		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
+			Context::addSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::roughGold(), BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
+	}
+	void testDumbBasedGlossyFull() {
+		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
+			Context::addSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::glossyFinish(), BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
+	}
+	void testDumbBasedMatteFull() {
+		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
+			Context::addSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::matteFinish(), BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
+	}
+
+
+	void simpleNonInteractiveTest() {
+		simpleTestCase<DefaultShader, DefaultPerspectiveLense>(
+			Context::addTripleLights<SimpleDirectionalLight>, DefaultShader(), BufferedRenderProcessTest::TEST_MULTI_ITER_CPU_AND_GPU);
+	}
 
 	void simpleNonInteractiveStochsticTest() {
-		simpleTestCase<SimpleStochasticShader, SimpleStochasticLense>(Context::addTripleLights<SimpleSoftDirectionalLight>);
+		simpleTestCase<SimpleStochasticShader, SimpleStochasticLense>(
+			Context::addTripleLights<SimpleSoftDirectionalLight>, SimpleStochasticShader(), BufferedRenderProcessTest::TEST_MULTI_ITER_CPU_AND_GPU);
 	}
 
-	void testDumbRay() {
-		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(Context::addSingleLight<SimpleSoftDirectionalLight>);
+	void testDumbBasedGold() {
+		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
+			Context::addSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::roughGold(), BufferedRenderProcessTest::TEST_MULTI_ITER_CPU_AND_GPU);
+	}
+	void testDumbBasedGlossy() {
+		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
+			Context::addSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::glossyFinish(), BufferedRenderProcessTest::TEST_MULTI_ITER_CPU_AND_GPU);
+	}
+	void testDumbBasedMatte() {
+		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
+			Context::addSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::matteFinish(), BufferedRenderProcessTest::TEST_MULTI_ITER_CPU_AND_GPU);
 	}
 }

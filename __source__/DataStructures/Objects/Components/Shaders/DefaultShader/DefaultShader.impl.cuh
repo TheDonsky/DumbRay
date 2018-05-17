@@ -32,7 +32,7 @@ __dumb__ DefaultShaderGeneric<HitType>::ShaderReport DefaultShaderGeneric<HitTyp
 }
 
 template<typename HitType>
-__dumb__ void DefaultShaderGeneric<HitType>::requestIndirectSamples(const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples)const {
+__dumb__ void DefaultShaderGeneric<HitType>::requestIndirectSamples(const ShaderIndirectSamplesRequest<HitType> &request, RaySamples *samples)const {
 	ShaderHitInfo info = {
 		request.object,
 		Photon(request.ray, Color(1.0f, 1.0f, 1.0f, 1.0f)),

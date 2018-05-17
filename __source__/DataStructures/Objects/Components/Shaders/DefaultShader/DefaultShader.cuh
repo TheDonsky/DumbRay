@@ -21,7 +21,7 @@ public:
 	__dumb__ DefaultShaderGeneric(ColorRGB color = ColorRGB(1, 1, 1), float diffuse = 0.7f, float smoothness = 0.2f, float shine = 8.0f);
 	__dumb__ ShaderReport cast(const ShaderHitInfo &input)const;
 
-	__dumb__ void requestIndirectSamples(const ShaderInirectSamplesRequest<HitType> &request, RaySamples *samples)const;
+	__dumb__ void requestIndirectSamples(const ShaderIndirectSamplesRequest<HitType> &request, RaySamples *samples)const;
 	__dumb__ Color getReflectedColor(const ShaderReflectedColorRequest<HitType> &request)const;
 
 

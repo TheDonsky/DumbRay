@@ -34,9 +34,16 @@ struct SampleRay {
 	Ray ray;
 	float sampleWeight;
 
+	// Anything really.... This will reappear, once some object is hit (defaults to 0).
+	float significance;
+
+	// Anything really.... This will be transferred from ShaderIndirectSamplesRequest 
+	// directly to ShaderReflectedColorRequest with indirect illumination photon (0 is reserved)
+	uint32_t type;
+
 	__device__ __host__ inline SampleRay() {}
-	__device__ __host__ inline SampleRay(Ray sample, float mass) {
-		ray = sample; sampleWeight = mass;
+	__device__ __host__ inline SampleRay(Ray sample, float mass, float significance = 1.0f, uint32_t typeFlags = 0) {
+		ray = sample; sampleWeight = mass; this->significance = significance; type = typeFlags;
 	}
 };
 
