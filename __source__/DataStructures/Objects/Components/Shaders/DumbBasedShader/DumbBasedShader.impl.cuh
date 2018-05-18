@@ -15,6 +15,9 @@ __dumb__ void DumbBasedShader::requestIndirectSamples(const ShaderIndirectSample
 	Vector3 sampleDir; 
 	uint32_t sampleType;
 	Vector3 normal = request.object->vert.normal().normalized();
+	if ((normal * (request.ray.direction)) > 0.0f) {
+		samples->set(SampleRay(Ray(request.hitPoint - (request.ray.direction * (8.0f * VECTOR_EPSILON)), request.ray.direction), 1.0f, request.significance, 0));
+	}
 
 	if (request.context->entropy->getBool(specMass)) {
 		Vector3 n = request.object->norm.massCenter(request.object->vert.getMasses(request.hitPoint)).normalized();
@@ -46,6 +49,9 @@ __dumb__ void DumbBasedShader::requestIndirectSamples(const ShaderIndirectSample
 	samples->set(SampleRay(Ray(request.hitPoint, sampleDir), 1.0f, request.significance, sampleType));
 }
 __dumb__ Color DumbBasedShader::getReflectedColor(const ShaderReflectedColorRequest<BakedTriFace> &request)const {
+	if ((request.object->vert.normal().normalized() * (request.photon.ray.direction)) > 0.0f)
+		if (request.photonType != PHOTON_TYPE_DIRECT_ILLUMINATION)
+			return request.photon.color;
 	Vector3 n = request.object->norm.massCenter(request.object->vert.getMasses(request.hitPoint)).normalized();
 	if ((n * request.observerDirection) < 0.0f) return Color(0.0f, 0.0f, 0.0f);
 	Vector3 wi = -request.photon.ray.direction.normalized();
