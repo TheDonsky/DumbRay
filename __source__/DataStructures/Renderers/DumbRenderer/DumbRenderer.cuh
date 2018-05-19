@@ -25,7 +25,8 @@ public:
 		BoxingMode boxingMode = BOXING_MODE_HEIGHT_BASED,
 		int maxBounces = 2,
 		int samplesPerPixelX = 1,
-		int samplesPerPixelY = 1);
+		int samplesPerPixelY = 1,
+		int pixelsPerGPUThread = 2);
 
 	void setScene(SceneType *scene);
 	SceneType* getScene()const;
@@ -47,6 +48,8 @@ public:
 	int getSamplesPerPixelX()const;
 	int getSamplesPerPixelY()const;
 
+	void setPixelsPerGPUThread(int count);
+	int getPixelsPerGPUThread()const;
 
 
 protected:
@@ -60,6 +63,8 @@ private:
 	volatile BoxingMode boxing;
 	volatile int bounceLimit;
 	volatile int fsaaX, fsaaY;
+	volatile int pxPerGPUThread;
+
 
 public:
 	class PixelRenderProcess {

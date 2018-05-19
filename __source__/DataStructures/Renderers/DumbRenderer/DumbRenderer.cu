@@ -13,13 +13,15 @@ DumbRenderer::DumbRenderer(
 	BoxingMode boxingMode,
 	int maxBounces,
 	int samplesPerPixelX,
-	int samplesPerPixelY)
+	int samplesPerPixelY,
+	int pixelsPerGPUThread)
 	: BlockRenderer(configuration, blockSettings, buffer) {
 	setScene(scene);
 	setCamera(camera);
 	setBoxingMode(boxingMode);
 	setMaxBounces(maxBounces);
 	setSamplesPerPixel(samplesPerPixelX, samplesPerPixelY);
+	setPixelsPerGPUThread(pixelsPerGPUThread);
 }
 
 void DumbRenderer::setScene(SceneType *scene) { sceneManager = scene; }
@@ -41,6 +43,9 @@ void DumbRenderer::setSamplesPerPixelY(int value) { fsaaY = ((value <= 1) ? 1 : 
 void DumbRenderer::setSamplesPerPixel(int x, int y) { setSamplesPerPixelX(x); setSamplesPerPixelY(y); }
 int DumbRenderer::getSamplesPerPixelX()const { return fsaaX; }
 int DumbRenderer::getSamplesPerPixelY()const { return fsaaY; }
+
+void DumbRenderer::setPixelsPerGPUThread(int count) { pxPerGPUThread = count; }
+int DumbRenderer::getPixelsPerGPUThread()const { return pxPerGPUThread; }
 
 bool DumbRenderer::renderBlocksCPU(
 	const Info &info, FrameBuffer *buffer, int startBlock, int endBlock) {
@@ -67,11 +72,12 @@ bool DumbRenderer::renderBlocksCPU(
 namespace {
 	namespace DumbRendererPrivateKernels {
 		__global__ static void renderBlocks(
-			DumbRenderer::PixelRenderProcess::SceneConfiguration configuration, RenderContext renderContext, int startBlock) {
+			DumbRenderer::PixelRenderProcess::SceneConfiguration configuration, RenderContext renderContext, int startBlock, int endBlock) {
 			DumbRenderer::PixelRenderProcess pixelRenderProcess;
 			pixelRenderProcess.configure(configuration);
 			pixelRenderProcess.setContext(renderContext, (blockIdx.x * blockDim.x) + threadIdx.x);
-			pixelRenderProcess.renderPixel(startBlock + blockIdx.x, threadIdx.x);
+			for (int curBlock = (startBlock + blockIdx.x); curBlock < endBlock; curBlock += gridDim.x)
+				pixelRenderProcess.renderPixel(curBlock, threadIdx.x);
 		}
 	}
 }
@@ -81,8 +87,11 @@ bool DumbRenderer::renderBlocksGPU(
 	int startBlock, int endBlock, cudaStream_t &renderStream) {
 	DumbRandHolder *randHolder = getThreadData<DumbRandHolder>(info);
 	if (randHolder == NULL) return false;
-	DumbRand *entropy = randHolder->getGPU(
-		(endBlock - startBlock) * host->getBlockSize(), info.device, false);
+
+	const int blocksToRender = (endBlock - startBlock);
+	const int blockCount = ((blocksToRender + pxPerGPUThread - 1) / pxPerGPUThread);
+
+	DumbRand *entropy = randHolder->getGPU(blockCount * host->getBlockSize(), info.device, false);
 	if (entropy == NULL) return false;
 	RenderContext renderContext;
 	renderContext.entropy = entropy;
@@ -91,8 +100,8 @@ bool DumbRenderer::renderBlocksGPU(
 	float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
 	if (!sceneConfiguration.device(getScene(), getCamera(), device, host, boxing, info.device, blending, getMaxBounces(), fsaaX, fsaaY)) return false;
 	DumbRendererPrivateKernels::renderBlocks
-		<<<(endBlock - startBlock), host->getBlockSize(), 0, renderStream>>>
-		(sceneConfiguration, renderContext, startBlock);
+		<<<blockCount, host->getBlockSize(), 0, renderStream>>>
+		(sceneConfiguration, renderContext, startBlock, endBlock);
 	if (cudaStreamSynchronize(renderStream) != cudaSuccess)
 		printf("error: %d\n", (int)cudaGetLastError());
 	return true;
@@ -143,31 +152,35 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::setContext(const Rend
 
 __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int blockId, int pixelId) {
 	// ###################################################################
-	/* Pixel location detection: */
-	int pixelX, pixelY;
-	if (!configuration.buffer->blockPixelLocation(blockId, pixelId, &pixelX, &pixelY)) return;
-
-
-
-	// ###################################################################
-	/* Relative pixel location and size: */
+	/* Relative pixel size: */
 
 	// Extructing some parameters:
-	register BoxingMode boxing = configuration.boxing;
 	register float width = (float)configuration.width;
 	register float height = (float)configuration.height;
 
 	// Pixel size (relative to lense):
 	float pixelSize;
-	if (boxing == BOXING_MODE_HEIGHT_BASED) pixelSize = (1.0f / height);
-	else if (boxing == BOXING_MODE_WIDTH_BASED) pixelSize = (1.0f / width);
-	else if (boxing == BOXING_MODE_MIN_BASED) pixelSize = (1.0f / ((height <= width) ? height : width));
-	else if (boxing == BOXING_MODE_MAX_BASED) pixelSize = (1.0f / ((height >= width) ? height : width));
-	else pixelSize = 1.0f;
-	
+	{
+		register BoxingMode boxing = configuration.boxing;
+		if (boxing == BOXING_MODE_HEIGHT_BASED) pixelSize = (1.0f / height);
+		else if (boxing == BOXING_MODE_WIDTH_BASED) pixelSize = (1.0f / width);
+		else if (boxing == BOXING_MODE_MIN_BASED) pixelSize = (1.0f / ((height <= width) ? height : width));
+		else if (boxing == BOXING_MODE_MAX_BASED) pixelSize = (1.0f / ((height >= width) ? height : width));
+		else pixelSize = 1.0f;
+	}
+
+
+
+	// ###################################################################
+	/* Pixel location detection: */
+
 	// Pixel position (Relative to lense center):
-	Vector2 offset((pixelX - (width / 2.0f)) * pixelSize, ((height / 2.0f) - pixelY) * pixelSize);
-	
+	Vector2 offset;
+	{
+		int pixelX, pixelY;
+		if (!configuration.buffer->blockPixelLocation(blockId, pixelId, &pixelX, &pixelY)) return;
+		offset = Vector2((pixelX - (width / 2.0f)) * pixelSize, ((height / 2.0f) - pixelY) * pixelSize);
+	}
 
 
 
@@ -176,38 +189,44 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixel(int block
 	/* Ray tracing logic: */
 	Color result(0.0f, 0.0f, 0.0f, 0.0f);
 
+	int fsaaI = configuration.fsaaX;
+	int fsaaJ = configuration.fsaaY;
+
+	const float pixelSampleW = (1.0f / ((float)configuration.fsaaX));
+	const float pixelSampleH = (1.0f / ((float)configuration.fsaaX));
+	Vector2 screenSpacePosition;
+
+	// Layers for each bounce:
+	BounceLayer bounceLayers[DUMB_RENDERER_BOUNCE_LIMIT + 1];
+	PhotonSamples lightRays;
+	const int maxLayer = configuration.maxBounces;
+
 	// __________________________________________________
 	// Full screen anti aliasing loop:
-	for (int fsaaI = 0; fsaaI < configuration.fsaaX; fsaaI++)
-		for (int fsaaJ = 0; fsaaJ < configuration.fsaaY; fsaaJ++) {
+	for (fsaaI = 0; fsaaI < configuration.fsaaX; fsaaI++)
+		for (fsaaJ = 0; fsaaJ < configuration.fsaaY; fsaaJ++) {
 			// __________________________________________________
 			// Getting samples for the ray:
 			RaySamples cameraPixelSamples;
-			float pixelSampleW = (1.0f / ((float)configuration.fsaaX));
-			float pixelSampleH = (1.0f / ((float)configuration.fsaaX));
-			Vector2 sampleOffset(
-				(((float)fsaaI) + 0.5f) * pixelSampleW * pixelSize,
-				(((float)fsaaJ) + 0.5f) * pixelSampleH * pixelSize);
-			Vector2 screenSpacePosition = (offset + sampleOffset);
+			{
+				Vector2 sampleOffset(
+					(((float)fsaaI) + 0.5f) * pixelSampleW * pixelSize,
+					(((float)fsaaJ) + 0.5f) * pixelSampleH * pixelSize);
+				screenSpacePosition = (offset + sampleOffset);
 
-			LenseGetPixelSamplesRequest cameraPixelSamplesRequest;
-			cameraPixelSamplesRequest.screenSpacePosition = screenSpacePosition;
-			cameraPixelSamplesRequest.pixelSize = pixelSize;
-			cameraPixelSamplesRequest.context = (&renderContext);
-			configuration.camera->getPixelSamples(cameraPixelSamplesRequest, &cameraPixelSamples);
-
+				LenseGetPixelSamplesRequest cameraPixelSamplesRequest;
+				cameraPixelSamplesRequest.screenSpacePosition = screenSpacePosition;
+				cameraPixelSamplesRequest.pixelSize = pixelSize;
+				cameraPixelSamplesRequest.context = (&renderContext);
+				configuration.camera->getPixelSamples(cameraPixelSamplesRequest, &cameraPixelSamples);
+			}
 
 			// Resulting pixel color:
 			Color color(0.0f, 0.0f, 0.0f, 0.0f);
 
-			// Layers for each bounce:
-			BounceLayer bounceLayers[DUMB_RENDERER_BOUNCE_LIMIT + 1];
-			PhotonSamples lightRays;
-			int currentLayer = -1;
-			int maxLayer = configuration.maxBounces;
-
 			// __________________________________________________
 			// Actual render loop:
+			int currentLayer = -1;
 			while (true) {
 				// ----------------------------------------------
 
