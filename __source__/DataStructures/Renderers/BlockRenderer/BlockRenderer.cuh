@@ -7,7 +7,7 @@ public:
 	class BlockConfiguration {
 	public:
 		BlockConfiguration(
-			int blockCutPerCpuThread = 1, int blockCutPerGpuSM = 16,
+			int blockCutPerCpuThread = 1, int blockCutPerGpuSM = 64,
 			bool forceDeviceInstanceUpdate = false);
 
 		int blockCutPerCpuThread()const;

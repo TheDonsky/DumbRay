@@ -88,7 +88,7 @@ private:
 };
 
 
-typedef BlockBasedFrameBuffer<16, 16> BlockBuffer;
+typedef BlockBasedFrameBuffer<8, 16> BlockBuffer;
 
 
 
