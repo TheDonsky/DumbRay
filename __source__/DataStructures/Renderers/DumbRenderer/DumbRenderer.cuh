@@ -4,6 +4,7 @@
 #include "../../Objects/Scene/Camera/Camera.cuh"
 #include "../../GeneralPurpose/DumbRand/DumbRand.cuh"
 
+#define DUMB_RENDERER_BOUNCE_LIMIT 64
 
 class DumbRenderer : public BlockRenderer {
 public:
@@ -26,7 +27,7 @@ public:
 		int maxBounces = 2,
 		int samplesPerPixelX = 1,
 		int samplesPerPixelY = 1,
-		int pixelsPerGPUThread = 2);
+		int pixelsPerGPUThread = 1);
 
 	void setScene(SceneType *scene);
 	SceneType* getScene()const;
@@ -90,7 +91,7 @@ public:
 
 		__device__ __host__ void configure(const SceneConfiguration &config);
 		__device__ __host__ void setContext(const RenderContext &context, int entropyOffset);
-		__device__ __host__ void renderPixel(int blockId, int pixelId);
+		__device__ __host__ void renderPixels(int pixelId, int startBlock, int endBlock, int step);
 
 
 	private:
@@ -113,17 +114,40 @@ public:
 			RaycastHit<SceneType::GeometryUnit> geometry;
 			RaySamples bounces;
 
-			__device__ __host__ inline void setup(const SampleRay &sample, float absWeight) {
-				color = Color(0.0f, 0.0f, 0.0f, 0.0f);
-				layerRay = sample.ray;
-				sampleWeight = sample.sampleWeight;
-				sampleSignificance = sample.significance;
-				sampleType = sample.type;
-				absoluteWeight = sampleWeight * absWeight;
-				geometry.object = NULL;
-				lightIndex = 0;
-				bounces.sampleCount = 0;
-			}
+			__device__ __host__ void setup(const SampleRay &sample, float absWeight);
 		};
+
+		float pixelSize;
+		__device__ __host__ void countPixelSize();
+
+		int pixelInBlock;
+		int curBlock;
+		int stopBlock;
+		int blockStep;
+		Vector2 pixelPostion;
+		Color pixelColor;
+		__device__ __host__ bool setPixel();
+
+		int fsaaI, fsaaJ;
+		float subPixelWeight;
+		Vector2 screenSpacePosition;
+		Color subPixelColor;
+		__device__ __host__ bool setSubPixel();
+
+		int maxLayer;
+		int currentLayer;
+		RaySamples cameraPixelSamples;
+		BounceLayer bounceLayers[DUMB_RENDERER_BOUNCE_LIMIT + 1];
+		PhotonSamples lightRays;
+
+		BounceLayer *layer;
+		const Ray *rayToCast;
+		void *restrictionObject;
+		int numIlluminationPhotons;
+		__device__ __host__ bool subPixelRenderPass();
+		__device__ __host__ bool setupSubPixelRenderPassLayer();
+		__device__ __host__ bool setSubPixelRenderPassJob();
+		__device__ __host__ bool castSubPixelRenderPassRay();
+		__device__ __host__ void illuminateSubPixelRenderPassLayer();
 	};
 };
