@@ -37,6 +37,14 @@ namespace DumbRendererTest {
 				self->scene.lights.cpuHandle()->operator[](start).use<LightType>(
 					Color(4.0f, 4.0f, 4.0f, 4.0f), Vector3(0.25f, -1.0f, -0.25f).normalized(), 512.0f);
 			}
+			
+			template<typename LightType>
+			static void addDimSingleLight(Context *self) {
+				int start = self->scene.lights.cpuHandle()->size();
+				self->scene.lights.cpuHandle()->flush(1);
+				self->scene.lights.cpuHandle()->operator[](start).use<LightType>(
+					Color(1.0f, 1.0f, 1.0f, 1.0f), Vector3(0.25f, -1.0f, -0.25f).normalized(), 512.0f);
+			}
 
 			void addObjects() {
 				Stacktor<PolyMesh> meshes;
@@ -103,6 +111,14 @@ namespace DumbRendererTest {
 		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
 			Context::addSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::roughGold(), BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
 	}
+	void testDumbBasedGoldDimFull() {
+		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
+			Context::addDimSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::roughGold(), BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
+	}
+	void testDumbBasedGoldGlossyFull() {
+		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
+			Context::addSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::glossyGold(), BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
+	}
 	void testDumbBasedGlossyFull() {
 		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
 			Context::addSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::glossyFinish(), BufferedRenderProcessTest::TEST_RUN_FULL_GAUNTLET);
@@ -126,6 +142,14 @@ namespace DumbRendererTest {
 	void testDumbBasedGold() {
 		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
 			Context::addSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::roughGold(), BufferedRenderProcessTest::TEST_MULTI_ITER_CPU_AND_GPU);
+	}
+	void testDumbBasedGoldDim() {
+		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
+			Context::addDimSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::roughGold(), BufferedRenderProcessTest::TEST_MULTI_ITER_CPU_AND_GPU);
+	}
+	void testDumbBasedGoldGlossy() {
+		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(
+			Context::addSingleLight<SimpleSoftDirectionalLight>, DumbBasedShader::glossyGold(), BufferedRenderProcessTest::TEST_MULTI_ITER_CPU_AND_GPU);
 	}
 	void testDumbBasedGlossy() {
 		simpleTestCase<DumbBasedShader, SimpleStochasticLense>(

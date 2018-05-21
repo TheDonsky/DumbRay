@@ -58,12 +58,16 @@ namespace {
 		tests["dumb_renderer_simple_full"] = { "Basic performance test for DumbRenderer (full gauntlet)", DumbRendererTest::simpleNonInteractiveTestFull };
 		tests["dumb_renderer_stochastic_full"] = { "Basic performance test with stochastic entities for DumbRenderer (full gauntlet)", DumbRendererTest::simpleNonInteractiveStochsticTestFull };
 		tests["dumb_based_gold_full"] = { "A simple general test for dumb renderer with DumbBasedShader::roughGold (full gauntlet)", DumbRendererTest::testDumbBasedGoldFull };
+		tests["dumb_based_gold_dim_full"] = { "A simple general test for dumb renderer with DumbBasedShader::roughGold (dim light) (full gauntlet)", DumbRendererTest::testDumbBasedGoldDimFull };
+		tests["dumb_based_gold_glossy_full"] = { "A simple general test for dumb renderer with DumbBasedShader::glossyGold (full gauntlet)", DumbRendererTest::testDumbBasedGoldGlossyFull };
 		tests["dumb_based_glossy_full"] = { "A simple general test for dumb renderer with DumbBasedShader::glossyFinish (full gauntlet)", DumbRendererTest::testDumbBasedGlossyFull };
 		tests["dumb_based_matte_full"] = { "A simple general test for dumb renderer with DumbBasedShader::matteFinish (full gauntlet)", DumbRendererTest::testDumbBasedMatteFull };
 
 		tests["dumb_renderer_simple"] = { "Basic performance test for DumbRenderer", DumbRendererTest::simpleNonInteractiveTest };
 		tests["dumb_renderer_stochastic"] = { "Basic performance test with stochastic entities for DumbRenderer", DumbRendererTest::simpleNonInteractiveStochsticTest };
 		tests["dumb_based_gold"] = { "A simple general test for dumb renderer with DumbBasedShader::roughGold", DumbRendererTest::testDumbBasedGold };
+		tests["dumb_based_gold_dim"] = { "A simple general test for dumb renderer with DumbBasedShader::roughGold (dim light)", DumbRendererTest::testDumbBasedGoldDim };
+		tests["dumb_based_gold_glossy"] = { "A simple general test for dumb renderer with DumbBasedShader::glossyGold", DumbRendererTest::testDumbBasedGoldGlossy };
 		tests["dumb_based_glossy"] = { "A simple general test for dumb renderer with DumbBasedShader::glossyFinish", DumbRendererTest::testDumbBasedGlossy };
 		tests["dumb_based_matte"] = { "A simple general test for dumb renderer with DumbBasedShader::matteFinish", DumbRendererTest::testDumbBasedMatte };
 		
