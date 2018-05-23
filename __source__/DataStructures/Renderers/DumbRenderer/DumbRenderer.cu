@@ -178,11 +178,11 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::renderPixels(int pixe
 __device__ __host__ void DumbRenderer::PixelRenderProcess::countPixelSize() {
 	register float width = (float)configuration.width;
 	register float height = (float)configuration.height;
-	register BoxingMode boxing = configuration.boxing;
-	if (boxing == BOXING_MODE_HEIGHT_BASED) pixelSize = (1.0f / height);
-	else if (boxing == BOXING_MODE_WIDTH_BASED) pixelSize = (1.0f / width);
-	else if (boxing == BOXING_MODE_MIN_BASED) pixelSize = (1.0f / ((height <= width) ? height : width));
-	else if (boxing == BOXING_MODE_MAX_BASED) pixelSize = (1.0f / ((height >= width) ? height : width));
+	register BoxingMode boxingMode = configuration.boxing;
+	if (boxingMode == BOXING_MODE_HEIGHT_BASED) pixelSize = (1.0f / height);
+	else if (boxingMode == BOXING_MODE_WIDTH_BASED) pixelSize = (1.0f / width);
+	else if (boxingMode == BOXING_MODE_MIN_BASED) pixelSize = (1.0f / ((height <= width) ? height : width));
+	else if (boxingMode == BOXING_MODE_MAX_BASED) pixelSize = (1.0f / ((height >= width) ? height : width));
 	else pixelSize = 1.0f;
 }
 __device__ __host__ bool DumbRenderer::PixelRenderProcess::setPixel() {

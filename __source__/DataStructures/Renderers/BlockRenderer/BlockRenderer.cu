@@ -44,8 +44,8 @@ bool BlockRenderer::setupData(const Info &info, void *&) {
 	if (info.isGPU()) {
 		FrameBuffer::DeviceBlockManager *manager = new FrameBuffer::DeviceBlockManager(
 			info.device, (hostBlockSynchNeeded ?
-				FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET :
-				FrameBuffer::DeviceBlockManager::CUDA_MANUALLY_SYNCH_HOST_BLOCKS),
+				(FrameBuffer::DeviceBlockManager::Settings)FrameBuffer::DeviceBlockManager::CUDA_RENDER_STREAM_AUTO_SYNCH_ON_GET :
+				(FrameBuffer::DeviceBlockManager::Settings)FrameBuffer::DeviceBlockManager::CUDA_MANUALLY_SYNCH_HOST_BLOCKS),
 			blockConfiguration.blockCutPerGpuSM());
 		if (manager == NULL) return false;	// ALLOCATION FAILURE...
 		else if (manager->errors() != 0) { delete manager; return false; }	// INTERNAL ERRORS...
