@@ -16,6 +16,7 @@
 #include"DataStructures/GeneralPurpose/DumbRand/DumbRand.test.cuh"
 #include"Namespaces/Images/Images.test.cuh"
 #include"Namespaces/Device/Device.cuh"
+#include"Namespaces/Dson/Dson.test.h"
 #include"Playground/Checkerboard/Checkerboard.cuh"
 #include <map>
 #include <string>
@@ -73,6 +74,7 @@ namespace {
 		
 		tests["dumb_rand"] = { "Simple tests for DumbRand", DumbRandTest::test };
 		tests["save_buffer_png"] = { "Simple tests for saving FrameBuffer as a png file", ImagesTest::testSavePng };
+		tests["dson_to_string"] = { "Test of how well Dson gets translated to string", DsonTest::testToString };
 		tests["test_checkerboard"] = { "Playground test of checkerboard rendering", CheckerboardTest::test };
 		std::cout << "___________________________________________________________________" << std::endl;
 		std::cout << "WELCOME TO DumbRay TESTING MODULE" << std::endl << "(enter ? for further instructions or any test to run)" << std::endl;
