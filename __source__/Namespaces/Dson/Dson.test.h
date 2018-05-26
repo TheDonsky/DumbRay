@@ -3,5 +3,6 @@
 
 namespace DsonTest {
 	void testToString();
+	void testFromString();
 }
 

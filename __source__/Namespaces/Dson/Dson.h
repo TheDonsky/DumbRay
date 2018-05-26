@@ -2,18 +2,19 @@
 #include<string>
 #include<vector>
 #include<unordered_map>
+#include <iostream>
 
 
 namespace Dson {
 	class Object {
 	public:
 		enum Type {
-			DUMBSON_DICT,
-			DUMBSON_ARRAY,
-			DUMBSON_STRING,
-			DUMBSON_NUMBER,
-			DUMBSON_BOOL,
-			DUMBSON_NULL
+			DSON_DICT,
+			DSON_ARRAY,
+			DSON_STRING,
+			DSON_NUMBER,
+			DSON_BOOL,
+			DSON_NULL
 		};
 
 	public:
@@ -116,5 +117,5 @@ namespace Dson {
 	private:
 	};
 
-	Object* parse(const std::string &text);
+	Object* parse(const std::string &text, std::ostream *errorLog = NULL);
 }

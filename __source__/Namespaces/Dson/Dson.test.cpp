@@ -424,4 +424,51 @@ namespace DsonTest {
 	void testToString() {
 		Tests::runTest(testToStringGauntlet, "Testing Dson::toString()");
 	}
+
+
+
+	namespace {
+		static void printIfNotNullAndDispose(Dson::Object *object) {
+			if (object != NULL) {
+				std::cout << object->toString("  ") << std::endl;
+				delete object;
+			}
+		}
+		static void testParseDson(const std::string &source) {
+			std::cout << "__________________________________________________" << std::endl;
+			std::cout << "Source: " << source << std::endl;
+			std::cout << "__________________" << std::endl;
+			printIfNotNullAndDispose(Dson::parse(source, &std::cout));
+		}
+
+		static void testFromStringGauntlet() {
+			testParseDson("");
+			testParseDson("{}");
+			testParseDson("[]");
+			testParseDson("{[]}");
+			testParseDson("[{}]");
+			testParseDson("[ {}, {}]");
+			testParseDson("[ {  } , {  } ]");
+			testParseDson("[{},{}]");
+			testParseDson("[\"aaa\"]");
+			testParseDson("[\"aaa\",]");
+			testParseDson("[\"aaa\",\"bbb\"]");
+			testParseDson("{\"aaa\"}");
+			testParseDson("{\"aaa\":}");
+			testParseDson("{\"aaa\":\"bbb\"}");
+			testParseDson("{\"aaa\":\"bbb\", \"ccc\"}");
+			testParseDson("{\"aaa\":\"bbb\", \"ccc\" :}");
+			testParseDson("{\"aaa\":\"bbb\", \"ccc\" : \"ddd\"}");
+			testParseDson("{\"aaa\":\"bbb\", \"ccc\" : \"ddd\",  \"aaa\":[]}");
+			testParseDson("1");
+			testParseDson("-1");
+			testParseDson("1.21");
+			testParseDson("1junk");
+			testParseDson("some_garbage");
+			testParseDson("{\"a\":true, \"b\": false, \"c\" : null, \"d\": 0, \"e\": [], \"f\": {}, \"g\": \"text\", \"h\": {\"1\":1}, \"i\":[0], \"j\" : {\"1\":\"1\", \"2\":[{},{}]}}");
+		}
+	}
+	void testFromString() {
+		Tests::runTest(testFromStringGauntlet, "Testing Dson::parse()");
+	}
 }
