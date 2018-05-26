@@ -1,0 +1,56 @@
+
+
+{
+	"meshes": {
+		"main_meshes": { "source": "main_meshes.obj" },
+		"some_other_meshes": { "source": "some_other_meshes.obj" }
+	},
+	"materials": {
+		"glossy_material": {
+			"type": "dumb_based",
+			"preset": "glossy",
+			"fresnel": [ 0.9, 0.8, 0.7 ],
+			"ignored_field": "bullshite"
+		}
+	},
+	"lights": {
+		"sun": {
+			"type": "simple_soft_directional",
+			"direction": [ 1, -1, 1 ],
+			"color": [ 1, 1, 0.9 ],
+			"softness": 0.25
+		}
+	},
+	"objects": {
+		"item_0": {
+			"mesh": "objects::box",
+			"transform": {
+				"recenter": false,
+				"position": [ 0, 0, 0 ],
+				"relative_position": [ 0, 0, 0 ],
+				"rotation": [ 0, 0, 0 ],
+				"scale": [ 1, 1, 1 ]
+			},
+			"material": "glossy_material"
+		},
+		"item_1": {
+			"mesh": "objects::box",
+			"transform": { "position": [ 32, 0, 32 ] },
+			"material": "glossy_material"
+		}
+	},
+	"camera": {
+		"lense": {
+			"type": "simple_stochastic",
+			"angle": 60.0
+		},
+		"transform": {
+			"position": [ 0, 0, 0 ],
+			"rotation": [ 0, 0, 0 ]
+		}
+	},
+	"resolution": [ 1920, 1080 ],
+	"resolution_comment": "this may be 'auto'/'window'/null or even missing to follow render window resolution",
+	"iterations": null,
+	"iterations_comment": "can be 'infinite' or missing for the same old unlimited, or some number, denoting count"
+}
