@@ -1,6 +1,6 @@
 #pragma once
 #include "../BlockRenderer/BlockRenderer.cuh"
-#include "../../Objects/Scene/DumbScene.cuh"
+#include "../../Objects/Scene/Scene.cuh"
 #include "../../Objects/Scene/Camera/Camera.cuh"
 #include "../../GeneralPurpose/DumbRand/DumbRand.cuh"
 

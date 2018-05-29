@@ -1,5 +1,4 @@
 #include "Checkerboard.cuh"
-#include"../../DataStructures/Objects/Scene/Scene.cuh"
 #include"../../DataStructures/Objects/Components/Lenses/DefaultPerspectiveLense/DefaultPerspectiveLense.cuh"
 #include"../../DataStructures/Objects/Scene/Raycasters/ShadedOctree/ShadedOctree.cuh"
 #include"../../DataStructures/Screen/FrameBuffer/MemoryMappedFrameBuffer/MemoryMappedFrameBuffer.cuh"

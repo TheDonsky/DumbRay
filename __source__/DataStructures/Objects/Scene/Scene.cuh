@@ -1,55 +1,63 @@
 #pragma once
-#include"Raycasters/ShadedOctree/ShadedOctree.cuh"
-#include"Lights/Light.cuh"
-#include"Camera/Camera.cuh"
-#include"../../GeneralPurpose/Handler/Handler.cuh"
-#include"../../GeneralPurpose/Matrix/Matrix.h"
+#include "../../GeneralPurpose/ReferenceManager/ReferenceManager.cuh"
+#include "../../GeneralPurpose/Stacktor/Stacktor.cuh"
+#include "Raycasters/Octree/Octree.cuh"
+#include "Lights/Light.cuh"
+#include "../Components/Shaders/Material.cuh"
+#include "../Meshes/BakedTriMesh/BakedTriMesh.h"
 
-/*
 
-//#define SCENE_USE_GENERIC_RAYCASTER
+template<typename HitType, typename GeometryType> struct SceneContext;
 
-template<typename HitType> struct Scene;
-#ifdef SCENE_USE_GENERIC_RAYCASTER
-TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(Scene, Raycaster<Shaded<HitType> >, Stacktor<Light>, Stacktor<Camera>, typename HitType);
-#else
-TYPE_TOOLS_REDEFINE_3_PART_TEMPLATE(Scene, ShadedOctree<HitType>, Stacktor<Light>, Stacktor<Camera>, typename HitType);
-#endif
-
-template<typename HitType>
+template<typename HitType, typename GeometryType>
 struct Scene {
-#ifdef SCENE_USE_GENERIC_RAYCASTER
-	Raycaster<Shaded<HitType> > geometry;
-#else
-	ShadedOctree<HitType> geometry;
-#endif
-	Stacktor<Light> lights;
-	Stacktor<Camera> cameras;
+	typedef Material<HitType> MaterialType;
+	typedef Stacktor<MaterialType> MaterialList;
+	typedef ReferenceManager<MaterialList> MaterialManager;
+	MaterialManager materials;
 
-	// ##########################################################################
-	// //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-	// ##########################################################################
-	DEFINE_CUDA_LOAD_INTERFACE_FOR(Scene);
-	TYPE_TOOLS_ADD_COMPONENT_GETTERS_3(Scene, geometry, lights, cameras);
+	typedef HitType SurfaceUnit;
+	typedef Renderable<SurfaceUnit> GeometryUnit;
+	typedef GeometryType Geometry;
+	typedef ReferenceManager<Geometry> GeometryManager;
+	GeometryManager geometry;
+	
+	typedef Stacktor<Light> LightList;
+	typedef ReferenceManager<LightList> LightManager;
+	LightManager lights;
+
+	typedef SceneContext<HitType, GeometryType> Context;
 };
 
-*/
+template<typename HitType, typename GeometryType>
+struct SceneContext {
+	typedef Scene<HitType, GeometryType> SceneType;
+	SceneType::MaterialList *materials;
+	SceneType::Geometry *geometry;
+	SceneType::LightList *lights;
 
-template<typename HitType, typename RaycasterType> struct Scene;
-TYPE_TOOLS_REDEFINE_4_PART_TEMPLATE(Scene, Stacktor<Material<HitType> >, RaycasterType, Stacktor<Light>, Stacktor<Camera>, typename HitType, typename RaycasterType);
-
-template<typename HitType, typename RaycasterType=Octree<Renderable<HitType> > >
-struct Scene {
-	Stacktor<Material<HitType> > materials;
-	RaycasterType geometry;
-	Stacktor<Light> lights;
-	Stacktor<Camera> cameras;
-
-	DEFINE_CUDA_LOAD_INTERFACE_FOR(Scene);
-	TYPE_TOOLS_ADD_COMPONENT_GETTERS_4(Scene, materials, geometry, lights, cameras);
+	inline bool hasError() {
+		return ((materials == NULL) || (geometry == NULL) || (lights == NULL));
+	}
+	inline void clean() {
+		materials = NULL;
+		geometry = NULL;
+		lights = NULL;
+	}
+	inline bool host(SceneType *scene) {
+		if (scene == NULL) { clean(); return false; }
+		materials = scene->materials.cpuHandle();
+		geometry = scene->geometry.cpuHandle();
+		lights = scene->lights.cpuHandle();
+		return (!hasError());
+	}
+	inline bool device(SceneType *scene, int deviceId) {
+		if (scene == NULL) { clean(); return false; }
+		materials = scene->materials.gpuHandle(deviceId);
+		geometry = scene->geometry.gpuHandle(deviceId);
+		lights = scene->lights.gpuHandle(deviceId);
+		return (!hasError());
+	}
 };
 
-
-
-
-#include"Scene.impl.cuh"
+typedef Scene<BakedTriFace, Octree<Renderable<BakedTriFace> > > TriScene;
