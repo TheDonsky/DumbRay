@@ -7,7 +7,6 @@
 #include"DataStructures/GeneralPurpose/Handler/Handler.test.cuh"
 #include"DataStructures/Objects/Components/Shaders/Material.test.cuh"
 #include"DataStructures/GeneralPurpose/TypeTools/TypeTools.test.cuh"
-#include"DataStructures/Objects/Scene/SceneHandler/SceneHandler.test.cuh"
 #include"DataStructures/Renderers/Renderer/Renderer.test.cuh"
 #include"DataStructures/Screen/FrameBuffer/MemoryMappedFrameBuffer/MemoryMappedFrameBuffer.test.cuh"
 #include"DataStructures/Screen/FrameBuffer/BlockBasedFrameBuffer/BlockBasedFrameBuffer.test.cuh"
@@ -35,7 +34,6 @@ namespace {
 		cudaSetDevice(0);
 		Device::dumpCurrentDevice();
 		std::map<std::string, TestEntry> tests;
-		tests["scene_handler"] = { "Basic test for SceneHandler structure", SceneHandlerTest::test };
 		tests["renderer"] = { "Basic test for standrad Renderer pipeline", RendererTest::test };
 		tests["type_tools"] = { "General tests for TypeTools and it's default implementations", TypeToolsTest::test };
 		tests["handler"] = { "General test for generic Handler type", HandlerTest::test };
