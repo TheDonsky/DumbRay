@@ -1,29 +1,33 @@
-
-
 {
-	"meshes": {
-		"main_meshes": { "source": "main_meshes.obj" },
-		"some_other_meshes": { "source": "some_other_meshes.obj" }
-	},
-	"materials": {
-		"glossy_material": {
+	"materials": [
+		{
+			"name": "glossy_material",
 			"type": "dumb_based",
 			"preset": "glossy",
 			"fresnel": [ 0.9, 0.8, 0.7 ],
 			"ignored_field": "bullshite"
+		},
+		{
+			"name": "gold_material",
+			"type": "dumb_based",
+			"preset": "gold"
 		}
-	},
-	"lights": {
-		"sun": {
-			"type": "simple_soft_directional",
+	],
+	"lights": [
+		{
+			"type": "simple_ssoft_directional",
 			"direction": [ 1, -1, 1 ],
 			"color": [ 1, 1, 0.9 ],
 			"softness": 0.25
 		}
-	},
-	"objects": {
-		"item_0": {
-			"mesh": "objects::box",
+	],
+	"objects": [
+		{
+			"name": "item_0",
+			"mesh": {
+				"obj": "scene_file_0.obj",
+				"object": "object"
+			},
 			"transform": {
 				"recenter": false,
 				"position": [ 0, 0, 0 ],
@@ -33,12 +37,48 @@
 			},
 			"material": "glossy_material"
 		},
-		"item_1": {
-			"mesh": "objects::box",
+		{
+			"name": "item_1",
+			"mesh": { "obj": "scene_file_1.obj" },
 			"transform": { "position": [ 32, 0, 32 ] },
-			"material": "glossy_material"
+			"material": "gold_material"
+		},
+		{
+			"mesh": {
+				"primitive": "sphere",
+				"radius": 18.0,
+				"segements": 32
+			},
+			"material": {
+				"type": "dumb_based",
+				"preset": "matte"
+			}
+		},
+		{
+			"mesh": {
+				"primitive": "sphere",
+				"radius": 18.0,
+				"segements": 32
+			},
+			"transform": { "position": [ 0, 32, 0 ] },
+			"material": {
+				"name": "unnamed_sphere_material",
+				"type": "dumb_based",
+				"preset": "matte",
+				"fresnel": [ 0.9, 0.8, 0.7 ]
+			}
+		},
+		{
+			"name": "named_sphere",
+			"mesh": {
+				"primitive": "sphere",
+				"radius": 18.0,
+				"segements": 32
+			},
+			"transform": { "position": [ 0, 64, 0 ] },
+			"material": "unnamed_sphere_material"
 		}
-	},
+	],
 	"camera": {
 		"lense": {
 			"type": "simple_stochastic",
