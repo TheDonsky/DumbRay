@@ -1,7 +1,9 @@
 #pragma once
-
+#include"../../../../Namespaces/Dson/Dson.h"
 #include"../../../Primitives/Pure/Vector3/Vector3.h"
 #include"../../../Primitives/Compound/Ray/Ray.h"
+#include<iostream>
+
 
 class Transform{
 public:
@@ -123,6 +125,17 @@ public:
 	__device__ __host__ inline Ray downRay()const;
 	// Direction
 	__device__ __host__ inline Ray ray(Vector3 dir)const;
+
+
+
+
+
+	/** ########################################################################## **/
+	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+	/** ########################################################################## **/
+	/** From/to Dson: **/
+	inline bool fromDson(const Dson::Object &object, std::ostream *errorStream);
+	inline Dson::Dict toDson()const;
 
 
 

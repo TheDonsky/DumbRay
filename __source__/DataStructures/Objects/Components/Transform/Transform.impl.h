@@ -202,6 +202,52 @@ __device__ __host__ inline Ray Transform::ray(Vector3 dir)const {
 
 
 
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
+/** From/to Dson: **/
+inline bool Transform::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+	if (object.type() != Dson::Object::DSON_DICT) {
+		if (errorStream != NULL) (*errorStream) << "Transform can not be constructed from any Dson::Object other than Dson::Dict" << std::endl;
+		return false;
+	}
+	const Dson::Dict &dict = (*((Dson::Dict*)(&object)));
+	Transform transform;
+	Vector3 vector;
+	if (dict.contains("position")) {
+		if (!vector.fromDson(dict["position"], errorStream)) return false;
+		transform.setPosition(vector);
+	}
+	if (dict.contains("rotation")) {
+		if (!vector.fromDson(dict["rotation"], errorStream)) return false;
+		transform.setEulerAngles(vector);
+	}
+	if (dict.contains("scale")) {
+		if (!vector.fromDson(dict["scale"], errorStream)) return false;
+		transform.setScale(vector);
+	}
+	if (dict.contains("relative_position")) {
+		if (!vector.fromDson(dict["relative_position"], errorStream)) return false;
+		transform.move(
+			(vector.x * transform.right()) + 
+			(vector.y * transform.up()) + 
+			(vector.z * transform.front()));
+	}
+	(*this) = transform;
+	return true;
+}
+inline Dson::Dict Transform::toDson()const {
+	Dson::Dict dict;
+	dict.set("position", getPosition().toDson());
+	dict.set("rotation", getEulerAngles().toDson());
+	dict.set("scale", getScale().toDson());
+	return dict;
+}
+
+
+
+
+
 /** -------------------------------------------------------------------------- **/
 /** System rebake: **/
 __device__ __host__ inline void Transform::rebake(){

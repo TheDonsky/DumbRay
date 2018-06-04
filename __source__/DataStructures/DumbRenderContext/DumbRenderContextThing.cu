@@ -1,24 +1,24 @@
-#include "RenderContext.cuh"
+#include "DumbRenderContext.cuh"
 
 
 namespace {
-	typedef std::unordered_map<std::string, RenderContext::MaterialFromDsonFunction> MaterialParserMap;
+	typedef std::unordered_map<std::string, DumbRenderContext::MaterialFromDsonFunction> MaterialParserMap;
 	static MaterialParserMap materialParsers;
-	typedef std::unordered_map<std::string, RenderContext::LightFromDsonFunction> LightParserMap;
+	typedef std::unordered_map<std::string, DumbRenderContext::LightFromDsonFunction> LightParserMap;
 	static LightParserMap lightParsers;
-	typedef std::unordered_map<std::string, RenderContext::LenseFromDsonFunction> LenseParserMap;
+	typedef std::unordered_map<std::string, DumbRenderContext::LenseFromDsonFunction> LenseParserMap;
 	static LenseParserMap lenseParsers;
 }
 
 
-RenderContext::RenderContext() {
+DumbRenderContext::DumbRenderContext() {
 
 }
-RenderContext::~RenderContext() {
+DumbRenderContext::~DumbRenderContext() {
 
 }
 
-bool RenderContext::fromDson(const Dson::Object *object, std::ostream *errorStream) {
+bool DumbRenderContext::fromDson(const Dson::Object *object, std::ostream *errorStream) {
 	if (object == NULL) {
 		if (errorStream != NULL) (*errorStream) << "Error: Render context can not be constructed from a NULL Dson::Object" << std::endl;
 		return false;
@@ -47,15 +47,15 @@ bool RenderContext::fromDson(const Dson::Object *object, std::ostream *errorStre
 	return true;
 }
 
-void RenderContext::registerMaterialType(
+void DumbRenderContext::registerMaterialType(
 	const std::string &typeName, MaterialFromDsonFunction fromDsonFunction) {
 	materialParsers[typeName] = fromDsonFunction;
 }
-void RenderContext::registerLightType(
+void DumbRenderContext::registerLightType(
 	const std::string &typeName, LightFromDsonFunction fromDsonFunction) {
 	lightParsers[typeName] = fromDsonFunction;
 }
-void RenderContext::registerLenseType(
+void DumbRenderContext::registerLenseType(
 	const std::string &typeName, LenseFromDsonFunction fromDsonFunction) {
 	lenseParsers[typeName] = fromDsonFunction;
 }
@@ -64,8 +64,8 @@ void RenderContext::registerLenseType(
 
 
 
-bool RenderContext::parseMaterials(const Dson::Object &object, std::ostream *errorStream) {
-	if (object.type != Dson::Object::DSON_ARRAY) {
+bool DumbRenderContext::parseMaterials(const Dson::Object &object, std::ostream *errorStream) {
+	if (object.type() != Dson::Object::DSON_ARRAY) {
 		if (errorStream != NULL) (*errorStream) << "Error: Materials should be contained in Dson::Array" << std::endl;
 		return false;
 	}
@@ -75,8 +75,8 @@ bool RenderContext::parseMaterials(const Dson::Object &object, std::ostream *err
 	}
 	return true;
 }
-bool RenderContext::parseLights(const Dson::Object &object, std::ostream *errorStream) {
-	if (object.type != Dson::Object::DSON_ARRAY) {
+bool DumbRenderContext::parseLights(const Dson::Object &object, std::ostream *errorStream) {
+	if (object.type() != Dson::Object::DSON_ARRAY) {
 		if (errorStream != NULL) (*errorStream) << "Error: Lights should be contained in Dson::Array" << std::endl;
 		return false;
 	}
@@ -86,8 +86,8 @@ bool RenderContext::parseLights(const Dson::Object &object, std::ostream *errorS
 	}
 	return true;
 }
-bool RenderContext::parseObjects(const Dson::Object &object, std::ostream *errorStream) {
-	if (object.type != Dson::Object::DSON_ARRAY) {
+bool DumbRenderContext::parseObjects(const Dson::Object &object, std::ostream *errorStream) {
+	if (object.type() != Dson::Object::DSON_ARRAY) {
 		if (errorStream != NULL) (*errorStream) << "Error: Objects should be contained in Dson::Array" << std::endl;
 		return false;
 	}
@@ -97,8 +97,8 @@ bool RenderContext::parseObjects(const Dson::Object &object, std::ostream *error
 	}
 	return true;
 }
-bool RenderContext::parseCamera(const Dson::Object &object, std::ostream *errorStream) {
-	if (object.type != Dson::Object::DSON_DICT) {
+bool DumbRenderContext::parseCamera(const Dson::Object &object, std::ostream *errorStream) {
+	if (object.type() != Dson::Object::DSON_DICT) {
 		if (errorStream != NULL) (*errorStream) << "Error: Camera should be contained in Dson::Dict" << std::endl;
 		return false;
 	}
@@ -132,8 +132,8 @@ bool RenderContext::parseCamera(const Dson::Object &object, std::ostream *errorS
 }
 
 
-bool RenderContext::parseMaterial(const Dson::Object &object, std::ostream *errorStream) {
-	if (object.type != Dson::Object::DSON_DICT) {
+bool DumbRenderContext::parseMaterial(const Dson::Object &object, std::ostream *errorStream) {
+	if (object.type() != Dson::Object::DSON_DICT) {
 		if (errorStream != NULL) (*errorStream) << "Error: Material should be contained in Dson::Dict" << std::endl;
 		return false;
 	}
@@ -165,8 +165,8 @@ bool RenderContext::parseMaterial(const Dson::Object &object, std::ostream *erro
 	}
 	return true;
 }
-bool RenderContext::parseLight(const Dson::Object &object, std::ostream *errorStream) {
-	if (object.type != Dson::Object::DSON_DICT) {
+bool DumbRenderContext::parseLight(const Dson::Object &object, std::ostream *errorStream) {
+	if (object.type() != Dson::Object::DSON_DICT) {
 		if (errorStream != NULL) (*errorStream) << "Error: Light should be contained in Dson::Dict" << std::endl;
 		return false;
 	}
@@ -193,8 +193,8 @@ bool RenderContext::parseLight(const Dson::Object &object, std::ostream *errorSt
 	}
 	return true;
 }
-bool RenderContext::parseObject(const Dson::Object &object, std::ostream *errorStream) {
-	if (object.type != Dson::Object::DSON_DICT) {
+bool DumbRenderContext::parseObject(const Dson::Object &object, std::ostream *errorStream) {
+	if (object.type() != Dson::Object::DSON_DICT) {
 		if (errorStream != NULL) (*errorStream) << "Error: Object should be contained in Dson::Dict" << std::endl;
 		return false;
 	}

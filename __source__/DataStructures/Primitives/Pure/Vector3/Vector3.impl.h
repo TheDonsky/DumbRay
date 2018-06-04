@@ -746,6 +746,44 @@ inline std::ostream& operator<<(std::ostream &stream, const Vector3 &v){
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
+/** From/to Dson: **/
+inline bool Vector3::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+	if (object.type() != Dson::Object::DSON_ARRAY) {
+		if (errorStream != NULL) (*errorStream) << "Vector3 can not be constructed from any Dson::Object other than Dson::Array" << std::endl;
+		return false;
+	}
+	const Dson::Array &arr = (*((Dson::Array*)(&object)));
+	x = y = z = 0;
+	int numId = 0;
+	for (int i = 0; i < arr.size(); i++)
+		if (arr[i].type() == Dson::Object::DSON_NUMBER) {
+			float number = ((Dson::Number*)(&arr[i]))->floatValue();
+			if (numId == 0) x = number;
+			else if (numId == 1) y = number;
+			else if (numId == 2) z = number;
+			numId++;
+		}
+	return true;
+}
+inline Dson::Array Vector3::toDson()const {
+	Dson::Array arr;
+	Dson::Number number;
+	number.value() = ((double)x);
+	arr.push(number);
+	number.value() = ((double)y);
+	arr.push(number);
+	number.value() = ((double)y);
+	arr.push(number);
+	return arr;
+}
+
+
+
+
+
+/** ########################################################################## **/
+/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+/** ########################################################################## **/
 /** Macro undefs: **/
 
 /** ------------------------------------ **/

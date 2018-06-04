@@ -8,10 +8,10 @@
 #include <unordered_map>
 
 
-class RenderContext {
+class DumbRenderContext {
 public:
-	RenderContext();
-	~RenderContext();
+	DumbRenderContext();
+	~DumbRenderContext();
 
 	bool fromDson(const Dson::Object *object, std::ostream *errorStream);
 
@@ -23,9 +23,9 @@ public:
 	inline static bool materialFromDson(
 		Material<BakedTriFace> &mat, 
 		const Dson::Dict &object, std::ostream *errorStream) {
-		Type* object = mat.use<Type>();
-		if (object == NULL) return false;
-		else return object->fromDson(object, errorStream);
+		Type* materialObject = mat.use<Type>();
+		if (materialObject == NULL) return false;
+		else return materialObject->fromDson(object, errorStream);
 	}
 	static void registerMaterialType(
 		const std::string &typeName, MaterialFromDsonFunction fromDsonFunction);
@@ -39,9 +39,9 @@ public:
 	template <typename Type>
 	inline static bool lightFromDson(
 		Light &light, const Dson::Dict &object, std::ostream *errorStream) {
-		Type* object = light.use<Type>();
-		if (object == NULL) return false;
-		else return object->fromDson(object, errorStream);
+		Type* lightObject = light.use<Type>();
+		if (lightObject == NULL) return false;
+		else return lightObject->fromDson(object, errorStream);
 	}
 	static void registerLightType(
 		const std::string &typeName, LightFromDsonFunction fromDsonFunction);
@@ -55,9 +55,9 @@ public:
 	template <typename Type>
 	inline static bool lenseFromDson(
 		Lense &lense, const Dson::Dict &object, std::ostream *errorStream) {
-		Type* object = lense.use<Type>();
-		if (object == NULL) return false;
-		else return object->fromDson(object, errorStream);
+		Type* lenseObject = lense.use<Type>();
+		if (lenseObject == NULL) return false;
+		else return lenseObject->fromDson(object, errorStream);
 	}
 	static void registerLenseType(
 		const std::string &typeName, LenseFromDsonFunction fromDsonFunction);
@@ -70,8 +70,8 @@ public:
 
 
 private:
-	__device__ __host__ inline RenderContext(const RenderContext &) {}
-	__device__ __host__ inline RenderContext& operator=(const RenderContext &) {}
+	__device__ __host__ inline DumbRenderContext(const DumbRenderContext &) {}
+	__device__ __host__ inline DumbRenderContext& operator=(const DumbRenderContext &) {}
 
 
 	bool parseMaterials(const Dson::Object &object, std::ostream *errorStream);

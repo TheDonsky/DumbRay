@@ -3,6 +3,7 @@
 #include"cuda_runtime.h"
 #include<iostream>
 #include<math.h>
+#include"../../../../Namespaces/Dson/Dson.h"
 
 #define PI 3.14159265359f
 #define RADIAN 57.29577951308233f
@@ -321,6 +322,17 @@ struct Vector3 : float3 {
 	inline friend std::istream& operator>>(std::istream &stream, Vector3 &v);
 	// Stream operator for output.
 	inline friend std::ostream& operator<<(std::ostream &stream, const Vector3 &v);
+
+
+
+
+
+	/** ########################################################################## **/
+	/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
+	/** ########################################################################## **/
+	/** From/to Dson: **/
+	inline bool fromDson(const Dson::Object &object, std::ostream *errorStream);
+	inline Dson::Array toDson()const;
 };
 
 
