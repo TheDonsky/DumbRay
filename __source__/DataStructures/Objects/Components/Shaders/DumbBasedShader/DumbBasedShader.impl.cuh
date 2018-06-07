@@ -100,3 +100,8 @@ __dumb__ float DumbBasedShader::fresnel(float r, const Vector3 &wh, const Vector
 	register float sqrVal = (val * val);
 	return (r + ((1.0f - r) * (sqrVal * sqrVal * val)));
 }
+
+
+inline bool DumbBasedShader::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+	return true;
+}

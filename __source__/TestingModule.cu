@@ -13,6 +13,7 @@
 #include"DataStructures/Screen/FrameBuffer/FrameBuffer.test.cuh"
 #include"DataStructures/Renderers/DumbRenderer/DumbRenderer.test.cuh"
 #include"DataStructures/GeneralPurpose/DumbRand/DumbRand.test.cuh"
+#include"DataStructures/DumbRenderContext/DumbRenderContext.cuh"
 #include"Namespaces/Images/Images.test.cuh"
 #include"Namespaces/Device/Device.cuh"
 #include"Namespaces/Dson/Dson.test.h"
@@ -75,6 +76,9 @@ namespace {
 		tests["dson_to_string"] = { "Test of how well Dson gets translated to string", DsonTest::testToString };
 		tests["dson_from_string"] = { "Test of how well Dson gets parsed from string", DsonTest::testFromString };
 		tests["test_checkerboard"] = { "Playground test of checkerboard rendering", CheckerboardTest::test };
+		
+		tests["scene_file"] = { "Test for rendering .dumb file", DumbRenderContext::test };
+		
 		std::cout << "___________________________________________________________________" << std::endl;
 		std::cout << "WELCOME TO DumbRay TESTING MODULE" << std::endl << "(enter ? for further instructions or any test to run)" << std::endl;
 		while (true) {

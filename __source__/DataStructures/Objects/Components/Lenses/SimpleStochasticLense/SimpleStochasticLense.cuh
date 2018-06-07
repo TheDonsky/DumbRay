@@ -15,6 +15,8 @@ public:
 	__dumb__ void getPixelSamples(const LenseGetPixelSamplesRequest &request, RaySamples *samples)const;
 	__dumb__ Color getPixelColor(const LenseGetPixelColorRequest &request)const;
 
+	inline bool fromDson(const Dson::Object &object, std::ostream *errorStream);
+
 private:
 	float x;
 };

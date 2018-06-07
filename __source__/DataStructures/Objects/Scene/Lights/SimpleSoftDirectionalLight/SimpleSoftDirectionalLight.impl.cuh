@@ -17,3 +17,8 @@ __dumb__ void SimpleSoftDirectionalLight::getVertexPhotons(const LightVertexSamp
 	Vector3 direction = (request.point - origin);
 	result->set(Photon(Ray(origin, direction), color));
 }
+
+
+inline bool SimpleSoftDirectionalLight::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+	return true;
+}

@@ -13,6 +13,7 @@ public:
 	DumbRenderContext();
 	~DumbRenderContext();
 
+	bool fromFile(const std::string &filename, std::ostream *errorStream);
 	bool fromDson(const Dson::Object *object, std::ostream *errorStream);
 
 
@@ -66,8 +67,15 @@ public:
 		registerLenseType(typeName, lenseFromDson<Type>);
 	}
 
+	static void registerMaterials();
+	static void registerLights();
+	static void registerLenses();
 
 
+	void runWindowRender();
+
+	static void test();
+	static void testFile(const std::string &filename);
 
 private:
 	__device__ __host__ inline DumbRenderContext(const DumbRenderContext &) {}
@@ -79,11 +87,16 @@ private:
 	bool parseObjects(const Dson::Object &object, std::ostream *errorStream);
 	bool parseCamera(const Dson::Object &object, std::ostream *errorStream);
 
-	bool parseMaterial(const Dson::Object &object, std::ostream *errorStream);
+	bool parseMaterial(const Dson::Object &object, std::ostream *errorStream, int *materialId = NULL);
 	bool parseLight(const Dson::Object &object, std::ostream *errorStream);
 	bool parseObject(const Dson::Object &object, std::ostream *errorStream);
 
+	bool getObjMesh(const Dson::Dict &dict, BakedTriMesh &mesh, std::ostream *errorStream);
+
 	std::unordered_map<std::string, int> materials;
-	std::unordered_map<std::string, PolyMesh> meshes;
+	typedef std::unordered_map<std::string, PolyMesh> MeshDict;
+	typedef std::unordered_map<std::string, MeshDict> ObjDict;
+	ObjDict objectFiles;
 	DumbRenderer::SceneType scene;
+	ReferenceManager<Camera> camera;
 };

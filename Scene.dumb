@@ -15,7 +15,7 @@
 	],
 	"lights": [
 		{
-			"type": "simple_ssoft_directional",
+			"type": "simple_soft_directional",
 			"direction": [ 1, -1, 1 ],
 			"color": [ 1, 1, 0.9 ],
 			"softness": 0.25

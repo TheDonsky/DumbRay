@@ -24,3 +24,8 @@ __dumb__ Color SimpleStochasticLense::getPixelColor(const LenseGetPixelColorRequ
 	else return request.photon.color;
 }
 
+
+inline bool SimpleStochasticLense::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+	return true;
+}
+
