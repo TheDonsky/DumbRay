@@ -22,6 +22,23 @@ namespace Dson {
 
 		virtual Type type()const = 0;
 		virtual std::string toString(const std::string &baseInset = "\t", const std::string &inset = "")const = 0;
+
+		template<typename DsonType>
+		inline DsonType *safeConvert(std::ostream *errorStream = NULL, const std::string &error = "Dson class mismatch...", Type targetType = DsonType().type()) {
+			if (type() == targetType) return ((DsonType*)this);
+			else {
+				if (errorStream != NULL) (*errorStream) << error << std::endl;
+				return NULL;
+			}
+		}
+		template<typename DsonType>
+		inline const DsonType *safeConvert(std::ostream *errorStream = NULL, const std::string &error = "Dson class mismatch...", Type targetType = DsonType().type()) const {
+			if (type() == targetType) return ((const DsonType*)this);
+			else {
+				if (errorStream != NULL) (*errorStream) << error << std::endl;
+				return NULL;
+			}
+		}
 	private:
 	};
 
@@ -46,6 +63,8 @@ namespace Dson {
 
 		virtual Type type()const;
 		virtual std::string toString(const std::string &baseInset = "\t", const std::string &inset = "")const;
+
+
 	private:
 		std::unordered_map<std::string, Object*> map;
 	};

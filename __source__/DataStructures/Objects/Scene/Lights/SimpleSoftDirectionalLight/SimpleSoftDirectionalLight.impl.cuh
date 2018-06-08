@@ -20,5 +20,30 @@ __dumb__ void SimpleSoftDirectionalLight::getVertexPhotons(const LightVertexSamp
 
 
 inline bool SimpleSoftDirectionalLight::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+	const Dson::Dict *dict = object.safeConvert<Dson::Dict>(errorStream, "Error: SimpleSoftDirectionalLight can only be constructed from Dson::Dict...");
+	Color shade = color;
+	Vector3 direction = dir;
+	float distance = dist;
+	float softness = (soft / ((distance == 0.0f) ? 0.0f : distance));
+	if (dict->contains("color")) {
+		Vector3 colorVector(0.0f, 0.0f, 0.0f);
+		if (!colorVector.fromDson(dict->get("color"), errorStream)) return false;
+		shade = ((ColorRGB)colorVector);
+	}
+	if (dict->contains("direction")) {
+		direction = Vector3(0.0f, 0.0f, 0.0f);
+		if (!direction.fromDson(dict->get("direction"), errorStream)) return false;
+	}
+	if (dict->contains("distance")) {
+		const Dson::Number *distanceObject = dict->get("distance").safeConvert<Dson::Number>(errorStream, "Error: SimpleSoftDirectionalLight distance has to have a numeric value...");
+		if (distanceObject == NULL) return false;
+		distance = distanceObject->floatValue();
+	}
+	if (dict->contains("softness")) {
+		const Dson::Number *softnessObject = dict->get("softness").safeConvert<Dson::Number>(errorStream, "Error: SimpleSoftDirectionalLight softness has to have a numeric value...");
+		if (softnessObject == NULL) return false;
+		softness = softnessObject->floatValue();
+	}
+	(*this) = SimpleSoftDirectionalLight(shade, direction, distance, softness);
 	return true;
 }

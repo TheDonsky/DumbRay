@@ -81,6 +81,7 @@ private:
 	__device__ __host__ inline DumbRenderContext(const DumbRenderContext &) {}
 	__device__ __host__ inline DumbRenderContext& operator=(const DumbRenderContext &) {}
 
+	std::string sourcePath;
 
 	bool parseMaterials(const Dson::Object &object, std::ostream *errorStream);
 	bool parseLights(const Dson::Object &object, std::ostream *errorStream);

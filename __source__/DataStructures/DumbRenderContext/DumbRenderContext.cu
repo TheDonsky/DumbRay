@@ -42,7 +42,14 @@ bool DumbRenderContext::fromFile(const std::string &filename, std::ostream *erro
 		return false;
 	}
 	Dson::Object *object = Dson::parse(string, errorStream);
-	return fromDson(object, errorStream);
+	{
+		size_t len = (filename.length());
+		while ((len <= filename.length()) && (len > 0) && (filename[len - 1] != '/') && (filename[len - 1] != '\\')) len--;
+		sourcePath = filename.substr(0, len);
+	}
+	bool rv = fromDson(object, errorStream);
+	sourcePath = "";
+	return rv;
 }
 
 bool DumbRenderContext::fromDson(const Dson::Object *object, std::ostream *errorStream) {
@@ -64,7 +71,7 @@ bool DumbRenderContext::fromDson(const Dson::Object *object, std::ostream *error
 	if (dict.contains("objects")) {
 		if (!parseObjects(dict.get("objects"), errorStream)) return false;
 	}
-	if (!dict.contains("camera")) {
+	if (dict.contains("camera")) {
 		if (!parseCamera(dict.get("camera"), errorStream)) return false;
 	}
 	else {
@@ -305,8 +312,15 @@ bool DumbRenderContext::getObjMesh(const Dson::Dict &dict, BakedTriMesh &mesh, s
 	if (objectFiles.find(objFileName) == objectFiles.end()) {
 		Stacktor<PolyMesh> meshes;
 		Stacktor<String> names;
-		if (!MeshReader::readObj(meshes, names, objFileName)) {
-			if (errorStream != NULL) (*errorStream) << ("Error: Could not read file: '" + objFileName+ "'") << std::endl;
+		std::string objFilePath;
+		{
+			std::ifstream stream;
+			stream.open(objFileName);
+			if (!stream.fail()) objFilePath = objFileName;
+			else objFilePath = (sourcePath + objFileName);
+		}
+		if (!MeshReader::readObj(meshes, names, objFilePath)) {
+			if (errorStream != NULL) (*errorStream) << ("Error: Could not read file: '" + objFileName+ "' (" + objFilePath + ")") << std::endl;
 			return false;
 		}
 		if (meshes.size() != names.size()) {
@@ -344,6 +358,9 @@ bool DumbRenderContext::getObjMesh(const Dson::Dict &dict, BakedTriMesh &mesh, s
 
 
 void DumbRenderContext::runWindowRender() {
+	scene.geometry.cpuHandle()->build();
+	scene.geometry.makeDirty();
+
 	DumbRenderer renderer;
 	renderer.setScene(&scene);
 	renderer.setCamera(&camera);

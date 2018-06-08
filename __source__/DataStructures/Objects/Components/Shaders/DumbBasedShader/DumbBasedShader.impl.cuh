@@ -103,5 +103,48 @@ __dumb__ float DumbBasedShader::fresnel(float r, const Vector3 &wh, const Vector
 
 
 inline bool DumbBasedShader::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+	if (object.type() != Dson::Object::DSON_DICT) {
+		if (errorStream != NULL) (*errorStream) << "Error: DumbBasedShader can only accept Dson::Dict in fromDson method..." << std::endl;
+		return false;
+	}
+	const Dson::Dict &dict = (*((Dson::Dict*)(&object)));
+	if (dict.contains("preset")) {
+		const Dson::String *presetObject = dict["preset"].safeConvert<Dson::String>(errorStream, "Error: DumbBasedShader preset should be of a string type...");
+		if (presetObject == NULL) return false;
+		const std::string &preset = presetObject->value();
+		if (preset == "rough_gold") (*this) = roughGold();
+		else if ((preset == "glossy_gold") || (preset == "gold")) (*this) = glossyGold();
+		else if ((preset == "glossy_finish") || (preset == "glossy")) (*this) = glossyFinish();
+		else if ((preset == "matte_finish") || (preset == "matte")) (*this) = matteFinish();
+		else {
+			if (errorStream != NULL) (*errorStream) << ("Error: DumbBasedShader preset \"" + preset + "\" does not exist...") << std::endl;
+			return false;
+		}
+	}
+	ColorRGB fresnelFactor = fres;
+	float metal = specMass;
+	float specular = spec;
+	ColorRGB diffuse = diff / ((metal == 1.0f) ? 1.0f : (1.0f - metal));
+	if (dict.contains("fresnel")) {
+		Vector3 fresnelColorVector(0.0f, 0.0f, 0.0f);
+		if (!fresnelColorVector.fromDson(dict["fresnel"], errorStream)) return false;
+		fresnelFactor = fresnelColorVector;
+	}
+	if (dict.contains("diffuse")) {
+		Vector3 diffuseColorVector(0.0f, 0.0f, 0.0f);
+		if (!diffuseColorVector.fromDson(dict["diffuse"], errorStream)) return false;
+		diffuse = diffuseColorVector;
+	}
+	if (dict.contains("specular")) {
+		const Dson::Number *specularValue = dict["specular"].safeConvert<Dson::Number>(errorStream, "Error: DumbBasedShader specular value hat to be a number...");
+		if (specularValue == NULL) return false;
+		specular = specularValue->floatValue();
+	}
+	if (dict.contains("metal")) {
+		const Dson::Number *metalValue = dict["metal"].safeConvert<Dson::Number>(errorStream, "Error: DumbBasedShader metal value hat to be a number...");
+		if (metalValue == NULL) return false;
+		metal = metalValue->floatValue();
+	}
+	(*this) = DumbBasedShader(fresnelFactor, specular, diffuse, metal);
 	return true;
 }
