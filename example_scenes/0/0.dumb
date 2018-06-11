@@ -27,6 +27,13 @@
 			"softness": 0.75
 		},
 		{
+			"type": "simple_soft_directional",
+			"direction": [ -1, -1, 1 ],
+			"color": [ 1, 1, 1 ],
+			"distance": 1,
+			"softness": 10000
+		},
+		{
 			"type": "simple_spherical",
 			"color": [ 1024, 2048, 1024 ],
 			"position": [ -32, 48, -48 ],
@@ -34,14 +41,19 @@
 		},
 		{
 			"type": "simple_spherical",
-			"color": [ 8192, 8192, 8192 ],
-			"position": [ 64, 256, 64 ],
-			"radius": 16.5
+			"color": [ 2048, 2048, 2048 ],
+			"position": [ -8, 16, -12 ],
+			"radius": 4.8
+		},
+		{
+			"type": "simple_spherical",
+			"color": [ 8192, 8192, 4096 ],
+			"position": [ 0, 128, -32 ],
+			"radius": 16
 		}
 	],
 	"objects": [
 		{
-			"name": "item_0",
 			"mesh": {
 				"obj": "files/cargo.obj",
 				"object": "Plane001"
@@ -49,7 +61,6 @@
 			"material": "glossy_material"
 		},
 		{
-			"name": "item_0",
 			"mesh": {
 				"obj": "files/cargo.obj",
 				"object": "Box002"
@@ -149,6 +160,25 @@
 				"object": "Box009"
 			},
 			"material": "glossy_metal"
+		},
+		{
+			"mesh": {
+				"obj": "files/cargo.obj",
+				"object": "Box002"
+			},
+			"transform": {
+				"position": [ -8, 32, -24 ],
+				"scale": [ 0.5, 0.5, 0.5 ],
+				"rotation": [ 4, 32, 8 ]
+			},
+			"material": {
+				"type": "dumb_based",
+				"name": "garbage",
+				"fresnsel": [ 0.95, 0.95, 0.95 ],
+				"diffuse": [ 1.0, 1.0, 1.0 ],
+				"metal": 1,
+				"specular": 64
+			}
 		}
 	],
 	"camera": {

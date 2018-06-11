@@ -360,16 +360,19 @@ bool DumbRenderContext::getObjMesh(const Dson::Dict &dict, BakedTriMesh &mesh, s
 void DumbRenderContext::runWindowRender() {
 	scene.geometry.cpuHandle()->build();
 	scene.geometry.makeDirty();
+	
+	Renderer::ThreadConfiguration configuration;
+	configuration.configureEveryGPU(2);
+	configuration.configureCPU(Renderer::ThreadConfiguration::ALL_BUT_GPU_THREADS);
 
-	DumbRenderer renderer;
+	DumbRenderer renderer(configuration);
 	renderer.setScene(&scene);
 	renderer.setCamera(&camera);
 
 	FrameBufferManager frameBuffer;
 	frameBuffer.cpuHandle()->use<BlockBuffer>();
 
-	//bool shouldSynchFromDevice = (!((configuration.numHostThreads() > 0) || (configuration.numActiveDevices() > 1)));
-	bool shouldSynchFromDevice = true;
+	bool shouldSynchFromDevice = (!((configuration.numHostThreads() > 0) || (configuration.numActiveDevices() > 1)));
 	BufferedWindow bufferedWindow(shouldSynchFromDevice ? BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE : 0);
 
 	BufferedRenderProcess process;
