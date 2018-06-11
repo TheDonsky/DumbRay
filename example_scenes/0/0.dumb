@@ -4,7 +4,7 @@
 			"name": "glossy_material",
 			"type": "dumb_based",
 			"preset": "glossy",
-			"diffuse": [ 0.5, 0.5, 0.5 ]
+			"diffuse": [ 0.25, 0.1, 0.1 ]
 		},
 		{
 			"name": "matte_material",
@@ -17,14 +17,26 @@
 		{
 			"type": "simple_soft_directional",
 			"direction": [ 1, -1, 1 ],
-			"color": [ 1, 1, 1 ],
+			"color": [ 0.25, 0.25, 0.25 ],
 			"softness": 0.25
 		},
 		{
 			"type": "simple_soft_directional",
 			"direction": [ -1, -1, 1 ],
-			"color": [ 0, 1, 0 ],
+			"color": [ 0, 0.35, 0 ],
 			"softness": 0.75
+		},
+		{
+			"type": "simple_spherical",
+			"color": [ 1024, 2048, 1024 ],
+			"position": [ -32, 48, -48 ],
+			"radius": 8.5
+		},
+		{
+			"type": "simple_spherical",
+			"color": [ 8192, 8192, 8192 ],
+			"position": [ 64, 256, 64 ],
+			"radius": 16.5
 		}
 	],
 	"objects": [
@@ -49,10 +61,9 @@
 				"scale": [ 1, 1, 1 ]
 			},
 			"material": {
-				"name": "gold_bullshit",
-				"type": "dumb_based",
-				"preset": "gold",
-				"specular": 8
+				"type": "simple_stochastic",
+				"color": [ 1, 0, 1 ],
+				"smoothness": 0.5
 			}
 		},
 		{
@@ -61,7 +72,12 @@
 				"obj": "files/cargo.obj",
 				"object": "Box003"
 			},
-			"material": "gold_bullshit"
+			"material": {
+				"name": "gold_bullshit",
+				"type": "dumb_based",
+				"preset": "gold",
+				"specular": 8
+			}
 		},
 		{
 			"name": "item_0",

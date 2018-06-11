@@ -36,3 +36,31 @@ __dumb__ Color SimpleStochasticShader::getReflectedColor(const ShaderReflectedCo
 	return ((request.photon.color * albedo) * ((diff * reflectionCos) + (gloss * pow(observerCos, shine))));
 }
 
+
+inline bool SimpleStochasticShader::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+	const Dson::Dict *dict = object.safeConvert<Dson::Dict>(errorStream, "Error: SimpleStochasticShader can not be constructed from any other Dson::Object but Dson::Dict...");
+	if (dict == NULL) return false;
+	Vector3 color = albedo;
+	float diffuse = diff;
+	float smoothness = gloss;
+	float shininess = shine;
+	if (dict->contains("color"))
+		if (!color.fromDson(dict->get("color"), errorStream)) return false;
+	if (dict->contains("diffuse")) {
+		const Dson::Number *number = dict->get("diffuse").safeConvert<Dson::Number>(errorStream, "Error: SimpleStochasticShader diffuse has to be a number.");
+		if (number == NULL) return false;
+		diffuse = number->floatValue();
+	}
+	if (dict->contains("smoothness")) {
+		const Dson::Number *number = dict->get("smoothness").safeConvert<Dson::Number>(errorStream, "Error: SimpleStochasticShader smoothness has to be a number.");
+		if (number == NULL) return false;
+		smoothness = number->floatValue();
+	}
+	if (dict->contains("shininess")) {
+		const Dson::Number *number = dict->get("shininess").safeConvert<Dson::Number>(errorStream, "Error: SimpleStochasticShader shininess has to be a number.");
+		if (number == NULL) return false;
+		shininess = number->floatValue();
+	}
+	(*this) = SimpleStochasticShader(color, diffuse, smoothness, shininess);
+	return true;
+}

@@ -12,6 +12,8 @@ public:
 	__dumb__ Color getReflectedColor(const ShaderReflectedColorRequest<BakedTriFace> &request)const;
 
 
+	inline bool fromDson(const Dson::Object &object, std::ostream *errorStream);
+
 
 private:
 	ColorRGB albedo;
