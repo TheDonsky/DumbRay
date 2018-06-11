@@ -1,0 +1,149 @@
+{
+	"materials": [
+		{
+			"name": "glossy_material",
+			"type": "dumb_based",
+			"preset": "glossy",
+			"diffuse": [ 0.5, 0.5, 0.5 ]
+		},
+		{
+			"name": "matte_material",
+			"type": "dumb_based",
+			"preset": "matte",
+			"diffuse": [ 0.5, 0.5, 0.0 ]
+		}
+	],
+	"lights": [
+		{
+			"type": "simple_soft_directional",
+			"direction": [ 1, -1, 1 ],
+			"color": [ 1, 1, 1 ],
+			"softness": 0.25
+		},
+		{
+			"type": "simple_soft_directional",
+			"direction": [ -1, -1, 1 ],
+			"color": [ 0, 1, 0 ],
+			"softness": 0.75
+		}
+	],
+	"objects": [
+		{
+			"name": "item_0",
+			"mesh": {
+				"obj": "files/cargo.obj",
+				"object": "Plane001"
+			},
+			"material": "glossy_material"
+		},
+		{
+			"name": "item_0",
+			"mesh": {
+				"obj": "files/cargo.obj",
+				"object": "Box002"
+			},
+			"transform": {
+				"position": [ 0, 0, 0 ],
+				"relative_position": [ 0, 0, 0 ],
+				"rotation": [ 0, 0, 0 ],
+				"scale": [ 1, 1, 1 ]
+			},
+			"material": {
+				"name": "gold_bullshit",
+				"type": "dumb_based",
+				"preset": "gold",
+				"specular": 8
+			}
+		},
+		{
+			"name": "item_0",
+			"mesh": {
+				"obj": "files/cargo.obj",
+				"object": "Box003"
+			},
+			"material": "gold_bullshit"
+		},
+		{
+			"name": "item_0",
+			"mesh": {
+				"obj": "files/cargo.obj",
+				"object": "Box004"
+			},
+			"material": "matte_material"
+		},
+		{
+			"name": "item_0",
+			"mesh": {
+				"obj": "files/cargo.obj",
+				"object": "Box005"
+			},
+			"material": {
+				"type": "dumb_based",
+				"preset": "glossy",
+				"diffuse": [ 0.75, 0.1, 0.1 ]
+			}
+		},
+		{
+			"name": "item_0",
+			"mesh": {
+				"obj": "files/cargo.obj",
+				"object": "Box006"
+			},
+			"material": {
+				"type": "dumb_based",
+				"name": "glossy_metal",
+				"fresnsel": [ 0.9, 0.9, 0.9 ],
+				"diffuse": [ 0.75, 0.1, 0.1 ],
+				"specular": 32,
+				"metal": 0.87
+			}
+		},
+		{
+			"name": "item_0",
+			"mesh": {
+				"obj": "files/cargo.obj",
+				"object": "Box007"
+			},
+			"material": {
+				"type": "dumb_based",
+				"fresnsel": [ 0.5, 0.5, 0.9 ],
+				"diffuse": [ 0.0, 0.0, 1.0 ],
+				"metal": 0.75
+			}
+		},
+		{
+			"name": "item_0",
+			"mesh": {
+				"obj": "files/cargo.obj",
+				"object": "Box008"
+			},
+			"material": {
+				"type": "dumb_based",
+				"name": "garbage",
+				"fresnsel": [ 0.25, 0.25, 0.29 ],
+				"diffuse": [ 0.0, 1.0, 1.0 ],
+				"metal": 0.15,
+				"specular": 4
+			}
+		},
+		{
+			"name": "item_0",
+			"mesh": {
+				"obj": "files/cargo.obj",
+				"object": "Box009"
+			},
+			"material": "glossy_metal"
+		}
+	],
+	"camera": {
+		"lense": {
+			"type": "simple_stochastic",
+			"angle": 45.0
+		},
+		"transform": {
+			"position": [ 0, 16, 0 ],
+			"rotation": [ 48, 16, 0 ],
+			"relative_position": [ 0, 0, -128 ]
+		}
+	}
+}

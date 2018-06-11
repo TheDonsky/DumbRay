@@ -293,7 +293,7 @@ bool DumbRenderContext::parseObject(const Dson::Object &object, std::ostream *er
 	}
 
 	for (int i = 0; i < mesh.size(); i++)
-		scene.geometry.cpuHandle()->push(DumbRenderer::SceneType::GeometryUnit(mesh[i], materialId));
+		scene.geometry.cpuHandle()->push(DumbRenderer::SceneType::GeometryUnit(mesh[i] >> transform, materialId));
 	
 	return true;
 }

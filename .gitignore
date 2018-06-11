@@ -7,7 +7,9 @@
 !*.h
 !*.sh
 !*.dumb
+!*.obj
 !.gitignore
 !makefile
 !README.md
 !/__source__
+!/example_scenes
