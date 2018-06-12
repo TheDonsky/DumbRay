@@ -1,6 +1,7 @@
 #include "DumbRenderContext.cuh"
 #include "../../Namespaces/MeshReader/MeshReader.h"
 #include "../Screen/FrameBuffer/BlockBasedFrameBuffer/BlockBasedFrameBuffer.cuh"
+#include "../../Namespaces/Images/Images.cuh"
 #include <fstream>
 
 
@@ -356,6 +357,52 @@ bool DumbRenderContext::getObjMesh(const Dson::Dict &dict, BakedTriMesh &mesh, s
 }
 
 
+namespace {
+	class IterationObserver {
+	private:
+		const BufferedWindow *window;
+		const FrameBuffer *buffer;
+		int lastWidth, lastHeight;
+		volatile unsigned int iterationCount, lastIterationCount, ignoredDisplayedFrames;
+		clock_t startTime, lastTime;
+
+	public:
+		inline IterationObserver(const BufferedWindow *wnd, const FrameBuffer *frameBuffer) {
+			window = wnd;
+			buffer = frameBuffer;
+			buffer->getSize(&lastWidth, &lastHeight);
+			iterationCount = lastIterationCount = ignoredDisplayedFrames = 0;
+			startTime = lastTime = clock();
+		}
+
+		inline void iterationComplete() {
+			int width, height; buffer->getSize(&width, &height);
+			if ((width != lastWidth) || (height != lastHeight)) {
+				lastWidth = width;
+				lastHeight = height;
+				iterationCount = lastIterationCount = 0;
+				ignoredDisplayedFrames = window->framesDisplayed();
+				startTime = lastTime = clock();
+			}
+			iterationCount++;
+			clock_t now = clock();
+			clock_t delta = (now - lastTime);
+			if (delta >= CLOCKS_PER_SEC) {
+				std::cout << "\r" << "Iterations:" << iterationCount << "; Frames:" << (window->framesDisplayed() - ignoredDisplayedFrames)
+					<< "; (Avg Iter/Sec: " << (((double)iterationCount) / ((double)(now - startTime)) * CLOCKS_PER_SEC)
+					<< "; Iter/Sec:" << (((double)(iterationCount - lastIterationCount)) / ((double)delta) * CLOCKS_PER_SEC) << ")";
+				lastTime = now;
+				lastIterationCount = iterationCount;
+			}
+		}
+
+		inline static void iterationCompleteCallback(void *observer) {
+			((IterationObserver*)observer)->iterationComplete();
+		}
+	};
+}
+
+
 
 void DumbRenderContext::runWindowRender() {
 	scene.geometry.cpuHandle()->build();
@@ -382,10 +429,29 @@ void DumbRenderContext::runWindowRender() {
 	process.setTargetDisplayWindow(&bufferedWindow);
 	process.setRenderer(&renderer);
 
+	IterationObserver observer(&bufferedWindow, frameBuffer.cpuHandle());
+	process.setIterationCompletionCallback(IterationObserver::iterationCompleteCallback, &observer);
 
 	process.start();
 	while (!bufferedWindow.windowClosed()) std::this_thread::sleep_for(std::chrono::milliseconds(32));
 	process.end();
+	{
+		std::cout << std::endl << "Enter a name ending with '.png' to save the image: ";
+		std::string line; std::getline(std::cin, line);
+		size_t leadInWhiteSpaces; for (leadInWhiteSpaces = 0; leadInWhiteSpaces < line.length(); leadInWhiteSpaces++) 
+			if (!iswspace(line[leadInWhiteSpaces])) break;
+		size_t leadOutWhiteSpaces; for (leadOutWhiteSpaces = 0; leadOutWhiteSpaces < line.length(); leadOutWhiteSpaces++) 
+			if (!iswspace(line[line.length() - leadOutWhiteSpaces - 1])) break;
+		if (leadInWhiteSpaces < line.length()) {
+			std::string filename = line.substr(leadInWhiteSpaces, line.length() - leadInWhiteSpaces - leadOutWhiteSpaces);
+			if (filename.length() >= 4) if (filename.substr(filename.length() - 4, 4) == ".png") {
+				std::cout << "Saving...." << std::endl;
+				if (Images::saveBufferPNG(*frameBuffer.cpuHandle(), filename) == Images::IMAGES_NO_ERROR)
+					std::cout << ("Image saved at: '" + filename + "'...") << std::endl;
+				else std::cout << ("Failed to save image at: '" + filename + "'...") << std::endl;
+			}
+		}
+	}
 }
 
 

@@ -79,7 +79,7 @@ public:
 
 private:
 	__device__ __host__ inline DumbRenderContext(const DumbRenderContext &) {}
-	__device__ __host__ inline DumbRenderContext& operator=(const DumbRenderContext &) {}
+	__device__ __host__ inline DumbRenderContext& operator=(const DumbRenderContext &) { return (*this); }
 
 	std::string sourcePath;
 
