@@ -306,14 +306,19 @@ inline bool Windows::Window::Content::set(int width, int height){
 	if (bitWidth != width || bitHeight != height || bitmap == NULL || colorHost == NULL || colorDevice == NULL){
 		dispose();
 		colorHost = new COLORREF[width * height];
-		cudaMalloc(&colorDevice, sizeof(COLORREF) * width * height);
+		bool deviceSet;
+		{
+			int cudaDevice;
+			deviceSet = (cudaGetDevice(&cudaDevice) == cudaSuccess);
+			if (deviceSet) cudaMalloc(&colorDevice, sizeof(COLORREF) * width * height);
+		}
 		bitmap = CreateBitmap(
 			width,						// width.
 			height,						// height
 			1,							// Color Planes, unfortanutelly don't know what is it actually. Let it be 1
 			8 * sizeof(COLORREF),		// Size of memory for one pixel in bits (in win32 4 bytes = 4*8 bits)
 			NULL);						// pointer to array
-		if (bitmap == NULL || colorHost == NULL || colorDevice == NULL){
+		if (bitmap == NULL || colorHost == NULL || (deviceSet && colorDevice == NULL)){
 			dispose();
 			return false;
 		}
@@ -340,6 +345,7 @@ inline bool Windows::Window::Content::loadFromHost(const Color *image, int width
 }
 inline bool Windows::Window::Content::loadFromDevice(const Color *image, int width, int height){
 	if (!set(width, height)) return false;
+	if (colorDevice == NULL) return false;
 	cudaStream_t stream; if (cudaStreamCreate(&stream) != cudaSuccess) return false;
 	int surface = width * height;
 	Private::translate<<<Private::numBlocks(surface), Private::numThreads(surface), 0, stream>>>(image, colorDevice, surface);

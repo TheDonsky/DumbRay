@@ -95,7 +95,7 @@ bool DumbRenderContext::fromDson(const Dson::Object *object, std::ostream *error
 	if (dict.contains("camera")) {
 		if (!parseCamera(dict.get("camera"), errorStream)) return false;
 	}
-	else if (camera.cpuHandle()->lense.object() == NULL)
+	if (camera.cpuHandle()->lense.object() == NULL)
 		camera.cpuHandle()->lense.use<SimpleStochasticLense>(64.0f);
 	if (dict.contains("renderer")) {
 		if (!parseRenderer(dict.get("renderer"), errorStream)) return false;
@@ -156,11 +156,7 @@ bool DumbRenderContext::parseCamera(const Dson::Object &object, std::ostream *er
 		return false;
 	}
 	const Dson::Dict &dict = (*((Dson::Dict*)(&object)));
-	if (!dict.contains("lense")) {
-		if (errorStream != NULL) (*errorStream) << "Error: Camera should have a lense" << std::endl;
-		return false;
-	}
-	else {
+	if (dict.contains("lense")) {
 		const Dson::Object &lenseObject = dict.get("lense");
 		if (lenseObject.type() != Dson::Object::DSON_DICT) {
 			if (errorStream != NULL) (*errorStream) << "Error: Camera lense has to be a Dson::Dict" << std::endl;
