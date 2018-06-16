@@ -118,6 +118,7 @@ public:
 		};
 
 		float pixelSize;
+		Vector2 pixelDims;
 		__device__ __host__ void countPixelSize();
 
 		int pixelInBlock;

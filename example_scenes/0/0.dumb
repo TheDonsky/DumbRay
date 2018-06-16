@@ -191,5 +191,26 @@
 			"rotation": [ 48, 16, 0 ],
 			"relative_position": [ 0, 0, -128 ]
 		}
+	},
+	"renderer": {
+	    "resources": {
+	        "cpu_could_be": "'all'/['all_but_gpu']/'all_but_one_per_gpu'/'none'/'one'/any_number",
+	        "cpu": "all_but_gpu",
+	        "gpu_value": "has_to_be_a_number",
+					"gpu": 2,
+	        "gpu_0": 2
+	    },
+	    "blocks": {
+	        "cpu_cut": 1,
+	        "gpu_cut": 96,
+	        "force_host_block_synchronisation": true
+	    },
+	    "pixel": {
+	        "boxing_can_be": "['height']/'width'/'min'/'max'",
+	        "boxing": "height",
+	        "bounces": 2,
+	        "samples_per_pixel": [1, 1],
+	        "pixels_per_gpu_thread": 1
+	    }
 	}
 }

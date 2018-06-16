@@ -21,7 +21,6 @@
 #include <map>
 #include <string>
 #include <ctype.h>
-#include <iomanip>
 
 
 namespace {
@@ -31,7 +30,6 @@ namespace {
 		TestFunction function;
 	};
 	static void test() {
-		std::cout << std::fixed << std::setprecision(4);
 		cudaSetDevice(0);
 		Device::dumpCurrentDevice();
 		std::map<std::string, TestEntry> tests;

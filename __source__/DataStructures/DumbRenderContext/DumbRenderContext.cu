@@ -3,6 +3,8 @@
 #include "../Screen/FrameBuffer/BlockBasedFrameBuffer/BlockBasedFrameBuffer.cuh"
 #include "../../Namespaces/Images/Images.cuh"
 #include <fstream>
+#include <sstream>
+#include <iomanip>
 
 
 namespace {
@@ -26,8 +28,13 @@ namespace {
 }
 
 
-DumbRenderContext::DumbRenderContext() {
-
+DumbRenderContext::DumbRenderContext() 
+	: threadConfiguration(Renderer::ThreadConfiguration::ALL_BUT_GPU_THREADS, 2) {
+	rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_HEIGHT_BASED;
+	rendererSettings.maxBounces = 2;
+	rendererSettings.samplesPerPixelX = 1;
+	rendererSettings.samplesPerPixelY = 1;
+	rendererSettings.pixelsPerGPUThread = 1;
 }
 DumbRenderContext::~DumbRenderContext() {
 
@@ -78,6 +85,9 @@ bool DumbRenderContext::fromDson(const Dson::Object *object, std::ostream *error
 	else {
 		if (errorStream != NULL) (*errorStream) << "Error: Scene Dson HAS TO contain camera" << std::endl;
 		return false;
+	}
+	if (dict.contains("renderer")) {
+		if (!parseRenderer(dict.get("renderer"), errorStream)) return false;
 	}
 	return true;
 }
@@ -172,6 +182,115 @@ bool DumbRenderContext::parseCamera(const Dson::Object &object, std::ostream *er
 		if (!transform.fromDson(dict["transform"], errorStream)) return false;
 		camera.cpuHandle()->transform = transform;
 	}
+	return true;
+}
+bool DumbRenderContext::parseRenderer(const Dson::Object &object, std::ostream *errorStream) {
+	const Dson::Dict *renderer = object.safeConvert<Dson::Dict>(errorStream, "Error: Renderer should be contained in Dson::Dict");
+	if (renderer == NULL) return false;
+
+	if (renderer->contains("resources")) {
+		const Dson::Dict *resources = renderer->get("resources").safeConvert<Dson::Dict>(errorStream, "Error: Renderer Resources has to be a Dson::Dict type");
+		if (resources == NULL) return false;
+		if (resources->contains("cpu")) {
+			const Dson::Object &cpuObject = resources->get("cpu");
+			if (cpuObject.type() == Dson::Object::DSON_STRING) {
+				const std::string &cpuText = ((const Dson::String*)(&cpuObject))->value();
+				if (cpuText == "all") threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ALL);
+				else if (cpuText == "all_but_gpu") threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ALL_BUT_GPU_THREADS);
+				else if (cpuText == "all_but_one_per_gpu") threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ALL_BUT_THREAD_PER_GPU);
+				else if (cpuText == "none") threadConfiguration.configureCPU(Renderer::ThreadConfiguration::NONE);
+				else if (cpuText == "one") threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ONE);
+				else {
+					if (errorStream != NULL) (*errorStream) << "Error: Renderer Resources CPU can only be one of 'all'/['all_but_gpu']/'all_but_one_per_gpu'/'none'/'one'/any_number" << std::endl;
+					return false;
+				}
+			}
+			else if (cpuObject.type() == Dson::Object::DSON_NUMBER)
+				threadConfiguration.configureCPU(((const Dson::Number*)(&cpuObject))->intValue());
+			else {
+				if (errorStream != NULL) (*errorStream) << "Error: Renderer Resources CPU can only be one of 'all'/['all_but_gpu']/'all_but_one_per_gpu'/'none'/'one'/any_number" << std::endl;
+				return false;
+			}
+		}
+		if (resources->contains("gpu")) {
+			const Dson::Number *gpu = resources->get("gpu").safeConvert<Dson::Number>(errorStream, "Error: Renderer Resources GPU can only be a number");
+			if (gpu == NULL) return false;
+			threadConfiguration.configureEveryGPU(gpu->intValue());
+		}
+		for (int i = 0; i < threadConfiguration.numDevices(); i++) {
+			std::stringstream stream;
+			stream << "gpu_" << i;
+			const std::string &gpuKey = stream.str();
+			if (resources->contains(gpuKey)) {
+				const Dson::Number *gpu = resources->get(gpuKey).safeConvert<Dson::Number>(errorStream, "Error: Renderer Resources " + gpuKey + " can only be a number");
+				if (gpu == NULL) return false;
+				threadConfiguration.configureGPU(i, gpu->intValue());
+			}
+		}
+	}
+	
+	if (renderer->contains("blocks")) {
+		const Dson::Dict *blocks = renderer->get("blocks").safeConvert<Dson::Dict>(errorStream, "Error: Renderer Blocks has to be a Dson::Dict type");
+		if (blocks == NULL) return false;
+		int blockCutPerCpuThread = blockConfiguration.blockCutPerCpuThread();
+		int blockCutPerGpuSM = blockConfiguration.blockCutPerGpuSM();
+		bool forceDeviceInstanceUpdate = blockConfiguration.forceDeviceInstanceUpdate();
+		if (blocks->contains("cpu_cut")) {
+			const Dson::Number *cpuCut = blocks->get("cpu_cut").safeConvert<Dson::Number>(errorStream, "Error: Renderer Blocks CPU_CUT has to be a number");
+			if (cpuCut == NULL) return false;
+			blockCutPerCpuThread = ((cpuCut->intValue() >= 1) ? cpuCut->intValue() : 1);
+		}
+		if (blocks->contains("gpu_cut")) {
+			const Dson::Number *gpuCut = blocks->get("gpu_cut").safeConvert<Dson::Number>(errorStream, "Error: Renderer Blocks GPU_CUT has to be a number");
+			if (gpuCut == NULL) return false;
+			blockCutPerGpuSM = ((gpuCut->intValue() >= 1) ? gpuCut->intValue() : 1);
+		}
+		if (blocks->contains("force_host_block_synchronisation")) {
+			const Dson::Bool *forceSynch = blocks->get("force_host_block_synchronisation").safeConvert<Dson::Bool>(errorStream, "Error: Renderer Blocks force_host_block_synchronisation has to be a boolean");
+			if (forceSynch == NULL) return false;
+			forceDeviceInstanceUpdate = forceSynch->value();
+		}
+		blockConfiguration = BlockRenderer::BlockConfiguration(blockCutPerCpuThread, blockCutPerGpuSM, forceDeviceInstanceUpdate);
+	}
+
+	if (renderer->contains("pixel")) {
+		const Dson::Dict *pixel = renderer->get("pixel").safeConvert<Dson::Dict>(errorStream, "Error: Renderer Pixel has to be a Dson::Dict type");
+		if (pixel == NULL) return false;
+		if (pixel->contains("boxing")) {
+			const Dson::String *boxing = pixel->get("boxing").safeConvert<Dson::String>(errorStream, "Error: Renderer Pixel boxing type has to be a string");
+			if (boxing == NULL) return false;
+			const std::string &boxingText = boxing->value();
+			if (boxingText == "height") rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_HEIGHT_BASED;
+			else if (boxingText == "width") rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_WIDTH_BASED;
+			else if (boxingText == "min") rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_MIN_BASED;
+			else if (boxingText == "max") rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_MAX_BASED;
+			else {
+				if (errorStream != NULL) (*errorStream) << "Error: Renderer Pixel boxing mode can only be one of ['height']/'width'/'min'/'max'" << std::endl;
+				return false;
+			}
+		}
+		if (pixel->contains("bounces")) {
+			const Dson::Number *bounces = pixel->get("bounces").safeConvert<Dson::Number>(errorStream, "Error: Renderer Pixel bounces has to be a number");
+			if (bounces == NULL) return false;
+			rendererSettings.maxBounces = bounces->intValue();
+		}
+		if (pixel->contains("samples_per_pixel")) {
+			const Dson::Array *bounces = pixel->get("samples_per_pixel").safeConvert<Dson::Array>(errorStream, "Error: Renderer Pixel samples_per_pixel has to be an array, containing two numbers");
+			if (bounces == NULL) return false;
+			if (bounces->size() != 2 || bounces->get(0).type() != Dson::Object::DSON_NUMBER || bounces->get(1).type() != Dson::Object::DSON_NUMBER) {
+				if (errorStream != NULL) (*errorStream) << "Error: Renderer Pixel samples_per_pixel has to be an array, containing two numbers" << std::endl;
+				return false;
+			}
+			rendererSettings.samplesPerPixelX = ((const Dson::Number*)(&bounces->get(0)))->intValue();
+			rendererSettings.samplesPerPixelY = ((const Dson::Number*)(&bounces->get(1)))->intValue();
+		}
+		if (pixel->contains("pixels_per_gpu_thread")) {
+			const Dson::Number *pixelsPerGpuThread = pixel->get("pixels_per_gpu_thread").safeConvert<Dson::Number>(errorStream, "Error: Renderer Pixel pixels_per_gpu_thread has to be a number");
+			if (pixelsPerGpuThread == NULL) return false;
+			rendererSettings.pixelsPerGPUThread = pixelsPerGpuThread->intValue();
+		}
+	}
+
 	return true;
 }
 
@@ -360,19 +479,19 @@ bool DumbRenderContext::getObjMesh(const Dson::Dict &dict, BakedTriMesh &mesh, s
 namespace {
 	class IterationObserver {
 	private:
-		const BufferedWindow *window;
 		const FrameBuffer *buffer;
 		int lastWidth, lastHeight;
-		volatile unsigned int iterationCount, lastIterationCount, ignoredDisplayedFrames;
+		volatile unsigned int iterationCount, lastIterationCount;
 		clock_t startTime, lastTime;
+		int lastCommentLength;
 
 	public:
-		inline IterationObserver(const BufferedWindow *wnd, const FrameBuffer *frameBuffer) {
-			window = wnd;
+		inline IterationObserver(const FrameBuffer *frameBuffer) {
 			buffer = frameBuffer;
 			buffer->getSize(&lastWidth, &lastHeight);
-			iterationCount = lastIterationCount = ignoredDisplayedFrames = 0;
+			iterationCount = lastIterationCount = 0;
 			startTime = lastTime = clock();
+			lastCommentLength = 0;
 		}
 
 		inline void iterationComplete() {
@@ -381,16 +500,25 @@ namespace {
 				lastWidth = width;
 				lastHeight = height;
 				iterationCount = lastIterationCount = 0;
-				ignoredDisplayedFrames = window->framesDisplayed();
 				startTime = lastTime = clock();
+				std::cout << "\r"; for (size_t i = 0; i < lastCommentLength; i++) std::cout << " ";
 			}
 			iterationCount++;
 			clock_t now = clock();
 			clock_t delta = (now - lastTime);
 			if (delta >= CLOCKS_PER_SEC) {
-				std::cout << "\r" << "Iterations:" << iterationCount << "; Frames:" << (window->framesDisplayed() - ignoredDisplayedFrames)
-					<< "; (Avg Iter/Sec: " << (((double)iterationCount) / ((double)(now - startTime)) * CLOCKS_PER_SEC)
+				std::cout << "\r"; for (size_t i = 0; i < lastCommentLength; i++) std::cout << " ";
+				std::stringstream stream;
+				long long seconds = ((long long)(((double)(now - startTime)) / CLOCKS_PER_SEC));
+				long long minutes = (seconds / 60); seconds = (seconds - (minutes * 60));
+				long long hours = (minutes / 60); minutes = (minutes - (hours * 60));
+				stream << std::setprecision(4) << "Iterations:" << iterationCount
+					<< " (elapsed: " << hours << ":" << minutes << ":" << seconds
+					<< "; Avg Iter/Sec: " << (((double)iterationCount) / ((double)(now - startTime)) * CLOCKS_PER_SEC)
 					<< "; Iter/Sec:" << (((double)(iterationCount - lastIterationCount)) / ((double)delta) * CLOCKS_PER_SEC) << ")";
+				const std::string &text = stream.str();
+				std::cout << "\r" << text;
+				lastCommentLength = text.length();
 				lastTime = now;
 				lastIterationCount = iterationCount;
 			}
@@ -407,20 +535,32 @@ namespace {
 void DumbRenderContext::runWindowRender() {
 	scene.geometry.cpuHandle()->build();
 	scene.geometry.makeDirty();
-	
-	Renderer::ThreadConfiguration configuration;
-	configuration.configureEveryGPU(2);
-	configuration.configureCPU(Renderer::ThreadConfiguration::ALL_BUT_GPU_THREADS);
 
-	DumbRenderer renderer(configuration);
-	renderer.setScene(&scene);
-	renderer.setCamera(&camera);
+	std::cout << "_____________________________________________________________" << std::endl;
+	std::cout << "RENDERING:" << std::endl;
+	std::cout << "    Geometry:   " << scene.geometry.cpuHandle()->getData().size() << " tris" << std::endl;
+	std::cout << "    Node count: " << scene.geometry.cpuHandle()->getNodeCount() << std::endl;
+	std::cout << "    Materials:  " << scene.materials.cpuHandle()->size() << std::endl;
+	std::cout << "    Lights:     " << scene.lights.cpuHandle()->size() << std::endl;
+	std::cout << "    Bounces:    " << rendererSettings.maxBounces << std::endl;
+	std::cout << "_____________________________________________________________" << std::endl;
 
 	FrameBufferManager frameBuffer;
 	frameBuffer.cpuHandle()->use<BlockBuffer>();
 
-	bool shouldSynchFromDevice = (!((configuration.numHostThreads() > 0) || (configuration.numActiveDevices() > 1)));
-	BufferedWindow bufferedWindow(shouldSynchFromDevice ? BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE : 0);
+	DumbRenderer renderer(threadConfiguration, blockConfiguration, 
+		&frameBuffer, &scene, &camera,
+		rendererSettings.boxingMode, rendererSettings.maxBounces,
+		rendererSettings.samplesPerPixelX, rendererSettings.samplesPerPixelY,
+		rendererSettings.pixelsPerGPUThread);
+
+	int renderingDevice = 0;
+	for (int i = 0; i < threadConfiguration.numDevices(); i++)
+		if (threadConfiguration.numDeviceThreads(i) > 0) {
+			renderingDevice = i;
+			break;
+		}
+	BufferedWindow bufferedWindow(renderer.automaticallySynchesHostBlocks() ? 0 : BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE, "Render Viewport", NULL, renderingDevice);
 
 	BufferedRenderProcess process;
 	process.setBuffer(&frameBuffer);
@@ -429,7 +569,7 @@ void DumbRenderContext::runWindowRender() {
 	process.setTargetDisplayWindow(&bufferedWindow);
 	process.setRenderer(&renderer);
 
-	IterationObserver observer(&bufferedWindow, frameBuffer.cpuHandle());
+	IterationObserver observer(frameBuffer.cpuHandle());
 	process.setIterationCompletionCallback(IterationObserver::iterationCompleteCallback, &observer);
 
 	process.start();

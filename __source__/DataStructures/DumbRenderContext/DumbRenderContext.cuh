@@ -87,6 +87,7 @@ private:
 	bool parseLights(const Dson::Object &object, std::ostream *errorStream);
 	bool parseObjects(const Dson::Object &object, std::ostream *errorStream);
 	bool parseCamera(const Dson::Object &object, std::ostream *errorStream);
+	bool parseRenderer(const Dson::Object &object, std::ostream *errorStream);
 
 	bool parseMaterial(const Dson::Object &object, std::ostream *errorStream, int *materialId = NULL);
 	bool parseLight(const Dson::Object &object, std::ostream *errorStream);
@@ -100,4 +101,14 @@ private:
 	ObjDict objectFiles;
 	DumbRenderer::SceneType scene;
 	ReferenceManager<Camera> camera;
+
+	Renderer::ThreadConfiguration threadConfiguration;
+	BlockRenderer::BlockConfiguration blockConfiguration;
+	struct RendererSettings {
+		DumbRenderer::BoxingMode boxingMode;
+		int maxBounces;
+		int samplesPerPixelX, samplesPerPixelY;
+		int pixelsPerGPUThread;
+	};
+	RendererSettings rendererSettings;
 };

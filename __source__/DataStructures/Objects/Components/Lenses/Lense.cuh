@@ -16,7 +16,7 @@ struct LenseGetPixelSamplesRequest {
 	Vector2 screenSpacePosition;
 
 	// Relative on screen size of the pixel:
-	float pixelSize;
+	Vector2 pixelSize;
 
 	// The render context in all of it's glory:
 	RenderContext *context;
@@ -26,7 +26,7 @@ struct LenseGetPixelColorRequest {
 	Vector2 screenSpacePosition;
 
 	// Relative on screen size of the pixel:
-	float pixelSize;
+	Vector2 pixelSize;
 
 	// Photon, that was cast upon the pixel:
 	Photon photon;

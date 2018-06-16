@@ -184,6 +184,7 @@ __device__ __host__ void DumbRenderer::PixelRenderProcess::countPixelSize() {
 	else if (boxingMode == BOXING_MODE_MIN_BASED) pixelSize = (1.0f / ((height <= width) ? height : width));
 	else if (boxingMode == BOXING_MODE_MAX_BASED) pixelSize = (1.0f / ((height >= width) ? height : width));
 	else pixelSize = 1.0f;
+	pixelDims = Vector2(pixelSize / ((float)configuration.fsaaX), pixelSize / ((float)configuration.fsaaY));
 }
 __device__ __host__ bool DumbRenderer::PixelRenderProcess::setPixel() {
 	if (curBlock >= stopBlock) return false;
@@ -214,12 +215,12 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::setSubPixel() {
 	else {
 		{
 			Vector2 sampleOffset(
-				(((float)fsaaI) + 0.5f) * pixelSize / ((float)configuration.fsaaX),
-				(((float)fsaaJ) + 0.5f) *  pixelSize / ((float)configuration.fsaaY));
+				(((float)fsaaI) + 0.5f) * pixelDims.x,
+				(((float)fsaaJ) + 0.5f) *  pixelDims.y);
 			screenSpacePosition = (pixelPostion + sampleOffset);
 			LenseGetPixelSamplesRequest cameraPixelSamplesRequest;
 			cameraPixelSamplesRequest.screenSpacePosition = screenSpacePosition;
-			cameraPixelSamplesRequest.pixelSize = pixelSize;
+			cameraPixelSamplesRequest.pixelSize = pixelDims;
 			cameraPixelSamplesRequest.context = (&renderContext);
 			configuration.camera->getPixelSamples(cameraPixelSamplesRequest, &cameraPixelSamples);
 		}
@@ -334,7 +335,7 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::setSubPixelRenderPass
 			// Add color to the final pixel:
 			LenseGetPixelColorRequest request;
 			request.screenSpacePosition = screenSpacePosition;
-			request.pixelSize = pixelSize;
+			request.pixelSize = pixelDims;
 			request.photon = Photon(Ray(layer->geometry.hitPoint, -layer->layerRay.direction), layer->color);
 			request.photonType = PHOTON_TYPE_INDIRECT_ILLUMINATION;
 			request.context = (&renderContext);
