@@ -88,6 +88,7 @@ private:
 	bool parseObjects(const Dson::Object &object, std::ostream *errorStream);
 	bool parseCamera(const Dson::Object &object, std::ostream *errorStream);
 	bool parseRenderer(const Dson::Object &object, std::ostream *errorStream);
+	bool includeFiles(const Dson::Object &object, std::ostream *errorStream);
 
 	bool parseMaterial(const Dson::Object &object, std::ostream *errorStream, int *materialId = NULL);
 	bool parseLight(const Dson::Object &object, std::ostream *errorStream);

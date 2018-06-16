@@ -298,14 +298,14 @@ __dumb__ Vertex intersectionCenter<AABB, Triangle>(const AABB &aabb, const Trian
 		Vertex sum(0.0f, 0.0f, 0.0f);
 		for (int i = 0; i < list.size(); i++) {
 			const Triangle &t = list[i];
-			float surface = ((128.0f * t.surface()) + 1.0f);
+			float surface = (t.surface() + 0.0001f);
 			sum += (t.massCenter() * surface);
 			size += surface;
 		}
 		return (sum / size);
 
 	}
-	else return (aabb.getMin() - aabb.getMax());
+	else return ((aabb.getMin() + aabb.getMax()) / 2.0f);
 	/*/
 	return intersectionBounds<AABB, Triangle>(aabb, triangle).getCenter();
 	//*/

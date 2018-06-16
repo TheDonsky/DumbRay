@@ -329,20 +329,10 @@ __device__ __host__ __noinline__ void Octree<ElemType>::split(int index, int dep
 	for (int i = 0; i < nodeData[index].size(); i++)
 		center += Shapes::intersectionCenter<AABB, ElemType>(bounds, *nodeData[index][i]);
 	center /= ((float)nodeData[index].size());
-	if ((center.x < bndStart.x || center.y < bndStart.y || center.z < bndStart.z) || (center.x > bndEnd.x || center.y > bndEnd.y || center.z > bndEnd.z))
-		center = (bndStart + bndEnd) / 2;
 	AABB sub[8];
 	splitAABB(tree[index].bounds, center, sub);
-	if (!splittingMakesSence(index, sub)) return; /*{
-		center = Vector3(0, 0, 0);
-		for (int i = 0; i < nodeData[index].size(); i++)
-			center += Shapes::massCenter<ElemType>(*nodeData[index][i]);
-		center /= ((float)nodeData[index].size());
-		if ((center.x < bndStart.x || center.y < bndStart.y || center.z < bndStart.z) || (center.x > bndEnd.x || center.y > bndEnd.y || center.z > bndEnd.z))
-			center = (bndStart + bndEnd) / 2;
-		splitAABB(tree[index].bounds, center, sub);
-		if (!splittingMakesSence(index, sub)) return;
-	} //*/
+	if (!splittingMakesSence(index, sub)) return; 
+
 	splitNode(index, sub);
 	for (int i = 0; i < nodeData[index].size(); i++){
 		ElemReference dataPtr = nodeData[index][i];
@@ -389,18 +379,14 @@ __device__ __host__ inline bool Octree<ElemType>::splittingMakesSence(int index,
 	for (int i = 0; i < 8; i++) {
 		const AABB &subBox = sub[i];
 		int insiders = 0;
-		for (int j = 0; j < nodeCount; j++) {
-			if (Shapes::intersect<AABB, ElemType>(subBox, *(nodeData[index][j])))
-				insiders++;
-			else break;
-		}
+		for (int j = 0; j < nodeCount; j++)
+			if (Shapes::intersect<AABB, ElemType>(subBox, *(nodeData[index][j]))) insiders++;
 		if (insiders >= nodeCount) full++;
 		else if (insiders == 0) empty++;
 		load += ((float)insiders) / ((float)nodeCount);
 	}
-	if (empty >= 7) return true;
 	if (full >= 1) return false;
-	return (load < 4.0f);
+	return (load < min(((float)nodeCount) / ((float)OCTREE_POLYCOUNT_TO_SPLIT_NODE), 6.0f));
 	//*/
 }
 template<typename ElemType>

@@ -1,6 +1,7 @@
 #include "DumbRenderContext.cuh"
 #include "../../Namespaces/MeshReader/MeshReader.h"
 #include "../Screen/FrameBuffer/BlockBasedFrameBuffer/BlockBasedFrameBuffer.cuh"
+#include "../Objects/Components/Lenses/SimpleStochasticLense/SimpleStochasticLense.cuh"
 #include "../../Namespaces/Images/Images.cuh"
 #include <fstream>
 #include <sstream>
@@ -50,13 +51,22 @@ bool DumbRenderContext::fromFile(const std::string &filename, std::ostream *erro
 		return false;
 	}
 	Dson::Object *object = Dson::parse(string, errorStream);
+	const std::string &src = sourcePath;
 	{
 		size_t len = (filename.length());
 		while ((len <= filename.length()) && (len > 0) && (filename[len - 1] != '/') && (filename[len - 1] != '\\')) len--;
 		sourcePath = filename.substr(0, len);
 	}
-	bool rv = fromDson(object, errorStream);
-	sourcePath = "";
+	bool rv;
+	if (object != NULL) {
+		rv = fromDson(object, errorStream);
+		delete object;
+	}
+	else {
+		if (errorStream != NULL) (*errorStream) << "Error: Could not parse file: \"" << filename << "\"" << std::endl;
+		rv = false;
+	}
+	sourcePath = src;
 	return rv;
 }
 
@@ -70,6 +80,9 @@ bool DumbRenderContext::fromDson(const Dson::Object *object, std::ostream *error
 		return false;
 	}
 	const Dson::Dict &dict = (*((const Dson::Dict*)object));
+	if (dict.contains("include")) {
+		if (!includeFiles(dict.get("include"), errorStream)) return false;
+	}
 	if (dict.contains("materials")) {
 		if (!parseMaterials(dict.get("materials"), errorStream)) return false;
 	}
@@ -82,10 +95,8 @@ bool DumbRenderContext::fromDson(const Dson::Object *object, std::ostream *error
 	if (dict.contains("camera")) {
 		if (!parseCamera(dict.get("camera"), errorStream)) return false;
 	}
-	else {
-		if (errorStream != NULL) (*errorStream) << "Error: Scene Dson HAS TO contain camera" << std::endl;
-		return false;
-	}
+	else if (camera.cpuHandle()->lense.object() == NULL)
+		camera.cpuHandle()->lense.use<SimpleStochasticLense>(64.0f);
 	if (dict.contains("renderer")) {
 		if (!parseRenderer(dict.get("renderer"), errorStream)) return false;
 	}
@@ -293,6 +304,24 @@ bool DumbRenderContext::parseRenderer(const Dson::Object &object, std::ostream *
 
 	return true;
 }
+bool DumbRenderContext::includeFiles(const Dson::Object &object, std::ostream *errorStream) {
+	const Dson::Array *include = object.safeConvert<Dson::Array>(errorStream, "Error: Include should be a list of strings");
+	if (include == NULL) return false;
+	for (size_t i = 0; i < include->size(); i++) {
+		const Dson::String *text = include->get(i).safeConvert<Dson::String>(errorStream, "Error: Can not include non-string objects");
+		if (text == NULL) std::cout << std::endl;
+		const std::string &fileName = text->value();
+		std::string filePath;
+		{
+			filePath = (sourcePath + fileName);
+			std::ifstream stream;
+			stream.open(filePath);
+			if (stream.fail()) filePath = fileName;
+		}
+		if (!fromFile(filePath, errorStream)) return false;
+	}
+	return true;
+}
 
 
 bool DumbRenderContext::parseMaterial(const Dson::Object &object, std::ostream *errorStream, int *materialId) {
@@ -435,9 +464,10 @@ bool DumbRenderContext::getObjMesh(const Dson::Dict &dict, BakedTriMesh &mesh, s
 		std::string objFilePath;
 		{
 			std::ifstream stream;
-			stream.open(objFileName);
-			if (!stream.fail()) objFilePath = objFileName;
-			else objFilePath = (sourcePath + objFileName);
+			const std::string relativePath = (sourcePath + objFileName);
+			stream.open(relativePath);
+			if (!stream.fail()) objFilePath = relativePath;
+			else objFilePath = objFileName;
 		}
 		if (!MeshReader::readObj(meshes, names, objFilePath)) {
 			if (errorStream != NULL) (*errorStream) << ("Error: Could not read file: '" + objFileName+ "' (" + objFilePath + ")") << std::endl;
@@ -538,11 +568,25 @@ void DumbRenderContext::runWindowRender() {
 
 	std::cout << "_____________________________________________________________" << std::endl;
 	std::cout << "RENDERING:" << std::endl;
-	std::cout << "    Geometry:   " << scene.geometry.cpuHandle()->getData().size() << " tris" << std::endl;
-	std::cout << "    Node count: " << scene.geometry.cpuHandle()->getNodeCount() << std::endl;
-	std::cout << "    Materials:  " << scene.materials.cpuHandle()->size() << std::endl;
-	std::cout << "    Lights:     " << scene.lights.cpuHandle()->size() << std::endl;
-	std::cout << "    Bounces:    " << rendererSettings.maxBounces << std::endl;
+	std::cout << "    ________________________________________" << std::endl;
+	std::cout << "    CPU threads: " << threadConfiguration.numHostThreads() << std::endl;
+	if (threadConfiguration.numDevices() > 0) {
+		std::cout << "    GPU threads: ";
+		if (threadConfiguration.numDevices() == 1) std::cout << threadConfiguration.numDeviceThreads(0) << " [" << Device::getDeviceName(0) << "]" << std::endl;
+		else {
+			std::cout << std::endl;
+			for (int i = 0; i < threadConfiguration.numDevices(); i++)
+				std::cout << "        GPU " << i << ": " << threadConfiguration.numDeviceThreads(i) << " [" << Device::getDeviceName(i) << "]" << std::endl;
+		}
+	}
+	std::cout << "    Block cut per CPU thread: " << blockConfiguration.blockCutPerCpuThread() << std::endl;
+	std::cout << "    Block cut per GPU SM:     " << blockConfiguration.blockCutPerGpuSM() << std::endl;
+	std::cout << "    ________________________________________" << std::endl;
+	std::cout << "    Geometry:    " << scene.geometry.cpuHandle()->getData().size() << " tris" << std::endl;
+	std::cout << "    Node count:  " << scene.geometry.cpuHandle()->getNodeCount() << std::endl;
+	std::cout << "    Materials:   " << scene.materials.cpuHandle()->size() << std::endl;
+	std::cout << "    Lights:      " << scene.lights.cpuHandle()->size() << std::endl;
+	std::cout << "    Bounces:     " << rendererSettings.maxBounces << std::endl;
 	std::cout << "_____________________________________________________________" << std::endl;
 
 	FrameBufferManager frameBuffer;
@@ -603,6 +647,9 @@ void DumbRenderContext::test() {
 }
 void DumbRenderContext::testFile(const std::string &filename) {
 	DumbRenderContext context;
-	if (!context.fromFile(filename, &std::cout)) return;
+	if (!context.fromFile(filename, &std::cout)) {
+		std::string line;
+		std::getline(std::cin, line);
+	}
 	context.runWindowRender();
 }

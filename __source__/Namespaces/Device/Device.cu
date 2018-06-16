@@ -50,4 +50,9 @@ namespace Device {
 		if (cudaGetDeviceProperties(&properties, device) != cudaSuccess) return -1;
 		return (properties.multiProcessorCount);
 	}
+	std::string getDeviceName(int device) {
+		cudaDeviceProp properties;
+		if (cudaGetDeviceProperties(&properties, device) != cudaSuccess) return "";
+		return properties.name;
+	}
 }
