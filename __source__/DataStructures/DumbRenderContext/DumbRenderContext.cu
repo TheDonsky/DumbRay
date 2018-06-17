@@ -509,7 +509,7 @@ namespace {
 		int lastWidth, lastHeight;
 		volatile unsigned int iterationCount, lastIterationCount;
 		clock_t startTime, lastTime;
-		int lastCommentLength;
+		size_t lastCommentLength;
 
 	public:
 		inline IterationObserver(const FrameBuffer *frameBuffer) {
