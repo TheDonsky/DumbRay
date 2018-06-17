@@ -78,8 +78,8 @@ public:
 	static void testFile(const std::string &filename);
 
 private:
-	__device__ __host__ inline DumbRenderContext(const DumbRenderContext &) {}
-	__device__ __host__ inline DumbRenderContext& operator=(const DumbRenderContext &) { return (*this); }
+	inline DumbRenderContext(const DumbRenderContext &) {}
+	inline DumbRenderContext& operator=(const DumbRenderContext &) { return (*this); }
 
 	std::string sourcePath;
 

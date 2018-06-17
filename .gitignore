@@ -8,6 +8,8 @@
 !*.sh
 !*.dumb
 !*.obj
+!*.ico
+!*.rc
 !.gitignore
 !makefile
 !README.md
