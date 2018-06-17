@@ -526,7 +526,6 @@ namespace {
 				lastWidth = width;
 				lastHeight = height;
 				iterationCount = lastIterationCount = 0;
-				startTime = lastTime = clock();
 				std::cout << "\r"; for (size_t i = 0; i < lastCommentLength; i++) std::cout << " ";
 			}
 			iterationCount++;
