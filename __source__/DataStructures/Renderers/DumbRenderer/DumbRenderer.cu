@@ -52,6 +52,8 @@ bool DumbRenderer::renderBlocksCPU(
 	if (entropy == NULL) return false;
 	RenderContext renderContext;
 	renderContext.entropy = entropy;
+	renderContext.textures = getScene()->textures.cpuHandle();
+	if (renderContext.textures == NULL) return false;
 
 	PixelRenderProcess::SceneConfiguration sceneConfiguration;
 	float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
@@ -90,6 +92,8 @@ bool DumbRenderer::renderBlocksGPU(
 	if (entropy == NULL) return false;
 	RenderContext renderContext;
 	renderContext.entropy = entropy;
+	renderContext.textures = getScene()->textures.gpuHandle(info.device);
+	if (renderContext.textures == NULL) return false;
 
 	PixelRenderProcess::SceneConfiguration sceneConfiguration;
 	float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));

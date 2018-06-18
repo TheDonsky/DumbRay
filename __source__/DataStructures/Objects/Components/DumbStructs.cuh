@@ -2,6 +2,7 @@
 #include"../../Primitives/Compound/Photon/Photon.cuh"
 #include"../../GeneralPurpose/Stacktor/Stacktor.cuh"
 #include"../../GeneralPurpose/DumbRand/DumbRand.cuh"
+#include"Texture/Texture.cuh"
 
 
 
@@ -57,4 +58,5 @@ enum PhotonType {
 
 struct RenderContext {
 	DumbRand *entropy;
+	Stacktor<Texture> *textures;
 };

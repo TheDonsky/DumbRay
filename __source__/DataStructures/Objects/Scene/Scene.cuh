@@ -4,6 +4,7 @@
 #include "Raycasters/Octree/Octree.cuh"
 #include "Lights/Light.cuh"
 #include "../Components/Shaders/Material.cuh"
+#include "../Components/Texture/Texture.cuh"
 #include "../Meshes/BakedTriMesh/BakedTriMesh.h"
 
 
@@ -25,6 +26,10 @@ struct Scene {
 	typedef Stacktor<Light> LightList;
 	typedef ReferenceManager<LightList> LightManager;
 	LightManager lights;
+
+	typedef Stacktor<Texture> TextureList;
+	typedef ReferenceManager<TextureList> TextureManager;
+	TextureManager textures;
 
 	typedef SceneContext<HitType, GeometryType> Context;
 };
