@@ -1,6 +1,7 @@
 #pragma once
 #include"../Material.cuh"
 #include"../../../Meshes/BakedTriMesh/BakedTriMesh.h"
+#include "../../../../DumbRenderContext/DumbRenderContext.cuh"
 
 
 
@@ -12,7 +13,7 @@ public:
 	__dumb__ Color getReflectedColor(const ShaderReflectedColorRequest<BakedTriFace> &request)const;
 
 
-	inline bool fromDson(const Dson::Object &object, std::ostream *errorStream);
+	inline bool fromDson(const Dson::Object &object, std::ostream *errorStream, DumbRenderContext *context);
 
 
 private:

@@ -103,6 +103,84 @@ bool DumbRenderContext::fromDson(const Dson::Object *object, std::ostream *error
 	return true;
 }
 
+
+bool DumbRenderContext::getImageId(const Dson::Object &object, int *imageId, std::ostream *errorStream) {
+	if ((object.type() == Dson::Object::DSON_BOOL)
+		|| (object.type() == Dson::Object::DSON_NULL)
+		|| (object.type() == Dson::Object::DSON_NUMBER)) {
+		(*imageId) = (-1);
+	}
+	else if (object.type() == Dson::Object::DSON_STRING) {
+		const std::string &name = ((const Dson::String*)(&object))->value();
+		std::unordered_map<std::string, int>::const_iterator it = textures.find("name::" + name);
+		if (it != textures.end()) { (*imageId) = it->second; return true; }
+		it = textures.find("png::" + name);
+		if (it != textures.end()) { (*imageId) = it->second; return true; }
+
+		if (errorStream != NULL) (*errorStream) << ("Error: Texture \"" + name + "\" not found") << std::endl;
+		return false;
+	}
+	else if (object.type() == Dson::Object::DSON_DICT) {
+		const Dson::Dict &dict = (*((const Dson::Dict*)(&object)));
+		if (dict.contains("png")) {
+			const Dson::String *fileNameObject = dict.get("png").safeConvert<Dson::String>(errorStream, "Error: Image 'png' entry MUST BE a string");
+			if (fileNameObject == NULL) return false;
+			const std::string &fileName = fileNameObject->value();
+			std::string filePath = (sourcePath + fileName);
+			{
+				std::ifstream stream;
+				stream.open(filePath);
+				if (stream.fail()) filePath = fileName;
+			}
+			Texture texture;
+			if (Images::getTexturePNG(texture, filePath) == Images::IMAGES_NO_ERROR) {
+				(*imageId) = scene.textures.cpuHandle()->size();
+				scene.textures.cpuHandle()->flush(1);
+				scene.textures.cpuHandle()->operator[](*imageId).stealFrom(texture);
+				textures["png::" + filePath] = (*imageId);
+				textures["png::" + fileName] = (*imageId);
+			}
+			else {
+				if (errorStream != NULL) (*errorStream) << ("Error: Could not read file: \"" + filePath + "\"") << std::endl;
+				return false;
+			}
+		}
+		// MAYBE... ADD OPTIONS TO ADD SOME OTHER WAYS TO GENERATE IMAGES....
+		else {
+			if (errorStream != NULL) (*errorStream) << "Error: Image dict incomplete" << std::endl;
+			return false;
+		}
+
+		if (dict.contains("filtering")) {
+			const Dson::String *filterObject = dict.get("png").safeConvert<Dson::String>(errorStream, "Error: Image 'filtering' entry MUST BE a string");
+			if (filterObject == NULL) return false;
+			const std::string &filter = filterObject->value();
+			if (filter == "none") scene.textures.cpuHandle()->operator[](*imageId).setFiltering(Texture::FILTER_NONE);
+			if (filter == "bilinear") scene.textures.cpuHandle()->operator[](*imageId).setFiltering(Texture::FILTER_BILINEAR);
+			if (filter == "trilinear") scene.textures.cpuHandle()->operator[](*imageId).setFiltering(Texture::FILTER_TRILINEAR);
+			else {
+				if (errorStream != NULL) (*errorStream) << "Error: Image filter can be only [\"none\"]/\"bilinear\"/\"trilinear\"" << std::endl;
+				return false;
+			}
+		}
+
+		if (dict.contains("name")) {
+			const Dson::String *nameObject = dict.get("png").safeConvert<Dson::String>(errorStream, "Error: Image name entry MUST BE a string");
+			if (nameObject == NULL) return false;
+			textures["name::" + nameObject->value()] = (*imageId);
+		}
+	}
+	else {
+		if (errorStream != NULL) (*errorStream) << "Error: Unsupported dson type for texture" << std::endl;
+		return false;
+	}
+	return true;
+}
+
+
+
+
+
 void DumbRenderContext::registerMaterialType(
 	const std::string &typeName, MaterialFromDsonFunction fromDsonFunction) {
 	registry.materialParsers[typeName] = fromDsonFunction;
@@ -180,7 +258,7 @@ bool DumbRenderContext::parseCamera(const Dson::Object &object, std::ostream *er
 				return false;
 			}
 			Lense tmpLense;
-			if (!it->second(tmpLense, lense, errorStream)) return false;
+			if (!it->second(tmpLense, lense, errorStream, this)) return false;
 			camera.cpuHandle()->lense = tmpLense;
 		}
 	}
@@ -343,7 +421,7 @@ bool DumbRenderContext::parseMaterial(const Dson::Object &object, std::ostream *
 			return false;
 		}
 		Material<BakedTriFace> material;
-		if (!it->second(material, dict, errorStream)) return false;
+		if (!it->second(material, dict, errorStream, this)) return false;
 		if (materialId != NULL) (*materialId) = scene.materials.cpuHandle()->size();
 		scene.materials.cpuHandle()->push(material);
 	}
@@ -377,7 +455,7 @@ bool DumbRenderContext::parseLight(const Dson::Object &object, std::ostream *err
 			return false;
 		}
 		Light light;
-		if (!it->second(light, dict, errorStream)) return false;
+		if (!it->second(light, dict, errorStream, this)) return false;
 		scene.lights.cpuHandle()->push(light);
 	}
 	return true;

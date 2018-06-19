@@ -16,17 +16,18 @@ public:
 	bool fromFile(const std::string &filename, std::ostream *errorStream);
 	bool fromDson(const Dson::Object *object, std::ostream *errorStream);
 
+	bool getImageId(const Dson::Object &object, int *imageId, std::ostream *errorStream);
 
 	typedef bool(*MaterialFromDsonFunction)(
 		Material<BakedTriFace> &mat, 
-		const Dson::Dict &object, std::ostream *errorStream);
+		const Dson::Dict &object, std::ostream *errorStream, DumbRenderContext *context);
 	template <typename Type>
 	inline static bool materialFromDson(
 		Material<BakedTriFace> &mat, 
-		const Dson::Dict &object, std::ostream *errorStream) {
+		const Dson::Dict &object, std::ostream *errorStream, DumbRenderContext *context) {
 		Type* materialObject = mat.use<Type>();
 		if (materialObject == NULL) return false;
-		else return materialObject->fromDson(object, errorStream);
+		else return materialObject->fromDson(object, errorStream, context);
 	}
 	static void registerMaterialType(
 		const std::string &typeName, MaterialFromDsonFunction fromDsonFunction);
@@ -36,13 +37,13 @@ public:
 	}
 
 	typedef bool(*LightFromDsonFunction)(
-		Light &light, const Dson::Dict &object, std::ostream *errorStream);
+		Light &light, const Dson::Dict &object, std::ostream *errorStream, DumbRenderContext *context);
 	template <typename Type>
 	inline static bool lightFromDson(
-		Light &light, const Dson::Dict &object, std::ostream *errorStream) {
+		Light &light, const Dson::Dict &object, std::ostream *errorStream, DumbRenderContext *context) {
 		Type* lightObject = light.use<Type>();
 		if (lightObject == NULL) return false;
-		else return lightObject->fromDson(object, errorStream);
+		else return lightObject->fromDson(object, errorStream, context);
 	}
 	static void registerLightType(
 		const std::string &typeName, LightFromDsonFunction fromDsonFunction);
@@ -52,13 +53,13 @@ public:
 	}
 
 	typedef bool(*LenseFromDsonFunction)(
-		Lense &lense, const Dson::Dict &object, std::ostream *errorStream);
+		Lense &lense, const Dson::Dict &object, std::ostream *errorStream, DumbRenderContext *context);
 	template <typename Type>
 	inline static bool lenseFromDson(
-		Lense &lense, const Dson::Dict &object, std::ostream *errorStream) {
+		Lense &lense, const Dson::Dict &object, std::ostream *errorStream, DumbRenderContext *context) {
 		Type* lenseObject = lense.use<Type>();
 		if (lenseObject == NULL) return false;
-		else return lenseObject->fromDson(object, errorStream);
+		else return lenseObject->fromDson(object, errorStream, context);
 	}
 	static void registerLenseType(
 		const std::string &typeName, LenseFromDsonFunction fromDsonFunction);
@@ -97,6 +98,8 @@ private:
 	bool getObjMesh(const Dson::Dict &dict, BakedTriMesh &mesh, std::ostream *errorStream);
 
 	std::unordered_map<std::string, int> materials;
+	std::unordered_map<std::string, int> textures;
+
 	typedef std::unordered_map<std::string, PolyMesh> MeshDict;
 	typedef std::unordered_map<std::string, MeshDict> ObjDict;
 	ObjDict objectFiles;

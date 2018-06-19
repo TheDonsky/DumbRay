@@ -37,7 +37,7 @@ __dumb__ Color SimpleStochasticShader::getReflectedColor(const ShaderReflectedCo
 }
 
 
-inline bool SimpleStochasticShader::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+inline bool SimpleStochasticShader::fromDson(const Dson::Object &object, std::ostream *errorStream, DumbRenderContext *) {
 	const Dson::Dict *dict = object.safeConvert<Dson::Dict>(errorStream, "Error: SimpleStochasticShader can not be constructed from any other Dson::Object but Dson::Dict...");
 	if (dict == NULL) return false;
 	Vector3 color = albedo;

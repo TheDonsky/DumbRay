@@ -19,7 +19,7 @@ __dumb__ void SimpleSoftDirectionalLight::getVertexPhotons(const LightVertexSamp
 }
 
 
-inline bool SimpleSoftDirectionalLight::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+inline bool SimpleSoftDirectionalLight::fromDson(const Dson::Object &object, std::ostream *errorStream, DumbRenderContext *) {
 	const Dson::Dict *dict = object.safeConvert<Dson::Dict>(errorStream, "Error: SimpleSoftDirectionalLight can only be constructed from Dson::Dict...");
 	Color shade = color;
 	Vector3 direction = dir;

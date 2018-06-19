@@ -71,6 +71,7 @@ namespace {
 		
 		tests["dumb_rand"] = { "Simple tests for DumbRand", DumbRandTest::test };
 		tests["save_buffer_png"] = { "Simple tests for saving FrameBuffer as a png file", ImagesTest::testSavePng };
+		tests["load_buffer_png"] = { "Simple tests for loading Texture from a png file", ImagesTest::testLoadPng };
 		tests["dson_to_string"] = { "Test of how well Dson gets translated to string", DsonTest::testToString };
 		tests["dson_from_string"] = { "Test of how well Dson gets parsed from string", DsonTest::testFromString };
 		tests["test_checkerboard"] = { "Playground test of checkerboard rendering", CheckerboardTest::test };

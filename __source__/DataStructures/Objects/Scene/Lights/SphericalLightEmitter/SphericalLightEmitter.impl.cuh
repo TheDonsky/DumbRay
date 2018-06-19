@@ -18,7 +18,7 @@ __dumb__ void SphericalLightEmitter::getVertexPhotons(const LightVertexSampleReq
 }
 
 
-inline bool SphericalLightEmitter::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+inline bool SphericalLightEmitter::fromDson(const Dson::Object &object, std::ostream *errorStream, DumbRenderContext *) {
 	const Dson::Dict *dict = object.safeConvert<Dson::Dict>(errorStream, "Error: SphericalLightEmitter can not be constructed from any other Dson::Object but Dson::Dict...");
 	if (dict == NULL) return false;
 	Color shade = col;

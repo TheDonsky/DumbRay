@@ -1,5 +1,6 @@
 #pragma once
 #include "../Lense.cuh"
+#include "../../../../DumbRenderContext/DumbRenderContext.cuh"
 
 
 /*
@@ -15,7 +16,7 @@ public:
 	__dumb__ void getPixelSamples(const LenseGetPixelSamplesRequest &request, RaySamples *samples)const;
 	__dumb__ Color getPixelColor(const LenseGetPixelColorRequest &request)const;
 
-	inline bool fromDson(const Dson::Object &object, std::ostream *errorStream);
+	inline bool fromDson(const Dson::Object &object, std::ostream *errorStream, DumbRenderContext *);
 
 private:
 	float x;

@@ -44,7 +44,9 @@ namespace ImagesTest {
 
 		static void loadPngTestCase() {
 			Texture texture;
-
+			std::cout << "Loading image..." << std::endl;
+			Images::Error error = Images::getTexturePNG(texture, "ImagesTest_testSavePng.png");
+			std::cout << "Status: " << error << std::endl;
 			Windows::Window window("Test window");
 			window.updateFrameHost(texture[0], texture.width(), texture.height());
 			int w = -1, h = -1;

@@ -1,5 +1,6 @@
 #pragma once
 #include "../../../Primitives/Pure/Color/Color.h"
+#include "../../../Primitives/Pure/Vector2/Vector2.h"
 #include "../../../GeneralPurpose/TypeTools/TypeTools.cuh"
 
 
@@ -38,7 +39,7 @@ public:
 	__device__ __host__ inline const Color* operator[](uint32_t y)const;
 	__device__ __host__ inline Color& operator()(uint32_t x, uint32_t y);
 	__device__ __host__ inline const Color& operator()(uint32_t x, uint32_t y)const;
-	__device__ __host__ inline const Color get(float x, float y)const;
+	__device__ __host__ inline const Color operator()(const Vector2 &pos)const;
 
 
 

@@ -58,14 +58,14 @@ __dumb__ Color DumbBasedShader::getReflectedColor(const ShaderReflectedColorRequ
 	if ((n * request.observerDirection) < 0.0f) return Color(0.0f, 0.0f, 0.0f);
 	Vector3 wi = -request.photon.ray.direction.normalized();
 	
-	Vector2 textureCoordinate = request.object->vert.massCenter(hitMasses);
+	Vector2 textureCoordinate = request.object->tex.massCenter(hitMasses);
 
 	Color brdf;
 	bool brdfMatters = (request.photonType == PHOTON_TYPE_DIRECT_ILLUMINATION || request.sampleType == 1);
 	if (brdfMatters) {
 		Vector3 w0 = request.observerDirection.normalized();
 		Vector3 wh = (w0 + wi).normalized();
-		Color fres = fresnelColor(textureCoordinate, request.context);
+		Color fres = (ColorRGB)fresnelColor(textureCoordinate, request.context);
 		Color fwi = Color(fresnel(fres.r, wh, wi), fresnel(fres.g, wh, wi), fresnel(fres.b, wh, wi));
 
 		float dwh = ((spec + 2) / (2.0f * PI));
@@ -85,7 +85,7 @@ __dumb__ Color DumbBasedShader::getReflectedColor(const ShaderReflectedColorRequ
 
 	Color diffuse;
 	bool diffuseColorMatters = (request.photonType == PHOTON_TYPE_DIRECT_ILLUMINATION || request.sampleType == 2);
-	Color diff = diffuseColor(textureCoordinate, request.context);
+	Color diff = (ColorRGB)diffuseColor(textureCoordinate, request.context);
 	if (diffuseColorMatters) diffuse = (diff * (n * wi));
 	else diffuse = Color(0.0f, 0.0f, 0.0f);
 	
@@ -108,7 +108,7 @@ __dumb__ float DumbBasedShader::fresnel(float r, const Vector3 &wh, const Vector
 }
 
 
-inline bool DumbBasedShader::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+inline bool DumbBasedShader::fromDson(const Dson::Object &object, std::ostream *errorStream, DumbRenderContext *context) {
 	if (object.type() != Dson::Object::DSON_DICT) {
 		if (errorStream != NULL) (*errorStream) << "Error: DumbBasedShader can only accept Dson::Dict in fromDson method..." << std::endl;
 		return false;
@@ -132,6 +132,13 @@ inline bool DumbBasedShader::fromDson(const Dson::Object &object, std::ostream *
 	float specular = spec;
 	ColoredTexture diffuse = diffuseColor;
 	diffuse.color /= ((metal == 1.0f) ? 1.0f : (1.0f - metal));
+	
+	//*
+
+	if (!fresnelFactor.fromDson(dict, errorStream, context, "fresnel", "fresnel_texture", "fresnel_tiling", "fresnel_offset")) return false;
+	if (!diffuse.fromDson(dict, errorStream, context, "diffuse", "diffuse_texture", "diffuse_tiling", "diffuse_offset")) return false;
+	
+	/*/
 	if (dict.contains("fresnel")) {
 		Vector3 fresnelColorVector(0.0f, 0.0f, 0.0f);
 		if (!fresnelColorVector.fromDson(dict["fresnel"], errorStream)) return false;
@@ -142,6 +149,8 @@ inline bool DumbBasedShader::fromDson(const Dson::Object &object, std::ostream *
 		if (!diffuseColorVector.fromDson(dict["diffuse"], errorStream)) return false;
 		diffuse.color = (ColorRGB)diffuseColorVector;
 	}
+	//*/
+	
 	if (dict.contains("specular")) {
 		const Dson::Number *specularValue = dict["specular"].safeConvert<Dson::Number>(errorStream, "Error: DumbBasedShader specular value hat to be a number...");
 		if (specularValue == NULL) return false;

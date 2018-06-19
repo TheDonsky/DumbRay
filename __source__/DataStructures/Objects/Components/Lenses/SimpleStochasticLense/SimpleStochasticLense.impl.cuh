@@ -25,7 +25,7 @@ __dumb__ Color SimpleStochasticLense::getPixelColor(const LenseGetPixelColorRequ
 }
 
 
-inline bool SimpleStochasticLense::fromDson(const Dson::Object &object, std::ostream *errorStream) {
+inline bool SimpleStochasticLense::fromDson(const Dson::Object &object, std::ostream *errorStream, DumbRenderContext *) {
 	if (object.type() != Dson::Object::DSON_DICT) {
 		if (errorStream != NULL) (*errorStream) << "Error: SimpleStochasticLense can only accept Dson::Dict in fromDson method..." << std::endl;
 		return false;

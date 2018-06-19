@@ -62,17 +62,36 @@ struct RenderContext {
 	const Stacktor<Texture> *textures;
 };
 
+
+class DumbRenderContext;
+
 struct ColoredTexture {
 	Color color;
 	int textureId;
+	Vector2 tiling;
+	Vector2 offset;
 
 	__device__ __host__ inline ColoredTexture() {}
-	__device__ __host__ inline ColoredTexture(Color col, int id) { color = col; textureId = id; }
-	__device__ __host__ inline ColoredTexture(Color col) : ColoredTexture(col, -1) {}
-	__device__ __host__ inline ColoredTexture(int id) : ColoredTexture(Color(1.0f, 1.0f, 1.0f, 1.0f), id) {}
-
-	__device__ __host__ inline Color operator()(Vector2 pos, const RenderContext *context)const { 
-		if (textureId < 0) return color;
-		else return (color * context->textures->operator[](textureId)(pos.x, pos.y));
+	__device__ __host__ inline ColoredTexture(Color col, int id, 
+		const Vector2 &tile = Vector2(1.0f, 1.0f), const Vector2 &off = Vector2(0.0f, 0.0f)) { 
+		color = col; 
+		textureId = id;
+		tiling = tile;
+		offset = off;
 	}
+	__device__ __host__ inline ColoredTexture(Color col) : ColoredTexture(col, -1) {}
+	__device__ __host__ inline ColoredTexture(int id, const Vector2 &tile = Vector2(1.0f, 1.0f), const Vector2 &off = Vector2(0.0f, 0.0f)) 
+		: ColoredTexture(Color(1.0f, 1.0f, 1.0f, 1.0f), id, tile, off) {}
+
+	__device__ __host__ inline Color operator()(const Vector2 &pos, const RenderContext *context)const { 
+		if (textureId < 0) return color;
+		Vector2 coord = ((pos ^ tiling) + offset);
+		return (color * context->textures->operator[](textureId)(coord));
+	}
+
+	bool fromDson(
+		const Dson::Object &object, std::ostream *errorStream, DumbRenderContext *context,
+		const std::string &colorKey = "color", const std::string &textureKey = "texture",
+		const std::string & tilingKey = "tiling", const std::string & offsetKey = "offset");
 };
+

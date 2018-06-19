@@ -1,7 +1,8 @@
 #pragma once
-
-
 #include"../Light.cuh"
+#include "../../../../DumbRenderContext/DumbRenderContext.cuh"
+
+
 
 
 
@@ -16,7 +17,7 @@ struct SimpleSoftDirectionalLight {
 	__dumb__ void getVertexPhotons(const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows)const;
 
 
-	inline bool fromDson(const Dson::Object &object, std::ostream *errorStream);
+	inline bool fromDson(const Dson::Object &object, std::ostream *errorStream, DumbRenderContext *context);
 };
 
 
