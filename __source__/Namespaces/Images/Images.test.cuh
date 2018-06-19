@@ -4,4 +4,5 @@
 
 namespace ImagesTest {
 	void testSavePng();
+	void testLoadPng();
 }

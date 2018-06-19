@@ -41,9 +41,32 @@ namespace ImagesTest {
 			}
 			std::cout << std::endl;
 		}
+
+		static void loadPngTestCase() {
+			Texture texture;
+
+			Windows::Window window("Test window");
+			window.updateFrameHost(texture[0], texture.width(), texture.height());
+			int w = -1, h = -1;
+			while (!window.dead()) {
+				int newW, newH;
+				if (!window.getDimensions(newW, newH)) break;
+				if (w != newW || h != newH) {
+					w = newW;
+					h = newH;
+					window.updateFrameHost(texture[0], texture.width(), texture.height());
+				}
+				std::this_thread::sleep_for(std::chrono::microseconds(32));
+			}
+			std::cout << std::endl;
+		}
 	}
 	
 	void testSavePng() {
 		Tests::runTest(savePngTestCase, "Testing Images::savePNG");
+	}
+
+	void testLoadPng() {
+		Tests::runTest(loadPngTestCase, "Testing Images::loadPNG");
 	}
 }

@@ -2,10 +2,11 @@
 
 
 
-__dumb__ DumbBasedShader::DumbBasedShader(const ColorRGB &fresnelFactor, float cpecular, const ColorRGB &diffuse, float metal) {
-	fres = fresnelFactor;
+__dumb__ DumbBasedShader::DumbBasedShader(const ColoredTexture &fresnelFactor, float cpecular, const ColoredTexture &diffuse, float metal) {
+	fresnelColor = fresnelFactor;
 	metal = max(min(metal, 1.0f), 0.0f);
-	diff = diffuse * (1.0f - metal);
+	diffuseColor = diffuse;
+	diffuseColor.color *= (1.0f - metal);
 	spec = cpecular;
 	specMass = metal;
 }
@@ -52,15 +53,19 @@ __dumb__ Color DumbBasedShader::getReflectedColor(const ShaderReflectedColorRequ
 	if ((request.object->vert.normal().normalized() * (request.photon.ray.direction)) > 0.0f)
 		if (request.photonType != PHOTON_TYPE_DIRECT_ILLUMINATION)
 			return request.photon.color;
-	Vector3 n = request.object->norm.massCenter(request.object->vert.getMasses(request.hitPoint)).normalized();
+	Vector3 hitMasses = request.object->vert.getMasses(request.hitPoint);
+	Vector3 n = request.object->norm.massCenter(hitMasses).normalized();
 	if ((n * request.observerDirection) < 0.0f) return Color(0.0f, 0.0f, 0.0f);
 	Vector3 wi = -request.photon.ray.direction.normalized();
 	
+	Vector2 textureCoordinate = request.object->vert.massCenter(hitMasses);
+
 	Color brdf;
 	bool brdfMatters = (request.photonType == PHOTON_TYPE_DIRECT_ILLUMINATION || request.sampleType == 1);
 	if (brdfMatters) {
 		Vector3 w0 = request.observerDirection.normalized();
 		Vector3 wh = (w0 + wi).normalized();
+		Color fres = fresnelColor(textureCoordinate, request.context);
 		Color fwi = Color(fresnel(fres.r, wh, wi), fresnel(fres.g, wh, wi), fresnel(fres.b, wh, wi));
 
 		float dwh = ((spec + 2) / (2.0f * PI));
@@ -78,18 +83,19 @@ __dumb__ Color DumbBasedShader::getReflectedColor(const ShaderReflectedColorRequ
 	}
 	else brdf = Color(0.0f, 0.0f, 0.0f);
 
-	Color diffuseColor;
+	Color diffuse;
 	bool diffuseColorMatters = (request.photonType == PHOTON_TYPE_DIRECT_ILLUMINATION || request.sampleType == 2);
-	if (diffuseColorMatters) diffuseColor = (diff * (n * wi));
-	else diffuseColor = Color(0.0f, 0.0f, 0.0f);
+	Color diff = diffuseColor(textureCoordinate, request.context);
+	if (diffuseColorMatters) diffuse = (diff * (n * wi));
+	else diffuse = Color(0.0f, 0.0f, 0.0f);
 	
 	Color color;
 	if (brdfMatters && diffuseColorMatters) color = Color(
-		max(0.0f, min((brdf.r * specMass) + diffuseColor.r, 1.0f)),
-		max(0.0f, min((brdf.g * specMass) + diffuseColor.g, 1.0f)),
-		max(0.0f, min((brdf.b * specMass) + diffuseColor.b, 1.0f)));
+		max(0.0f, min((brdf.r * specMass) + diffuse.r, 1.0f)),
+		max(0.0f, min((brdf.g * specMass) + diffuse.g, 1.0f)),
+		max(0.0f, min((brdf.b * specMass) + diffuse.b, 1.0f)));
 	else if (brdfMatters) color = brdf;
-	else color = (diffuseColor * (1.0f / (1.0f - specMass)));
+	else color = (diffuse * (1.0f / (1.0f - specMass)));
 	
 	return (color * request.photon.color);
 }
@@ -121,19 +127,20 @@ inline bool DumbBasedShader::fromDson(const Dson::Object &object, std::ostream *
 			return false;
 		}
 	}
-	ColorRGB fresnelFactor = fres;
+	ColoredTexture fresnelFactor = fresnelColor;
 	float metal = specMass;
 	float specular = spec;
-	ColorRGB diffuse = diff / ((metal == 1.0f) ? 1.0f : (1.0f - metal));
+	ColoredTexture diffuse = diffuseColor;
+	diffuse.color /= ((metal == 1.0f) ? 1.0f : (1.0f - metal));
 	if (dict.contains("fresnel")) {
 		Vector3 fresnelColorVector(0.0f, 0.0f, 0.0f);
 		if (!fresnelColorVector.fromDson(dict["fresnel"], errorStream)) return false;
-		fresnelFactor = fresnelColorVector;
+		fresnelFactor.color = (ColorRGB)fresnelColorVector;
 	}
 	if (dict.contains("diffuse")) {
 		Vector3 diffuseColorVector(0.0f, 0.0f, 0.0f);
 		if (!diffuseColorVector.fromDson(dict["diffuse"], errorStream)) return false;
-		diffuse = diffuseColorVector;
+		diffuse.color = (ColorRGB)diffuseColorVector;
 	}
 	if (dict.contains("specular")) {
 		const Dson::Number *specularValue = dict["specular"].safeConvert<Dson::Number>(errorStream, "Error: DumbBasedShader specular value hat to be a number...");

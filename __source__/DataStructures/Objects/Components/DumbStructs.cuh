@@ -1,5 +1,6 @@
 #pragma once
 #include"../../Primitives/Compound/Photon/Photon.cuh"
+#include"../../Primitives/Pure/Vector2/Vector2.h"
 #include"../../GeneralPurpose/Stacktor/Stacktor.cuh"
 #include"../../GeneralPurpose/DumbRand/DumbRand.cuh"
 #include"Texture/Texture.cuh"
@@ -58,5 +59,20 @@ enum PhotonType {
 
 struct RenderContext {
 	DumbRand *entropy;
-	Stacktor<Texture> *textures;
+	const Stacktor<Texture> *textures;
+};
+
+struct ColoredTexture {
+	Color color;
+	int textureId;
+
+	__device__ __host__ inline ColoredTexture() {}
+	__device__ __host__ inline ColoredTexture(Color col, int id) { color = col; textureId = id; }
+	__device__ __host__ inline ColoredTexture(Color col) : ColoredTexture(col, -1) {}
+	__device__ __host__ inline ColoredTexture(int id) : ColoredTexture(Color(1.0f, 1.0f, 1.0f, 1.0f), id) {}
+
+	__device__ __host__ inline Color operator()(Vector2 pos, const RenderContext *context)const { 
+		if (textureId < 0) return color;
+		else return (color * context->textures->operator[](textureId)(pos.x, pos.y));
+	}
 };
