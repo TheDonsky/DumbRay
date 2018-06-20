@@ -152,14 +152,13 @@ bool DumbRenderContext::getImageId(const Dson::Object &object, int *imageId, std
 		}
 
 		if (dict.contains("filtering")) {
-			const Dson::String *filterObject = dict.get("png").safeConvert<Dson::String>(errorStream, "Error: Image 'filtering' entry MUST BE a string");
+			const Dson::String *filterObject = dict.get("filtering").safeConvert<Dson::String>(errorStream, "Error: Image 'filtering' entry MUST BE a string");
 			if (filterObject == NULL) return false;
 			const std::string &filter = filterObject->value();
 			if (filter == "none") scene.textures.cpuHandle()->operator[](*imageId).setFiltering(Texture::FILTER_NONE);
-			if (filter == "bilinear") scene.textures.cpuHandle()->operator[](*imageId).setFiltering(Texture::FILTER_BILINEAR);
-			if (filter == "trilinear") scene.textures.cpuHandle()->operator[](*imageId).setFiltering(Texture::FILTER_TRILINEAR);
+			else if (filter == "bilinear") scene.textures.cpuHandle()->operator[](*imageId).setFiltering(Texture::FILTER_BILINEAR);
 			else {
-				if (errorStream != NULL) (*errorStream) << "Error: Image filter can be only [\"none\"]/\"bilinear\"/\"trilinear\"" << std::endl;
+				if (errorStream != NULL) (*errorStream) << ("Error: Image filter can be only \"none\"/[\"bilinear\"] (got: \"" + filter + "\")") << std::endl;
 				return false;
 			}
 		}

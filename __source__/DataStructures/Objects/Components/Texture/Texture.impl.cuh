@@ -82,7 +82,12 @@ __device__ __host__ inline const Color Texture::operator()(const Vector2 &pos)co
 	register uint32_t maxX = ((minX + 1) % w), maxY = ((minY + 1) % h);
 	register float offX = (posX - ((float)minX)), offY = (posY - ((float)minY));
 	// __TMP__:
-	return operator()((offX <= 0.5f) ? minX : maxX, (offY <= 0.5f) ? minY : maxY);
+	if (flags == FILTER_NONE) return operator()((offX <= 0.5f) ? minX : maxX, (offY <= 0.5f) ? minY : maxY);
+	else return (
+		(operator()(minX, minY) * ((1.0f - offX) * (1.0f - offY)))
+		+ (operator()(minX, maxY) * ((1.0f - offX) * offY))
+		+ (operator()(maxX, minY) * (offX * (1.0f - offY)))
+		+ (operator()(maxX, maxY) * (offX * offY)));
 }
 
 

@@ -14,11 +14,10 @@ class Texture {
 public:
 	enum Filtering {
 		FILTER_NONE = 0,
-		FILTER_BILINEAR = 1,
-		FILTER_TRILINEAR = 2
+		FILTER_BILINEAR = 1
 	};
 
-	__device__ __host__ inline Texture(uint32_t width = 0, uint32_t height = 0, Filtering filtering = FILTER_NONE);
+	__device__ __host__ inline Texture(uint32_t width = 0, uint32_t height = 0, Filtering filtering = FILTER_BILINEAR);
 	__device__ __host__ inline Texture(const Texture &other);
 	__device__ __host__ inline Texture& operator=(const Texture &other);
 	__device__ __host__ inline void copyFrom(const Texture &other);
