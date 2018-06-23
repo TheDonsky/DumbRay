@@ -2,11 +2,12 @@
 
 
 
-__dumb__ DumbBasedShader::DumbBasedShader(const ColoredTexture &fresnelFactor, float cpecular, const ColoredTexture &diffuse, float metal) {
+__dumb__ DumbBasedShader::DumbBasedShader(const ColoredTexture &fresnelFactor, float cpecular, const ColoredTexture &diffuse, float metal, const ColoredTexture &normal) {
 	fresnelColor = fresnelFactor;
 	metal = max(min(metal, 1.0f), 0.0f);
 	diffuseColor = diffuse;
 	diffuseColor.color *= (1.0f - metal);
+	normalColor = normal;
 	spec = cpecular;
 	specMass = metal;
 }
@@ -54,11 +55,29 @@ __dumb__ Color DumbBasedShader::getReflectedColor(const ShaderReflectedColorRequ
 		if (request.photonType != PHOTON_TYPE_DIRECT_ILLUMINATION)
 			return request.photon.color;
 	Vector3 hitMasses = request.object->vert.getMasses(request.hitPoint);
+	Vector2 textureCoordinate = request.object->tex.massCenter(hitMasses);
 	Vector3 n = request.object->norm.massCenter(hitMasses).normalized();
 	if ((n * request.observerDirection) < 0.0f) return Color(0.0f, 0.0f, 0.0f);
+	if (normalColor.textureId >= 0) {
+		// __TODO__: Fix normal with normal map here...
+		Vector2 texDelta;
+		Vector3 verDelta;
+		if (hitMasses.x < 0.999f) {
+			texDelta = (request.object->tex.a - textureCoordinate);
+			verDelta = (request.object->vert.a - request.hitPoint);
+		}
+		else {
+			texDelta = (request.object->tex.b - textureCoordinate);
+			verDelta = (request.object->vert.b - request.hitPoint);
+		}
+		Vector3 verCoDelta = (verDelta & n).normalized();
+		verDelta = (verCoDelta & n);
+
+		Vector3 u = ((verDelta * texDelta.y) - (verCoDelta * texDelta.x)).normalized();
+
+		n = normalColor.getNormal(n, u, textureCoordinate, request.context);
+	}
 	Vector3 wi = -request.photon.ray.direction.normalized();
-	
-	Vector2 textureCoordinate = request.object->tex.massCenter(hitMasses);
 
 	Color brdf;
 	bool brdfMatters = (request.photonType == PHOTON_TYPE_DIRECT_ILLUMINATION || request.sampleType == 1);
@@ -137,7 +156,7 @@ inline bool DumbBasedShader::fromDson(const Dson::Object &object, std::ostream *
 
 	if (!fresnelFactor.fromDson(dict, errorStream, context, "fresnel", "fresnel_texture", "fresnel_tiling", "fresnel_offset")) return false;
 	if (!diffuse.fromDson(dict, errorStream, context, "diffuse", "diffuse_texture", "diffuse_tiling", "diffuse_offset")) return false;
-	
+	if (!normalColor.fromDson(dict, errorStream, context, "normal_color", "normal_texture", "normal_tiling", "normal_offset")) return false;
 	/*/
 	if (dict.contains("fresnel")) {
 		Vector3 fresnelColorVector(0.0f, 0.0f, 0.0f);
@@ -161,6 +180,6 @@ inline bool DumbBasedShader::fromDson(const Dson::Object &object, std::ostream *
 		if (metalValue == NULL) return false;
 		metal = metalValue->floatValue();
 	}
-	(*this) = DumbBasedShader(fresnelFactor, specular, diffuse, metal);
+	(*this) = DumbBasedShader(fresnelFactor, specular, diffuse, metal, normalColor);
 	return true;
 }

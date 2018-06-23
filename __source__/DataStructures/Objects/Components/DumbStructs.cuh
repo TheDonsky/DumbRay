@@ -93,5 +93,16 @@ struct ColoredTexture {
 		const Dson::Object &object, std::ostream *errorStream, DumbRenderContext *context,
 		const std::string &colorKey = "color", const std::string &textureKey = "texture",
 		const std::string & tilingKey = "tiling", const std::string & offsetKey = "offset");
+
+	__device__ __host__ inline Vector3 getNormal(const Vector3 n, const Vector3 u, const Vector3 v, const Vector2 &pos, const RenderContext *context)const {
+		if (textureId < 0) return n;
+		Vector2 coord = ((pos ^ tiling) + offset);
+		ColorRGB rgb = context->textures->operator[](textureId)(coord);
+		Vector3 masses((color.g * rgb.b), (color.r * ((rgb.r * 2.0f) - 1.0f)), (color.b * ((rgb.g * 2.0f) - 1.0f)));
+		return ((n * masses.x) + (u * masses.y) + (v * masses.z)).normalized();
+	}
+	__device__ __host__ inline Vector3 getNormal(const Vector3 n, const Vector3 u, const Vector2 &pos, const RenderContext *context)const {
+		return getNormal(n, u, (u & n), pos, context);
+	}
 };
 
