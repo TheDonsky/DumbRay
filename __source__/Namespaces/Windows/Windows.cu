@@ -10,7 +10,7 @@ namespace Windows{
 	namespace Private{
 #define WINDOWS_KERNELS_THREADS_PER_BLOCKS 128
 #define WINDOWS_KERNELS_UNITS_PER_THREAD 8
-		__device__ __host__ inline static COLORREF translateColor(const Color &c){
+		__device__ __host__ static COLORREF translateColor(const Color &c){
 			return RGB(((int)(max(min(c.b, 1.0f), 0.0f) * 255)), ((int)(max(min(c.g, 1.0f), 0.0f) * 255)), ((int)(max(min(c.r, 1.0f), 0.0f) * 255)));
 		}
 
@@ -24,22 +24,22 @@ namespace Windows{
 			}
 		}
 
-		inline static int numThreads(int){
+		static int numThreads(int){
 			return WINDOWS_KERNELS_THREADS_PER_BLOCKS;
 		}
-		inline static int numBlocks(int dataSize){
+		static int numBlocks(int dataSize){
 			int unitsPerBlock = WINDOWS_KERNELS_THREADS_PER_BLOCKS * WINDOWS_KERNELS_UNITS_PER_THREAD;
 			return ((dataSize + unitsPerBlock - 1) / unitsPerBlock);
 		}
 
 
-		__device__ __host__ inline static int blockCount(int height){
+		__device__ __host__ static int blockCount(int height){
 			return height;
 		}
-		__device__ __host__ inline static int unitsPerThread() {
+		__device__ __host__ static int unitsPerThread() {
 			return 32;
 		}
-		__device__ __host__ inline static int threadsPerBlock(int width){
+		__device__ __host__ static int threadsPerBlock(int width){
 			int unitsPerT = unitsPerThread();
 			return ((width + unitsPerT - 1) / unitsPerT);
 		}
@@ -82,7 +82,7 @@ namespace Windows{
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-inline Windows::Window::Window(const char *windowName, const char *className){
+Windows::Window::Window(const char *windowName, const char *className){
 	windowDead = false;
 	hwndInFocus = false;
 	volatile bool status = false;
@@ -97,7 +97,7 @@ inline Windows::Window::Window(const char *windowName, const char *className){
 }
 
 
-inline Windows::Window::~Window(){
+Windows::Window::~Window(){
 	windowDead = true;
 	if (messageThread.joinable())
 		messageThread.join();
@@ -111,17 +111,17 @@ inline Windows::Window::~Window(){
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-inline int Windows::Window::getWidth()const{
+int Windows::Window::getWidth()const{
 	int w, h;
 	getDimensions(w, h);
 	return(w);
 }
-inline int Windows::Window::hetHeight()const{
+int Windows::Window::hetHeight()const{
 	int w, h;
 	getDimensions(w, h);
 	return(h);
 }
-inline bool Windows::Window::getDimensions(int &width, int &height)const{
+bool Windows::Window::getDimensions(int &width, int &height)const{
 	RECT rect;
 	if (GetWindowRect(hwnd, &rect)){
 		width = rect.right - rect.left;
@@ -135,21 +135,21 @@ inline bool Windows::Window::getDimensions(int &width, int &height)const{
 	}
 }
 
-inline bool Windows::Window::setWidth(int newWidth){
+bool Windows::Window::setWidth(int newWidth){
 	//
 	if (newWidth < 0) newWidth = 0;
 	return false;
 }
-inline bool Windows::Window::setHeight(int newHeight){
+bool Windows::Window::setHeight(int newHeight){
 	//
 	if (newHeight < 0) newHeight = 0;
 	return false;
 }
 
-inline bool Windows::Window::dead()const{
+bool Windows::Window::dead()const{
 	return windowDead;
 }
-inline bool Windows::Window::inFocus()const{
+bool Windows::Window::inFocus()const{
 	return hwndInFocus;
 }
 
@@ -160,20 +160,20 @@ inline bool Windows::Window::inFocus()const{
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-inline void Windows::Window::updateFromHost(const FrameBuffer &image) {
+void Windows::Window::updateFromHost(const FrameBuffer &image) {
 	if (windowDead) return;
 	if (!content.loadFromHost(image)) return;
 	display();
 }
-inline void Windows::Window::updateFrameHost(const Matrix<Color> &image){
+void Windows::Window::updateFrameHost(const Matrix<Color> &image){
 	updateFrameHost(image[0], image.width(), image.height());
 }
-inline void Windows::Window::updateFrameHost(const Color *devImage, int width, int height){
+void Windows::Window::updateFrameHost(const Color *devImage, int width, int height){
 	if (windowDead) return;
 	if (!content.loadFromHost(devImage, width, height)) return;
 	display();
 }
-inline void Windows::Window::updateFrameDevice(const Matrix<Color> *devImage) {
+void Windows::Window::updateFrameDevice(const Matrix<Color> *devImage) {
 	int width, height;
 	if (!getDimensions(width, height)) return;
 	if (!content.set(width, height)) return;
@@ -187,7 +187,7 @@ inline void Windows::Window::updateFrameDevice(const Matrix<Color> *devImage) {
 	if (SetBitmapBits(content.bitmap, sizeof(COLORREF) * width * height, content.colorHost) != 0)
 		display();
 }
-inline void Windows::Window::updateFrameDevice(const Color *devImage, int width, int height){
+void Windows::Window::updateFrameDevice(const Color *devImage, int width, int height){
 	if (windowDead) return;
 	if (!content.loadFromDevice(devImage, width, height)) return;
 	display();
@@ -200,7 +200,7 @@ inline void Windows::Window::updateFrameDevice(const Color *devImage, int width,
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-inline LRESULT CALLBACK Windows::Window::windowProcedure(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
+LRESULT CALLBACK Windows::Window::windowProcedure(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam){
 	switch (msg){
 	case WM_CLOSE:
 		DestroyWindow(hwnd);
@@ -214,21 +214,21 @@ inline LRESULT CALLBACK Windows::Window::windowProcedure(HWND hwnd, UINT msg, WP
 	return 0;
 }
 
-inline void Windows::Window::createWindow(Window *thisWindow, const char *windowName, const char *className, volatile bool *status, std::condition_variable *statusCondition){
+void Windows::Window::createWindow(Window *thisWindow, const char *windowName, const char *className, volatile bool *status, std::condition_variable *statusCondition){
 	thisWindow->hInstance = GetModuleHandle(NULL);
 
 	WNDCLASS wc = {};
 
 	wc.lpfnWndProc = windowProcedure;
 	wc.hInstance = thisWindow->hInstance;
-	wc.lpszClassName = className;
+	wc.lpszClassName = (LPCWSTR)className;
 
 	RegisterClass(&wc);
 
 	thisWindow->hwnd = CreateWindowEx(
 		0,							// Optional window styles.
-		className,					// Window class
-		windowName,					// Window text
+		(LPCWSTR) className,		// Window class
+		(LPCWSTR) windowName,		// Window text
 		WS_OVERLAPPEDWINDOW,		// Window style
 
 		// Size and position
@@ -260,7 +260,7 @@ inline void Windows::Window::createWindow(Window *thisWindow, const char *window
 
 	thisWindow->windowDead = true;
 }
-inline void Windows::Window::display(){
+void Windows::Window::display(){
 	HDC hdc = GetDC(hwnd);
 	// Temp HDC to copy picture
 	HDC src = CreateCompatibleDC(hdc); // hdc - Device context for window, I've got earlier with GetDC(hWnd) or GetDC(NULL);
@@ -289,20 +289,20 @@ inline void Windows::Window::display(){
 
 
 
-inline void Windows::Window::Content::init(){
+void Windows::Window::Content::init(){
 	bitmap = NULL;
 	colorHost = NULL;
 	colorDevice = NULL;
 	bitWidth = 0;
 	bitHeight = 0;
 }
-inline void Windows::Window::Content::dispose(){
+void Windows::Window::Content::dispose(){
 	if (bitmap != NULL) DeleteObject(bitmap);
 	if (colorHost != NULL) delete[] colorHost;
 	if (colorDevice != NULL) cudaFree(colorDevice);
 	init();
 }
-inline bool Windows::Window::Content::set(int width, int height){
+bool Windows::Window::Content::set(int width, int height){
 	if (bitWidth != width || bitHeight != height || bitmap == NULL || colorHost == NULL || colorDevice == NULL){
 		dispose();
 		colorHost = new COLORREF[width * height];
@@ -327,7 +327,7 @@ inline bool Windows::Window::Content::set(int width, int height){
 	}
 	return true;
 }
-inline bool Windows::Window::Content::loadFromHost(const FrameBuffer &image) {
+bool Windows::Window::Content::loadFromHost(const FrameBuffer &image) {
 	int width, height;
 	image.getSize(&width, &height);
 	if (!set(width, height)) return false;
@@ -336,14 +336,14 @@ inline bool Windows::Window::Content::loadFromHost(const FrameBuffer &image) {
 			colorHost[(j * width) + i] = Private::translateColor(image.getColor(i, j));
 	return (SetBitmapBits(bitmap, sizeof(COLORREF) * (width * height), colorHost) != 0);
 }
-inline bool Windows::Window::Content::loadFromHost(const Color *image, int width, int height){
+bool Windows::Window::Content::loadFromHost(const Color *image, int width, int height){
 	if (!set(width, height)) return false;
 	int surface = width * height;
 	for (int i = 0; i < surface; i++)
 		colorHost[i] = Private::translateColor(image[i]);
 	return (SetBitmapBits(bitmap, sizeof(COLORREF) * surface, colorHost) != 0);
 }
-inline bool Windows::Window::Content::loadFromDevice(const Color *image, int width, int height){
+bool Windows::Window::Content::loadFromDevice(const Color *image, int width, int height){
 	if (!set(width, height)) return false;
 	if (colorDevice == NULL) return false;
 	cudaStream_t stream; if (cudaStreamCreate(&stream) != cudaSuccess) return false;
@@ -361,24 +361,24 @@ inline bool Windows::Window::Content::loadFromDevice(const Color *image, int wid
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-inline Windows::Window::Window(const char *windowName, const char *className) { width = 1280; height = 512; }
-inline Windows::Window::~Window() {}
+Windows::Window::Window(const char *windowName, const char *className) { width = 1280; height = 512; }
+Windows::Window::~Window() {}
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-inline int Windows::Window::getWidth()const { return width; }
-inline int Windows::Window::hetHeight()const { return height; }
-inline bool Windows::Window::getDimensions(int &width, int &height)const { width = this->width; height = this->height; return true; }
-inline bool Windows::Window::setWidth(int newWidth) { width = newWidth; return true; }
-inline bool Windows::Window::setHeight(int newHeight) { height = newHeight; return true; }
-inline bool Windows::Window::setDimensions(int width, int height) { this->width = width; this->height = height; return true; }
-inline bool Windows::Window::dead()const { return false; }
-inline bool Windows::Window::inFocus()const { return false; }
+int Windows::Window::getWidth()const { return width; }
+int Windows::Window::hetHeight()const { return height; }
+bool Windows::Window::getDimensions(int &width, int &height)const { width = this->width; height = this->height; return true; }
+bool Windows::Window::setWidth(int newWidth) { width = newWidth; return true; }
+bool Windows::Window::setHeight(int newHeight) { height = newHeight; return true; }
+bool Windows::Window::setDimensions(int width, int height) { this->width = width; this->height = height; return true; }
+bool Windows::Window::dead()const { return false; }
+bool Windows::Window::inFocus()const { return false; }
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-inline void Windows::Window::updateFrameHost(const Matrix<Color> &image) {}
-inline void Windows::Window::updateFrameHost(const Color *devImage, int width, int height) {}
-inline void Windows::Window::updateFrameDevice(const Matrix<Color> *devImage) {}
-inline void Windows::Window::updateFrameDevice(const Color *devImage, int width, int height) {}
+void Windows::Window::updateFrameHost(const Matrix<Color> &image) {}
+void Windows::Window::updateFrameHost(const Color *devImage, int width, int height) {}
+void Windows::Window::updateFrameDevice(const Matrix<Color> *devImage) {}
+void Windows::Window::updateFrameDevice(const Color *devImage, int width, int height) {}
 #endif

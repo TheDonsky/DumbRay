@@ -280,7 +280,6 @@ namespace Dson {
 
 			builder.selectMainParser(listParserId);
 		}
-		static Parser::ParserNetwork dsonParserNetwork(buildDsonParserNetwork);
 
 		static bool addToDict(const Object &item, std::ostream *errorLog, Dict *target, const std::string *key) {
 			if (target->contains(*key)) {
@@ -429,7 +428,7 @@ namespace Dson {
 	}
 	
 	Object* parse(const std::string &text, std::ostream *errorLog) {
-		std::vector<Parser::RecursiveParser::Token> tokens = dsonParserNetwork.parse(text);
+		std::vector<Parser::RecursiveParser::Token> tokens = Parser::ParserNetwork(buildDsonParserNetwork).parse(text);
 		if (tokens.size() < 1) {
 			if (errorLog != NULL) (*errorLog) << "No in tokens (source: \"" << text << "\")" << std::endl;
 			return NULL;

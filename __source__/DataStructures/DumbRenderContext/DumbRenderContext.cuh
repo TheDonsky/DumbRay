@@ -4,6 +4,7 @@
 #include "../Objects/Meshes/PolyMesh/PolyMesh.h"
 #include "../Objects/Scene/Scene.cuh"
 #include "../../Namespaces/Dson/Dson.h"
+#include "DumbRenderContextConnector.cuh"
 #include <string>
 #include <unordered_map>
 

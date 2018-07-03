@@ -30,7 +30,7 @@ namespace Parser {
 
 			Builder(BuildFn buildFn);
 			inline Builder(const Builder &) {}
-			inline Builder &operator=(const Builder &) {}
+			inline Builder &operator=(const Builder &) { return (*this); }
 			void buildNetwork(ParserNetwork *network);
 		};
 
@@ -43,7 +43,7 @@ namespace Parser {
 	private:
 		friend class ParserNetworkBuilder;
 		inline ParserNetwork(const ParserNetwork &) {}
-		inline ParserNetwork &operator=(const ParserNetwork &) {}
+		inline ParserNetwork &operator=(const ParserNetwork &) { return (*this); }
 		std::vector<RecursiveParser> parsers;
 		const RecursiveParser *mainParser;
 	};
