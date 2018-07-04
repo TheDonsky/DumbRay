@@ -3,42 +3,86 @@
 #include "../Screen/FrameBuffer/BlockBasedFrameBuffer/BlockBasedFrameBuffer.cuh"
 #include "../Objects/Components/Lenses/SimpleStochasticLense/SimpleStochasticLense.cuh"
 #include "../../Namespaces/Images/Images.cuh"
+#include "DumbRenderContextRegistry.cuh"
 #include <fstream>
 #include <sstream>
 #include <iomanip>
-
+#include <mutex>
 
 namespace {
-	typedef std::unordered_map<std::string, DumbRenderContext::MaterialFromDsonFunction> MaterialParserMap;
-	typedef std::unordered_map<std::string, DumbRenderContext::LightFromDsonFunction> LightParserMap;
-	typedef std::unordered_map<std::string, DumbRenderContext::LenseFromDsonFunction> LenseParserMap;
+	static std::mutex registryLock;
+	static DumbRenderContextRegistry *registry = NULL;
 	
-	class Registry {
-	public:
-		inline Registry() {
-			DumbRenderContext::registerMaterials();
-			DumbRenderContext::registerLights();
-			DumbRenderContext::registerLenses();
-		}
+	typedef std::unordered_map<std::string, DumbRenderContextRegistry::MaterialFromDsonFunction> MaterialParserMap;
+	typedef std::unordered_map<std::string, DumbRenderContextRegistry::LightFromDsonFunction> LightParserMap;
+	typedef std::unordered_map<std::string, DumbRenderContextRegistry::LenseFromDsonFunction> LenseParserMap;
 
-		MaterialParserMap materialParsers;
-		LightParserMap lightParsers;
-		LenseParserMap lenseParsers;
+	MaterialParserMap materialParsers;
+	LightParserMap lightParsers;
+	LenseParserMap lenseParsers;
+
+
+	typedef std::unordered_map<std::string, PolyMesh> MeshDict;
+	typedef std::unordered_map<std::string, MeshDict> ObjDict;
+
+	struct DumbRenderContextData {
+		std::string sourcePath;
+
+		std::unordered_map<std::string, int> materials;
+		std::unordered_map<std::string, int> textures;
+
+		ObjDict objectFiles;
+
+		DumbRenderer::SceneType scene;
+		ReferenceManager<Camera> camera;
+
+		Renderer::ThreadConfiguration threadConfiguration;
+		BlockRenderer::BlockConfiguration blockConfiguration;
+		struct RendererSettings {
+			DumbRenderer::BoxingMode boxingMode;
+			int maxBounces;
+			int samplesPerPixelX, samplesPerPixelY;
+			int pixelsPerGPUThread;
+		};
+		RendererSettings rendererSettings;
 	};
-	static Registry registry;
 }
 
 
-DumbRenderContext::DumbRenderContext() 
-	: threadConfiguration(Renderer::ThreadConfiguration::ALL_BUT_GPU_THREADS, 2) {
-	rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_HEIGHT_BASED;
-	rendererSettings.maxBounces = 2;
-	rendererSettings.samplesPerPixelX = 1;
-	rendererSettings.samplesPerPixelY = 1;
-	rendererSettings.pixelsPerGPUThread = 1;
+void DumbRenderContextRegistry::registerMaterialType(
+	const std::string &typeName, MaterialFromDsonFunction fromDsonFunction) {
+	materialParsers[typeName] = fromDsonFunction;
+}
+void DumbRenderContextRegistry::registerLightType(
+	const std::string &typeName, LightFromDsonFunction fromDsonFunction) {
+	lightParsers[typeName] = fromDsonFunction;
+}
+void DumbRenderContextRegistry::registerLenseType(
+	const std::string &typeName, LenseFromDsonFunction fromDsonFunction) {
+	lenseParsers[typeName] = fromDsonFunction;
+}
+
+
+#define CONTEXT ((DumbRenderContextData*)data)->
+
+DumbRenderContext::DumbRenderContext() {
+	{
+		std::lock_guard<std::mutex> guard(registryLock);
+		if (registry == NULL) registry = new DumbRenderContextRegistry();
+	}
+	DumbRenderContextData *dataObject = new DumbRenderContextData();
+	data = ((void*)dataObject);
+	if (data == NULL) return;
+	dataObject->threadConfiguration = Renderer::ThreadConfiguration(Renderer::ThreadConfiguration::ALL_BUT_GPU_THREADS, 2);
+	dataObject->rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_HEIGHT_BASED;
+	dataObject->rendererSettings.maxBounces = 2;
+	dataObject->rendererSettings.samplesPerPixelX = 1;
+	dataObject->rendererSettings.samplesPerPixelY = 1;
+	dataObject->rendererSettings.pixelsPerGPUThread = 1;
 }
 DumbRenderContext::~DumbRenderContext() {
-
+	DumbRenderContextData *dataObject = ((DumbRenderContextData*)data);
+	if (dataObject != NULL) { delete dataObject; data = NULL; }
 }
 
 
@@ -51,11 +95,11 @@ bool DumbRenderContext::fromFile(const std::string &filename, std::ostream *erro
 		return false;
 	}
 	Dson::Object *object = Dson::parse(string, errorStream);
-	const std::string &src = sourcePath;
+	const std::string &src = CONTEXT sourcePath;
 	{
 		size_t len = (filename.length());
 		while ((len <= filename.length()) && (len > 0) && (filename[len - 1] != '/') && (filename[len - 1] != '\\')) len--;
-		sourcePath = filename.substr(0, len);
+		CONTEXT sourcePath = filename.substr(0, len);
 	}
 	bool rv;
 	if (object != NULL) {
@@ -66,7 +110,7 @@ bool DumbRenderContext::fromFile(const std::string &filename, std::ostream *erro
 		if (errorStream != NULL) (*errorStream) << "Error: Could not parse file: \"" << filename << "\"" << std::endl;
 		rv = false;
 	}
-	sourcePath = src;
+	CONTEXT sourcePath = src;
 	return rv;
 }
 
@@ -95,8 +139,8 @@ bool DumbRenderContext::fromDson(const Dson::Object *object, std::ostream *error
 	if (dict.contains("camera")) {
 		if (!parseCamera(dict.get("camera"), errorStream)) return false;
 	}
-	if (camera.cpuHandle()->lense.object() == NULL)
-		camera.cpuHandle()->lense.use<SimpleStochasticLense>(64.0f);
+	if (CONTEXT camera.cpuHandle()->lense.object() == NULL)
+		CONTEXT camera.cpuHandle()->lense.use<SimpleStochasticLense>(64.0f);
 	if (dict.contains("renderer")) {
 		if (!parseRenderer(dict.get("renderer"), errorStream)) return false;
 	}
@@ -112,10 +156,10 @@ bool DumbRenderContext::getImageId(const Dson::Object &object, int *imageId, std
 	}
 	else if (object.type() == Dson::Object::DSON_STRING) {
 		const std::string &name = ((const Dson::String*)(&object))->value();
-		std::unordered_map<std::string, int>::const_iterator it = textures.find("name::" + name);
-		if (it != textures.end()) { (*imageId) = it->second; return true; }
-		it = textures.find("png::" + name);
-		if (it != textures.end()) { (*imageId) = it->second; return true; }
+		std::unordered_map<std::string, int>::const_iterator it = CONTEXT textures.find("name::" + name);
+		if (it != CONTEXT textures.end()) { (*imageId) = it->second; return true; }
+		it = CONTEXT textures.find("png::" + name);
+		if (it != CONTEXT textures.end()) { (*imageId) = it->second; return true; }
 
 		if (errorStream != NULL) (*errorStream) << ("Error: Texture \"" + name + "\" not found") << std::endl;
 		return false;
@@ -126,7 +170,7 @@ bool DumbRenderContext::getImageId(const Dson::Object &object, int *imageId, std
 			const Dson::String *fileNameObject = dict.get("png").safeConvert<Dson::String>(errorStream, "Error: Image 'png' entry MUST BE a string");
 			if (fileNameObject == NULL) return false;
 			const std::string &fileName = fileNameObject->value();
-			std::string filePath = (sourcePath + fileName);
+			std::string filePath = (CONTEXT sourcePath + fileName);
 			{
 				std::ifstream stream;
 				stream.open(filePath);
@@ -134,11 +178,11 @@ bool DumbRenderContext::getImageId(const Dson::Object &object, int *imageId, std
 			}
 			Texture texture;
 			if (Images::getTexturePNG(texture, filePath) == Images::IMAGES_NO_ERROR) {
-				(*imageId) = scene.textures.cpuHandle()->size();
-				scene.textures.cpuHandle()->flush(1);
-				scene.textures.cpuHandle()->operator[](*imageId).stealFrom(texture);
-				textures["png::" + filePath] = (*imageId);
-				textures["png::" + fileName] = (*imageId);
+				(*imageId) = CONTEXT scene.textures.cpuHandle()->size();
+				CONTEXT scene.textures.cpuHandle()->flush(1);
+				CONTEXT scene.textures.cpuHandle()->operator[](*imageId).stealFrom(texture);
+				CONTEXT textures["png::" + filePath] = (*imageId);
+				CONTEXT textures["png::" + fileName] = (*imageId);
 			}
 			else {
 				if (errorStream != NULL) (*errorStream) << ("Error: Could not read file: \"" + filePath + "\"") << std::endl;
@@ -155,8 +199,8 @@ bool DumbRenderContext::getImageId(const Dson::Object &object, int *imageId, std
 			const Dson::String *filterObject = dict.get("filtering").safeConvert<Dson::String>(errorStream, "Error: Image 'filtering' entry MUST BE a string");
 			if (filterObject == NULL) return false;
 			const std::string &filter = filterObject->value();
-			if (filter == "none") scene.textures.cpuHandle()->operator[](*imageId).setFiltering(Texture::FILTER_NONE);
-			else if (filter == "bilinear") scene.textures.cpuHandle()->operator[](*imageId).setFiltering(Texture::FILTER_BILINEAR);
+			if (filter == "none") CONTEXT scene.textures.cpuHandle()->operator[](*imageId).setFiltering(Texture::FILTER_NONE);
+			else if (filter == "bilinear") CONTEXT scene.textures.cpuHandle()->operator[](*imageId).setFiltering(Texture::FILTER_BILINEAR);
 			else {
 				if (errorStream != NULL) (*errorStream) << ("Error: Image filter can be only \"none\"/[\"bilinear\"] (got: \"" + filter + "\")") << std::endl;
 				return false;
@@ -166,7 +210,7 @@ bool DumbRenderContext::getImageId(const Dson::Object &object, int *imageId, std
 		if (dict.contains("name")) {
 			const Dson::String *nameObject = dict.get("png").safeConvert<Dson::String>(errorStream, "Error: Image name entry MUST BE a string");
 			if (nameObject == NULL) return false;
-			textures["name::" + nameObject->value()] = (*imageId);
+			CONTEXT textures["name::" + nameObject->value()] = (*imageId);
 		}
 	}
 	else {
@@ -174,23 +218,6 @@ bool DumbRenderContext::getImageId(const Dson::Object &object, int *imageId, std
 		return false;
 	}
 	return true;
-}
-
-
-
-
-
-void DumbRenderContext::registerMaterialType(
-	const std::string &typeName, MaterialFromDsonFunction fromDsonFunction) {
-	registry.materialParsers[typeName] = fromDsonFunction;
-}
-void DumbRenderContext::registerLightType(
-	const std::string &typeName, LightFromDsonFunction fromDsonFunction) {
-	registry.lightParsers[typeName] = fromDsonFunction;
-}
-void DumbRenderContext::registerLenseType(
-	const std::string &typeName, LenseFromDsonFunction fromDsonFunction) {
-	registry.lenseParsers[typeName] = fromDsonFunction;
 }
 
 
@@ -251,20 +278,20 @@ bool DumbRenderContext::parseCamera(const Dson::Object &object, std::ostream *er
 				return false;
 			}
 			const std::string &type = ((Dson::String*)(&typeObject))->value();
-			LenseParserMap::const_iterator it = registry.lenseParsers.find(type);
-			if (it == registry.lenseParsers.end()) {
+			LenseParserMap::const_iterator it = lenseParsers.find(type);
+			if (it == lenseParsers.end()) {
 				if (errorStream != NULL) (*errorStream) << "Error: Unknown lense type: \"" << type << "\"" << std::endl;
 				return false;
 			}
 			Lense tmpLense;
 			if (!it->second(tmpLense, lense, errorStream, this)) return false;
-			camera.cpuHandle()->lense = tmpLense;
+			CONTEXT camera.cpuHandle()->lense = tmpLense;
 		}
 	}
 	if (dict.contains("transform")) {
 		Transform transform;
 		if (!transform.fromDson(dict["transform"], errorStream)) return false;
-		camera.cpuHandle()->transform = transform;
+		CONTEXT camera.cpuHandle()->transform = transform;
 	}
 	return true;
 }
@@ -279,18 +306,18 @@ bool DumbRenderContext::parseRenderer(const Dson::Object &object, std::ostream *
 			const Dson::Object &cpuObject = resources->get("cpu");
 			if (cpuObject.type() == Dson::Object::DSON_STRING) {
 				const std::string &cpuText = ((const Dson::String*)(&cpuObject))->value();
-				if (cpuText == "all") threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ALL);
-				else if (cpuText == "all_but_gpu") threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ALL_BUT_GPU_THREADS);
-				else if (cpuText == "all_but_one_per_gpu") threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ALL_BUT_THREAD_PER_GPU);
-				else if (cpuText == "none") threadConfiguration.configureCPU(Renderer::ThreadConfiguration::NONE);
-				else if (cpuText == "one") threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ONE);
+				if (cpuText == "all") CONTEXT threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ALL);
+				else if (cpuText == "all_but_gpu") CONTEXT threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ALL_BUT_GPU_THREADS);
+				else if (cpuText == "all_but_one_per_gpu") CONTEXT threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ALL_BUT_THREAD_PER_GPU);
+				else if (cpuText == "none") CONTEXT threadConfiguration.configureCPU(Renderer::ThreadConfiguration::NONE);
+				else if (cpuText == "one") CONTEXT threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ONE);
 				else {
 					if (errorStream != NULL) (*errorStream) << "Error: Renderer Resources CPU can only be one of 'all'/['all_but_gpu']/'all_but_one_per_gpu'/'none'/'one'/any_number" << std::endl;
 					return false;
 				}
 			}
 			else if (cpuObject.type() == Dson::Object::DSON_NUMBER)
-				threadConfiguration.configureCPU(((const Dson::Number*)(&cpuObject))->intValue());
+				CONTEXT threadConfiguration.configureCPU(((const Dson::Number*)(&cpuObject))->intValue());
 			else {
 				if (errorStream != NULL) (*errorStream) << "Error: Renderer Resources CPU can only be one of 'all'/['all_but_gpu']/'all_but_one_per_gpu'/'none'/'one'/any_number" << std::endl;
 				return false;
@@ -299,16 +326,16 @@ bool DumbRenderContext::parseRenderer(const Dson::Object &object, std::ostream *
 		if (resources->contains("gpu")) {
 			const Dson::Number *gpu = resources->get("gpu").safeConvert<Dson::Number>(errorStream, "Error: Renderer Resources GPU can only be a number");
 			if (gpu == NULL) return false;
-			threadConfiguration.configureEveryGPU(gpu->intValue());
+			CONTEXT threadConfiguration.configureEveryGPU(gpu->intValue());
 		}
-		for (int i = 0; i < threadConfiguration.numDevices(); i++) {
+		for (int i = 0; i < CONTEXT threadConfiguration.numDevices(); i++) {
 			std::stringstream stream;
 			stream << "gpu_" << i;
 			const std::string &gpuKey = stream.str();
 			if (resources->contains(gpuKey)) {
 				const Dson::Number *gpu = resources->get(gpuKey).safeConvert<Dson::Number>(errorStream, "Error: Renderer Resources " + gpuKey + " can only be a number");
 				if (gpu == NULL) return false;
-				threadConfiguration.configureGPU(i, gpu->intValue());
+				CONTEXT threadConfiguration.configureGPU(i, gpu->intValue());
 			}
 		}
 	}
@@ -316,9 +343,9 @@ bool DumbRenderContext::parseRenderer(const Dson::Object &object, std::ostream *
 	if (renderer->contains("blocks")) {
 		const Dson::Dict *blocks = renderer->get("blocks").safeConvert<Dson::Dict>(errorStream, "Error: Renderer Blocks has to be a Dson::Dict type");
 		if (blocks == NULL) return false;
-		int blockCutPerCpuThread = blockConfiguration.blockCutPerCpuThread();
-		int blockCutPerGpuSM = blockConfiguration.blockCutPerGpuSM();
-		bool forceDeviceInstanceUpdate = blockConfiguration.forceDeviceInstanceUpdate();
+		int blockCutPerCpuThread = CONTEXT blockConfiguration.blockCutPerCpuThread();
+		int blockCutPerGpuSM = CONTEXT blockConfiguration.blockCutPerGpuSM();
+		bool forceDeviceInstanceUpdate = CONTEXT blockConfiguration.forceDeviceInstanceUpdate();
 		if (blocks->contains("cpu_cut")) {
 			const Dson::Number *cpuCut = blocks->get("cpu_cut").safeConvert<Dson::Number>(errorStream, "Error: Renderer Blocks CPU_CUT has to be a number");
 			if (cpuCut == NULL) return false;
@@ -334,7 +361,7 @@ bool DumbRenderContext::parseRenderer(const Dson::Object &object, std::ostream *
 			if (forceSynch == NULL) return false;
 			forceDeviceInstanceUpdate = forceSynch->value();
 		}
-		blockConfiguration = BlockRenderer::BlockConfiguration(blockCutPerCpuThread, blockCutPerGpuSM, forceDeviceInstanceUpdate);
+		CONTEXT blockConfiguration = BlockRenderer::BlockConfiguration(blockCutPerCpuThread, blockCutPerGpuSM, forceDeviceInstanceUpdate);
 	}
 
 	if (renderer->contains("pixel")) {
@@ -344,10 +371,10 @@ bool DumbRenderContext::parseRenderer(const Dson::Object &object, std::ostream *
 			const Dson::String *boxing = pixel->get("boxing").safeConvert<Dson::String>(errorStream, "Error: Renderer Pixel boxing type has to be a string");
 			if (boxing == NULL) return false;
 			const std::string &boxingText = boxing->value();
-			if (boxingText == "height") rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_HEIGHT_BASED;
-			else if (boxingText == "width") rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_WIDTH_BASED;
-			else if (boxingText == "min") rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_MIN_BASED;
-			else if (boxingText == "max") rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_MAX_BASED;
+			if (boxingText == "height") CONTEXT rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_HEIGHT_BASED;
+			else if (boxingText == "width") CONTEXT rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_WIDTH_BASED;
+			else if (boxingText == "min") CONTEXT rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_MIN_BASED;
+			else if (boxingText == "max") CONTEXT rendererSettings.boxingMode = DumbRenderer::BOXING_MODE_MAX_BASED;
 			else {
 				if (errorStream != NULL) (*errorStream) << "Error: Renderer Pixel boxing mode can only be one of ['height']/'width'/'min'/'max'" << std::endl;
 				return false;
@@ -356,7 +383,7 @@ bool DumbRenderContext::parseRenderer(const Dson::Object &object, std::ostream *
 		if (pixel->contains("bounces")) {
 			const Dson::Number *bounces = pixel->get("bounces").safeConvert<Dson::Number>(errorStream, "Error: Renderer Pixel bounces has to be a number");
 			if (bounces == NULL) return false;
-			rendererSettings.maxBounces = bounces->intValue();
+			CONTEXT rendererSettings.maxBounces = bounces->intValue();
 		}
 		if (pixel->contains("samples_per_pixel")) {
 			const Dson::Array *bounces = pixel->get("samples_per_pixel").safeConvert<Dson::Array>(errorStream, "Error: Renderer Pixel samples_per_pixel has to be an array, containing two numbers");
@@ -365,13 +392,13 @@ bool DumbRenderContext::parseRenderer(const Dson::Object &object, std::ostream *
 				if (errorStream != NULL) (*errorStream) << "Error: Renderer Pixel samples_per_pixel has to be an array, containing two numbers" << std::endl;
 				return false;
 			}
-			rendererSettings.samplesPerPixelX = ((const Dson::Number*)(&bounces->get(0)))->intValue();
-			rendererSettings.samplesPerPixelY = ((const Dson::Number*)(&bounces->get(1)))->intValue();
+			CONTEXT rendererSettings.samplesPerPixelX = ((const Dson::Number*)(&bounces->get(0)))->intValue();
+			CONTEXT rendererSettings.samplesPerPixelY = ((const Dson::Number*)(&bounces->get(1)))->intValue();
 		}
 		if (pixel->contains("pixels_per_gpu_thread")) {
 			const Dson::Number *pixelsPerGpuThread = pixel->get("pixels_per_gpu_thread").safeConvert<Dson::Number>(errorStream, "Error: Renderer Pixel pixels_per_gpu_thread has to be a number");
 			if (pixelsPerGpuThread == NULL) return false;
-			rendererSettings.pixelsPerGPUThread = pixelsPerGpuThread->intValue();
+			CONTEXT rendererSettings.pixelsPerGPUThread = pixelsPerGpuThread->intValue();
 		}
 	}
 
@@ -386,7 +413,7 @@ bool DumbRenderContext::includeFiles(const Dson::Object &object, std::ostream *e
 		const std::string &fileName = text->value();
 		std::string filePath;
 		{
-			filePath = (sourcePath + fileName);
+			filePath = (CONTEXT sourcePath + fileName);
 			std::ifstream stream;
 			stream.open(filePath);
 			if (stream.fail()) filePath = fileName;
@@ -414,20 +441,20 @@ bool DumbRenderContext::parseMaterial(const Dson::Object &object, std::ostream *
 			return false;
 		}
 		const std::string &type = ((Dson::String*)(&typeObject))->value();
-		MaterialParserMap::const_iterator it = registry.materialParsers.find(type);
-		if (it == registry.materialParsers.end()) {
+		MaterialParserMap::const_iterator it = materialParsers.find(type);
+		if (it == materialParsers.end()) {
 			if (errorStream != NULL) (*errorStream) << "Error: Unknown material type: \"" << type << "\"" << std::endl;
 			return false;
 		}
 		Material<BakedTriFace> material;
 		if (!it->second(material, dict, errorStream, this)) return false;
-		if (materialId != NULL) (*materialId) = scene.materials.cpuHandle()->size();
-		scene.materials.cpuHandle()->push(material);
+		if (materialId != NULL) (*materialId) = CONTEXT scene.materials.cpuHandle()->size();
+		CONTEXT scene.materials.cpuHandle()->push(material);
 	}
 	if (dict.contains("name")) {
 		const Dson::Object &entry = dict.get("name");
 		if (entry.type() == Dson::Object::DSON_STRING)
-			materials[((Dson::String*)(&entry))->value()] = (scene.materials.cpuHandle()->size() - 1);
+			CONTEXT materials[((Dson::String*)(&entry))->value()] = (CONTEXT scene.materials.cpuHandle()->size() - 1);
 	}
 	return true;
 }
@@ -448,17 +475,75 @@ bool DumbRenderContext::parseLight(const Dson::Object &object, std::ostream *err
 			return false;
 		}
 		const std::string &type = ((Dson::String*)(&typeObject))->value();
-		LightParserMap::const_iterator it = registry.lightParsers.find(type);
-		if (it == registry.lightParsers.end()) {
+		LightParserMap::const_iterator it = lightParsers.find(type);
+		if (it == lightParsers.end()) {
 			if (errorStream != NULL) (*errorStream) << "Error: Unknown light type: \"" << type << "\"" << std::endl;
 			return false;
 		}
 		Light light;
 		if (!it->second(light, dict, errorStream, this)) return false;
-		scene.lights.cpuHandle()->push(light);
+		CONTEXT scene.lights.cpuHandle()->push(light);
 	}
 	return true;
 }
+bool getObjMesh(void *data, const Dson::Dict &dict, BakedTriMesh &mesh, std::ostream *errorStream) {
+	if (!dict.contains("obj")) {
+		if (errorStream != NULL) (*errorStream) << "Error: 'obj' entry missing from Object." << std::endl;
+		return false;
+	}
+	const Dson::Object &objObject = dict["obj"];
+	if (objObject.type() != Dson::Object::DSON_STRING) {
+		if (errorStream != NULL) (*errorStream) << "Error: Value 'obj' entry must be a string." << std::endl;
+		return false;
+	}
+	const std::string &objFileName = ((Dson::String*)(&objObject))->value();
+	if (CONTEXT objectFiles.find(objFileName) == CONTEXT objectFiles.end()) {
+		Stacktor<PolyMesh> meshes;
+		Stacktor<String> names;
+		std::string objFilePath;
+		{
+			std::ifstream stream;
+			const std::string relativePath = (CONTEXT sourcePath + objFileName);
+			stream.open(relativePath);
+			if (!stream.fail()) objFilePath = relativePath;
+			else objFilePath = objFileName;
+		}
+		if (!MeshReader::readObj(meshes, names, objFilePath)) {
+			if (errorStream != NULL) (*errorStream) << ("Error: Could not read file: '" + objFileName + "' (" + objFilePath + ")") << std::endl;
+			return false;
+		}
+		if (meshes.size() != names.size()) {
+			if (errorStream != NULL) (*errorStream) << ("Error: File '" + objFileName + "' does not have equal amount of names and meshes") << std::endl;
+			return false;
+		}
+		CONTEXT objectFiles[objFileName] = MeshDict();
+		MeshDict &polyMeshDict = CONTEXT objectFiles[objFileName];
+		for (int i = 0; i < meshes.size(); i++)
+			polyMeshDict[names[i] + 0] = meshes[i];
+	}
+	const MeshDict &meshDict = CONTEXT objectFiles[objFileName];
+	if (dict.contains("object")) {
+		const Dson::Object &objectObject = dict["object"];
+		if (objectObject.type() != Dson::Object::DSON_STRING) {
+			if (errorStream != NULL) (*errorStream) << "Error: Value 'object' entry must be a string." << std::endl;
+			return false;
+		}
+		const std::string &objectName = ((Dson::String*)(&objectObject))->value();
+		MeshDict::const_iterator it = meshDict.find(objectName);
+		if (it == meshDict.end()) {
+			if (errorStream != NULL) (*errorStream) << ("Error: Object '" + objectName + "' not found in file '" + objFileName + "'") << std::endl;
+			return false;
+		}
+		const BakedTriMesh bakedMesh = it->second.bake();
+		for (int i = 0; i < bakedMesh.size(); i++) mesh.push(bakedMesh[i]);
+	}
+	else for (MeshDict::const_iterator it = meshDict.begin(); it != meshDict.end(); it++) {
+		const BakedTriMesh bakedMesh = it->second.bake();
+		for (int i = 0; i < bakedMesh.size(); i++) mesh.push(bakedMesh[i]);
+	}
+	return true;
+}
+
 bool DumbRenderContext::parseObject(const Dson::Object &object, std::ostream *errorStream) {
 	if (object.type() != Dson::Object::DSON_DICT) {
 		if (errorStream != NULL) (*errorStream) << "Error: Object should be contained in Dson::Dict" << std::endl;
@@ -490,8 +575,8 @@ bool DumbRenderContext::parseObject(const Dson::Object &object, std::ostream *er
 		const Dson::Object &material = dict["material"];
 		if (material.type() == Dson::Object::DSON_STRING) {
 			const std::string &name = ((Dson::String*)(&material))->value();
-			std::unordered_map<std::string, int>::const_iterator it = materials.find(name);
-			if (it == materials.end()) {
+			std::unordered_map<std::string, int>::const_iterator it = CONTEXT materials.find(name);
+			if (it == CONTEXT materials.end()) {
 				if (errorStream != NULL) (*errorStream) << ("Error: Material not found: \"" + name + "\"") << std::endl;
 				return false;
 			}
@@ -503,7 +588,7 @@ bool DumbRenderContext::parseObject(const Dson::Object &object, std::ostream *er
 	BakedTriMesh mesh;
 	{
 		if (meshDict.contains("obj")) {
-			if (!getObjMesh(meshDict, mesh, errorStream)) return false;
+			if (!getObjMesh(data, meshDict, mesh, errorStream)) return false;
 		}
 		else if (meshDict.contains("primitive")) {
 			// create a primitive...
@@ -515,66 +600,8 @@ bool DumbRenderContext::parseObject(const Dson::Object &object, std::ostream *er
 	}
 
 	for (int i = 0; i < mesh.size(); i++)
-		scene.geometry.cpuHandle()->push(DumbRenderer::SceneType::GeometryUnit(mesh[i] >> transform, materialId));
+		CONTEXT scene.geometry.cpuHandle()->push(DumbRenderer::SceneType::GeometryUnit(mesh[i] >> transform, materialId));
 	
-	return true;
-}
-
-bool DumbRenderContext::getObjMesh(const Dson::Dict &dict, BakedTriMesh &mesh, std::ostream *errorStream) {
-	if (!dict.contains("obj")) {
-		if (errorStream != NULL) (*errorStream) << "Error: 'obj' entry missing from Object." << std::endl;
-		return false;
-	}
-	const Dson::Object &objObject = dict["obj"];
-	if (objObject.type() != Dson::Object::DSON_STRING) {
-		if (errorStream != NULL) (*errorStream) << "Error: Value 'obj' entry must be a string." << std::endl;
-		return false;
-	}
-	const std::string &objFileName = ((Dson::String*)(&objObject))->value();
-	if (objectFiles.find(objFileName) == objectFiles.end()) {
-		Stacktor<PolyMesh> meshes;
-		Stacktor<String> names;
-		std::string objFilePath;
-		{
-			std::ifstream stream;
-			const std::string relativePath = (sourcePath + objFileName);
-			stream.open(relativePath);
-			if (!stream.fail()) objFilePath = relativePath;
-			else objFilePath = objFileName;
-		}
-		if (!MeshReader::readObj(meshes, names, objFilePath)) {
-			if (errorStream != NULL) (*errorStream) << ("Error: Could not read file: '" + objFileName+ "' (" + objFilePath + ")") << std::endl;
-			return false;
-		}
-		if (meshes.size() != names.size()) {
-			if (errorStream != NULL) (*errorStream) << ("Error: File '" + objFileName + "' does not have equal amount of names and meshes") << std::endl;
-			return false;
-		}
-		objectFiles[objFileName] = MeshDict();
-		MeshDict &polyMeshDict = objectFiles[objFileName];
-		for (int i = 0; i < meshes.size(); i++)
-			polyMeshDict[names[i] + 0] = meshes[i];
-	}
-	const MeshDict &meshDict = objectFiles[objFileName];
-	if (dict.contains("object")) {
-		const Dson::Object &objectObject = dict["object"];
-		if (objectObject.type() != Dson::Object::DSON_STRING) {
-			if (errorStream != NULL) (*errorStream) << "Error: Value 'object' entry must be a string." << std::endl;
-			return false;
-		}
-		const std::string &objectName = ((Dson::String*)(&objectObject))->value();
-		MeshDict::const_iterator it = meshDict.find(objectName);
-		if (it == meshDict.end()) {
-			if (errorStream != NULL) (*errorStream) << ("Error: Object '" + objectName + "' not found in file '" + objFileName + "'") << std::endl;
-			return false;
-		}
-		const BakedTriMesh bakedMesh = it->second.bake();
-		for (int i = 0; i < bakedMesh.size(); i++) mesh.push(bakedMesh[i]);
-	}
-	else for (MeshDict::const_iterator it = meshDict.begin(); it != meshDict.end(); it++) {
-		const BakedTriMesh bakedMesh = it->second.bake();
-		for (int i = 0; i < bakedMesh.size(); i++) mesh.push(bakedMesh[i]);
-	}
 	return true;
 }
 
@@ -635,44 +662,44 @@ namespace {
 
 
 void DumbRenderContext::runWindowRender() {
-	scene.geometry.cpuHandle()->build();
-	scene.geometry.makeDirty();
+	CONTEXT scene.geometry.cpuHandle()->build();
+	CONTEXT scene.geometry.makeDirty();
 
 	std::cout << "_____________________________________________________________" << std::endl;
 	std::cout << "RENDERING:" << std::endl;
 	std::cout << "    ________________________________________" << std::endl;
-	std::cout << "    CPU threads: " << threadConfiguration.numHostThreads() << std::endl;
-	if (threadConfiguration.numDevices() > 0) {
+	std::cout << "    CPU threads: " << CONTEXT threadConfiguration.numHostThreads() << std::endl;
+	if (CONTEXT threadConfiguration.numDevices() > 0) {
 		std::cout << "    GPU threads: ";
-		if (threadConfiguration.numDevices() == 1) std::cout << threadConfiguration.numDeviceThreads(0) << " [" << Device::getDeviceName(0) << "]" << std::endl;
+		if (CONTEXT threadConfiguration.numDevices() == 1) std::cout << CONTEXT threadConfiguration.numDeviceThreads(0) << " [" << Device::getDeviceName(0) << "]" << std::endl;
 		else {
 			std::cout << std::endl;
-			for (int i = 0; i < threadConfiguration.numDevices(); i++)
-				std::cout << "        GPU " << i << ": " << threadConfiguration.numDeviceThreads(i) << " [" << Device::getDeviceName(i) << "]" << std::endl;
+			for (int i = 0; i < CONTEXT threadConfiguration.numDevices(); i++)
+				std::cout << "        GPU " << i << ": " << CONTEXT threadConfiguration.numDeviceThreads(i) << " [" << Device::getDeviceName(i) << "]" << std::endl;
 		}
 	}
-	std::cout << "    Block cut per CPU thread: " << blockConfiguration.blockCutPerCpuThread() << std::endl;
-	std::cout << "    Block cut per GPU SM:     " << blockConfiguration.blockCutPerGpuSM() << std::endl;
+	std::cout << "    Block cut per CPU thread: " << CONTEXT blockConfiguration.blockCutPerCpuThread() << std::endl;
+	std::cout << "    Block cut per GPU SM:     " << CONTEXT blockConfiguration.blockCutPerGpuSM() << std::endl;
 	std::cout << "    ________________________________________" << std::endl;
-	std::cout << "    Geometry:    " << scene.geometry.cpuHandle()->getData().size() << " tris" << std::endl;
-	std::cout << "    Node count:  " << scene.geometry.cpuHandle()->getNodeCount() << std::endl;
-	std::cout << "    Materials:   " << scene.materials.cpuHandle()->size() << std::endl;
-	std::cout << "    Lights:      " << scene.lights.cpuHandle()->size() << std::endl;
-	std::cout << "    Bounces:     " << rendererSettings.maxBounces << std::endl;
+	std::cout << "    Geometry:    " << CONTEXT scene.geometry.cpuHandle()->getData().size() << " tris" << std::endl;
+	std::cout << "    Node count:  " << CONTEXT scene.geometry.cpuHandle()->getNodeCount() << std::endl;
+	std::cout << "    Materials:   " << CONTEXT scene.materials.cpuHandle()->size() << std::endl;
+	std::cout << "    Lights:      " << CONTEXT scene.lights.cpuHandle()->size() << std::endl;
+	std::cout << "    Bounces:     " << CONTEXT rendererSettings.maxBounces << std::endl;
 	std::cout << "_____________________________________________________________" << std::endl;
 
 	FrameBufferManager frameBuffer;
 	frameBuffer.cpuHandle()->use<BlockBuffer>();
 
-	DumbRenderer renderer(threadConfiguration, blockConfiguration, 
-		&frameBuffer, &scene, &camera,
-		rendererSettings.boxingMode, rendererSettings.maxBounces,
-		rendererSettings.samplesPerPixelX, rendererSettings.samplesPerPixelY,
-		rendererSettings.pixelsPerGPUThread);
+	DumbRenderer renderer(CONTEXT threadConfiguration, CONTEXT blockConfiguration,
+		&frameBuffer, &CONTEXT scene, &CONTEXT camera,
+		CONTEXT rendererSettings.boxingMode, CONTEXT rendererSettings.maxBounces,
+		CONTEXT rendererSettings.samplesPerPixelX, CONTEXT rendererSettings.samplesPerPixelY,
+		CONTEXT rendererSettings.pixelsPerGPUThread);
 
 	int renderingDevice = 0;
-	for (int i = 0; i < threadConfiguration.numDevices(); i++)
-		if (threadConfiguration.numDeviceThreads(i) > 0) {
+	for (int i = 0; i < CONTEXT threadConfiguration.numDevices(); i++)
+		if (CONTEXT threadConfiguration.numDeviceThreads(i) > 0) {
 			renderingDevice = i;
 			break;
 		}

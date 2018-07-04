@@ -1,10 +1,10 @@
-#include "DumbRenderContext.cuh"
+#include "DumbRenderContextRegistry.cuh"
 
 
 #include "../Objects/Components/Shaders/DumbBasedShader/DumbBasedShader.cuh"
 #include "../Objects/Components/Shaders/SimpleStochasticShader/SimpleStochasticShader.cuh"
 
-void DumbRenderContext::registerMaterials() {
+void DumbRenderContextRegistry::registerMaterials() {
 	registerMaterialType<DumbBasedShader>("dumb_based");
 	registerMaterialType<SimpleStochasticShader>("simple_stochastic");
 }
@@ -13,7 +13,7 @@ void DumbRenderContext::registerMaterials() {
 #include "../Objects/Scene/Lights/SimpleSoftDirectionalLight/SimpleSoftDirectionalLight.cuh"
 #include "../Objects/Scene/Lights/SphericalLightEmitter/SphericalLightEmitter.cuh"
 
-void DumbRenderContext::registerLights() {
+void DumbRenderContextRegistry::registerLights() {
 	registerLightType<SimpleSoftDirectionalLight>("simple_soft_directional");
 	registerLightType<SphericalLightEmitter>("simple_spherical");
 }
@@ -21,7 +21,7 @@ void DumbRenderContext::registerLights() {
 
 #include "../Objects/Components/Lenses/SimpleStochasticLense/SimpleStochasticLense.cuh"
 
-void DumbRenderContext::registerLenses() {
+void DumbRenderContextRegistry::registerLenses() {
 	registerLenseType<SimpleStochasticLense>("simple_stochastic");
 }
 
