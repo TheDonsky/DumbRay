@@ -8,6 +8,7 @@
 #include <sstream>
 #include <iomanip>
 #include <mutex>
+#include <set>
 
 namespace {
 	static std::mutex registryLock;
@@ -85,6 +86,20 @@ DumbRenderContext::~DumbRenderContext() {
 	if (dataObject != NULL) { delete dataObject; data = NULL; }
 }
 
+bool DumbRenderContext::buildFromFile(const std::string &filename, std::ostream *errorStream) {
+	this->~DumbRenderContext();
+	new (this) DumbRenderContext();
+	if (!fromFile(filename, errorStream)) return false;
+	CONTEXT scene.geometry.cpuHandle()->build();
+	return true;
+}
+bool DumbRenderContext::buildFromDson(const Dson::Object *object, std::ostream *errorStream) {
+	this->~DumbRenderContext();
+	new (this) DumbRenderContext();
+	if (!fromDson(object, errorStream)) return false;
+	CONTEXT scene.geometry.cpuHandle()->build();
+	return true;
+}
 
 bool DumbRenderContext::fromFile(const std::string &filename, std::ostream *errorStream) {
 	std::ifstream stream;
@@ -703,7 +718,7 @@ void DumbRenderContext::runWindowRender() {
 			renderingDevice = i;
 			break;
 		}
-	BufferedWindow bufferedWindow(renderer.automaticallySynchesHostBlocks() ? 0 : BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE, "Render Viewport", NULL, renderingDevice);
+	BufferedWindow bufferedWindow(renderer.automaticallySynchesHostBlocks() ? 0 : BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE, NULL, "Render Viewport", NULL, renderingDevice);
 
 	BufferedRenderProcess process;
 	process.setBuffer(&frameBuffer);
@@ -751,4 +766,120 @@ void DumbRenderContext::testFile(const std::string &filename) {
 		std::getline(std::cin, line);
 	}
 	context.runWindowRender();
+}
+
+
+
+
+namespace {
+	struct RenderInstanceData {
+		FrameBufferManager frameBuffer;
+		DumbRenderer renderer;
+		BufferedRenderProcess process;
+		BufferedWindow bufferedWindow;
+		Window *window;
+
+		RenderInstanceData(Window *wnd) : bufferedWindow(0, wnd) {
+			window = wnd;
+		}
+
+		std::mutex lock;
+		std::set<std::pair<DumbRenderContext::RenderInstance::Callback, void *> > onIterationComplete;
+	};
+
+#define DATA_PTR ((RenderInstanceData*)data)
+#define DATA DATA_PTR->
+#define CTX ((DumbRenderContextData*)ctx->data)->
+}
+
+
+DumbRenderContext::RenderInstance::RenderInstance(DumbRenderContext *context, Window *window) {
+	ctx = context;
+	data = new RenderInstanceData(window);
+	reset();
+}
+DumbRenderContext::RenderInstance::~RenderInstance() {
+	stop();
+	RenderInstanceData* instanceData = DATA_PTR;
+	if (instanceData != NULL) {
+		delete instanceData;
+		data = NULL;
+	}
+}
+
+void DumbRenderContext::RenderInstance::reset() {
+	initBuffer();
+	initRenderer();
+	initWindow();
+	initRenderContext();
+}
+
+void DumbRenderContext::RenderInstance::start() {
+	DATA process.start();
+}
+void DumbRenderContext::RenderInstance::stop() {
+	DATA process.end();
+}
+
+void DumbRenderContext::RenderInstance::setResolution(int width, int height) {
+	DATA process.setTargetResolution(width, height, true);
+}
+void DumbRenderContext::RenderInstance::getResolution(int &width, int &height) {
+	DATA frameBuffer.cpuHandle()->getSize(&width, &height);
+}
+void DumbRenderContext::RenderInstance::getPixelColor(int x, int y, float &r, float &g, float &b, float &a)const {
+	Color color = DATA frameBuffer.cpuHandle()->getColor(x, y);
+	r = color.r; g = color.g; b = color.b; a = color.a;
+}
+
+void DumbRenderContext::RenderInstance::onIterationComplete(Callback callback, void *aux) {
+	DATA lock.lock();
+	DATA onIterationComplete.emplace(std::pair<DumbRenderContext::RenderInstance::Callback, void *>(callback, aux));
+	DATA lock.unlock();
+}
+
+
+void DumbRenderContext::RenderInstance::initBuffer() {
+	DATA frameBuffer.~FrameBufferManager();
+	new (&DATA frameBuffer) FrameBufferManager();
+	DATA frameBuffer.cpuHandle()->use<BlockBuffer>();
+}
+void DumbRenderContext::RenderInstance::initRenderer() {
+	DATA renderer.~DumbRenderer();
+	new (&DATA renderer) DumbRenderer(CTX threadConfiguration, CTX blockConfiguration,
+		&DATA frameBuffer, &CTX scene, &CTX camera,
+		CTX rendererSettings.boxingMode, CTX rendererSettings.maxBounces,
+		CTX rendererSettings.samplesPerPixelX, CTX rendererSettings.samplesPerPixelY,
+		CTX rendererSettings.pixelsPerGPUThread);
+}
+void DumbRenderContext::RenderInstance::initWindow() {
+	DATA bufferedWindow.~BufferedWindow();
+	int renderingDevice = 0;
+	for (int i = 0; i < CTX threadConfiguration.numDevices(); i++)
+		if (CTX threadConfiguration.numDeviceThreads(i) > 0) {
+			renderingDevice = i;
+			break;
+		}
+	new (&DATA bufferedWindow) BufferedWindow(
+		DATA renderer.automaticallySynchesHostBlocks() ? 0 : BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE, 
+		DATA window, "Render Viewport", NULL, renderingDevice);
+}
+void DumbRenderContext::RenderInstance::initRenderContext() {
+	DATA process.lockSettings();
+	DATA process.setBuffer(&DATA frameBuffer, false);
+	DATA process.setInfinateTargetIterations(false);
+	DATA process.setTargetResolutionToWindowSize(false);
+	DATA process.setRenderer(&DATA renderer, false);
+	DATA process.setTargetDisplayWindow(&DATA bufferedWindow, false);
+	DATA process.setIterationCompletionCallback(iterationComplete, this, false);
+	DATA process.unlockSettings();
+}
+
+
+void DumbRenderContext::RenderInstance::iterationComplete() {
+	for (std::set<std::pair<Callback, void *> >::const_iterator it = DATA onIterationComplete.begin(); it != DATA onIterationComplete.end(); it++)
+		it->first(it->second);
+}
+void DumbRenderContext::RenderInstance::iterationComplete(void *reference) {
+	((RenderInstance*)reference)->iterationComplete();
 }

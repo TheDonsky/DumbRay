@@ -1,17 +1,30 @@
 #include "BufferedWindow.cuh"
+#include "../Window/WindowsWindow.cuh"
 #include <new>
 
 
-BufferedWindow::BufferedWindow(OptionFlags optionFlags, const char *windowName, FrameBufferManager *frameBufferManager, int renderingDeviceId) {
+BufferedWindow::BufferedWindow(OptionFlags optionFlags, Window *target, const char *windowName, FrameBufferManager *frameBufferManager, int renderingDeviceId) {
 	options = optionFlags;
 	bufferManager = frameBufferManager;
 	deviceId = renderingDeviceId;
 	state = 0;
 	numFramesDisplayed = 0;
-	new(&window()) Windows::Window(windowName);
+	if (target != NULL) {
+		targetWindow = target;
+		if (windowName != NULL)
+			targetWindow->setName(windowName);
+	}
+	else {
+		targetWindow = new WindowsWindow(windowName);
+		state |= WINDOW_ALLOCATED_INTERNALLY;
+	}
 	windowThread = std::thread(bufferedWindowThread, this);
 }
-BufferedWindow::~BufferedWindow() { closeWindow(); }
+BufferedWindow::~BufferedWindow() { 
+	closeWindow();
+	if ((state & WINDOW_ALLOCATED_INTERNALLY) != 0)
+		delete targetWindow;
+}
 
 void BufferedWindow::setBuffer(FrameBufferManager *frameBufferManager) {
 	std::lock_guard<std::mutex> guard(bufferLock);
@@ -27,8 +40,8 @@ bool BufferedWindow::trySetBuffer(FrameBufferManager *frameBufferManager) {
 }
 void BufferedWindow::notifyChange() { bufferCond.notify_one();  }
 
-bool BufferedWindow::getWindowResolution(int &width, int &height)const { return window().getDimensions(width, height); }
-bool BufferedWindow::windowClosed()const { return window().dead(); }
+bool BufferedWindow::getWindowResolution(int &width, int &height)const { return targetWindow->getResolution(width, height); }
+bool BufferedWindow::windowClosed()const { return targetWindow->closed(); }
 void BufferedWindow::closeWindow() {
 	while (true) {
 		std::lock_guard<std::mutex> guard(bufferLock);
@@ -40,13 +53,10 @@ void BufferedWindow::closeWindow() {
 	if ((state & WINDOW_DESTROYED) != 0) return;
 	state |= WINDOW_DESTROYED;
 	windowThread.join();
-	window().~Window();
+	targetWindow->close();
 }
 
 size_t BufferedWindow::framesDisplayed()const { return numFramesDisplayed; }
-
-Windows::Window &BufferedWindow::window() { return (*((Windows::Window*)windowMemory)); }
-const Windows::Window &BufferedWindow::window()const { return (*((const Windows::Window*)windowMemory)); }
 
 void BufferedWindow::bufferedWindowThread(BufferedWindow *bufferedWindow) {
 	bool deviceSynchNeeded = ((bufferedWindow->options & SYNCH_FRAME_BUFFER_FROM_DEVICE) != 0);
@@ -67,7 +77,17 @@ void BufferedWindow::bufferedWindowThread(BufferedWindow *bufferedWindow) {
 		if (deviceSynchNeeded)
 			if (!cpuHandle->updateHostBlocks(
 				((FrameBufferManager*)bufferedWindow->bufferManager)->gpuHandle(bufferedWindow->deviceId), 0, cpuHandle->getBlockCount())) continue;
-		bufferedWindow->window().updateFromHost(*cpuHandle);
+		
+		bufferedWindow->targetWindow->startUpdate();
+		int handleWidth, handleHeight;
+		cpuHandle->getSize(&handleWidth, &handleHeight);
+		bufferedWindow->targetWindow->setImageResolution(handleWidth, handleHeight);
+		for (int j = 0; j < handleHeight; j++)
+			for (int i = 0; i < handleWidth; i++) {
+				Color color = cpuHandle->getColor(i, j);
+				bufferedWindow->targetWindow->setPixel(i, j, color.r, color.g, color.b, color.a);
+			}
+		bufferedWindow->targetWindow->endUpdate();;
 		bufferedWindow->numFramesDisplayed++;
 	}
 }

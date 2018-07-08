@@ -1,6 +1,7 @@
 #pragma once
 #include "../FrameBuffer/FrameBuffer.cuh"
 #include "../../../Namespaces/Windows/Windows.h"
+#include "../Window/Window.cuh"
 #include <thread>
 #include <atomic>
 #include <mutex>
@@ -15,6 +16,7 @@ public:
 
 	BufferedWindow(
 		OptionFlags optionFlags = 0,
+		Window *target = NULL,
 		const char *windowName = "BufferedWindow",
 		FrameBufferManager *frameBufferManager = NULL,
 		int renderingDeviceId = 0);
@@ -35,7 +37,8 @@ private:
 	enum State {
 		BUFFERED_WINDOW_THREAD_FINISHED = 1,
 		BUFFERED_WINDOW_SHOULD_EXIT = 2,
-		WINDOW_DESTROYED = 4
+		WINDOW_DESTROYED = 4,
+		WINDOW_ALLOCATED_INTERNALLY = 8
 	};
 	typedef uint16_t StateFlags;
 
@@ -46,7 +49,6 @@ private:
 	int deviceId;
 	volatile StateFlags state;
 
-	char windowMemory[sizeof(Windows::Window)];
 	std::mutex bufferLock;
 	std::condition_variable bufferCond;
 	
@@ -55,8 +57,7 @@ private:
 
 	std::thread windowThread;
 
-	Windows::Window &window();
-	const Windows::Window &window()const;
+	Window *targetWindow;
 
 	static void bufferedWindowThread(BufferedWindow *bufferedWindow);
 };
