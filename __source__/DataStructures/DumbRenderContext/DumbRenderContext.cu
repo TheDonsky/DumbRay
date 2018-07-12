@@ -838,6 +838,13 @@ void DumbRenderContext::RenderInstance::onIterationComplete(Callback callback, v
 	DATA lock.unlock();
 }
 
+int DumbRenderContext::RenderInstance::iteration()const {
+	return DATA renderer.iteration();
+}
+double DumbRenderContext::RenderInstance::renderTime()const {
+	return (((double)DATA process.renderTime()) / CLOCKS_PER_SEC);
+}
+
 
 void DumbRenderContext::RenderInstance::initBuffer() {
 	DATA frameBuffer.~FrameBufferManager();

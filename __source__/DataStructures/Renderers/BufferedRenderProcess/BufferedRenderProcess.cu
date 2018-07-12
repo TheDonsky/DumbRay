@@ -33,6 +33,8 @@ BufferedRenderProcess::BufferedRenderProcess() {
 
 	errorOnIteration = NULL;
 	errorOnIterationArg = NULL;
+
+	renderClocks = 0;
 }
 BufferedRenderProcess::~BufferedRenderProcess() { end(); }
 
@@ -43,12 +45,14 @@ void BufferedRenderProcess::start() {
 	SET_FLAG(FLAG_RENDER_PROCESS_THREAD_KILL_ISSUED, false);
 	SET_FLAG(FLAG_RENDER_PROCESS_THREAD_STARTED, true);
 	renderThread = std::thread(renderProcess, this);
+	startClock = clock();
 }
 void BufferedRenderProcess::end() {
 	std::lock_guard<std::mutex> guard(threadLock);
 	if (!HAS_FLAG(FLAG_RENDER_PROCESS_THREAD_STARTED)) return;
 	SET_FLAG(FLAG_RENDER_PROCESS_THREAD_KILL_ISSUED, true);
 	renderThread.join();
+	renderClocks = renderTime();
 	SET_FLAG(FLAG_RENDER_PROCESS_THREAD_STARTED, false);
 }
 
@@ -95,6 +99,11 @@ void BufferedRenderProcess::synchSettings(bool alreadyLocked) {
 	if (!HAS_FLAG(FLAG_RENDER_PROCESS_THREAD_STARTED)) return;
 	synchCond.wait(lock);
 }
+
+long long BufferedRenderProcess::renderTime()const {
+	return (renderClocks + (HAS_FLAG(FLAG_RENDER_PROCESS_THREAD_STARTED) ? (clock() - startClock) : 0));
+}
+
 
 
 
@@ -167,7 +176,11 @@ void BufferedRenderProcess::renderProcess(BufferedRenderProcess *target) {
 				backBuffer->cpuHandle()->setResolution(targetWidth, targetHeight);
 				backBuffer->makeDirty();
 				if (bufferedWindowSharesBuffer) bufferedWindow->setBuffer(frontBuffer);
-				if (renderer != NULL) renderer->resetIterations();
+				if (renderer != NULL) {
+					renderer->resetIterations();
+					target->renderClocks = 0;
+					target->startClock = clock();
+				}
 			}
 		}
 
@@ -191,6 +204,8 @@ void BufferedRenderProcess::renderProcess(BufferedRenderProcess *target) {
 						}
 						if (shouldSwap) swapBuffers = (!swapBuffers);
 						renderer->resetIterations();
+						target->renderClocks = 0;
+						target->startClock = clock();
 					}
 					if (iterationCompletionCallback != NULL) iterationCompletionCallback(iterationCompletionCallbackArg);
 					if ((renderer->iteration() == targetIterations) && (renderCompletionCallback != NULL)) renderCompletionCallback(renderCompletionCallbackArg);

@@ -41,6 +41,10 @@ public:
 
 		void onIterationComplete(Callback callback, void *aux);
 
+		int iteration()const;
+		double renderTime()const;
+
+
 	private:
 		inline RenderInstance(const RenderInstance &) {}
 		inline RenderInstance& operator=(const RenderInstance &) { return (*this); }

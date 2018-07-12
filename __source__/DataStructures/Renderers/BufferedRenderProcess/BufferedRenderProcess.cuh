@@ -36,6 +36,8 @@ public:
 
 	void synchSettings(bool alreadyLocked = false);
 
+	long long renderTime()const;
+
 
 private:
 	volatile uint16_t flags;
@@ -58,6 +60,9 @@ private:
 	void* alreadyRenderedCallbackArg;
 	Callback errorOnIteration;
 	void* errorOnIterationArg;
+
+	long long renderClocks;
+	long long startClock;
 
 	static void renderProcess(BufferedRenderProcess *target);
 };
