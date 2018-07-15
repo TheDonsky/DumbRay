@@ -3,6 +3,7 @@
 #include"../../Primitives/Pure/Vector2/Vector2.h"
 #include"../../GeneralPurpose/Stacktor/Stacktor.cuh"
 #include"../../GeneralPurpose/DumbRand/DumbRand.cuh"
+#include"../Meshes/BakedTriMesh/BakedTriMesh.h"
 #include"Texture/Texture.cuh"
 
 
@@ -103,6 +104,29 @@ struct ColoredTexture {
 	}
 	__device__ __host__ inline Vector3 getNormal(const Vector3 n, const Vector3 u, const Vector2 &pos, const RenderContext *context)const {
 		return getNormal(n, u, (u & n), pos, context);
+	}
+	__device__ __host__ inline Vector3 getNormal(const BakedTriFace &face, const Vector3 &masses, const RenderContext *context)const {
+		Vector3 n = face.norm.massCenter(masses).normalized();
+		const Vector3 pos = face.tex.massCenter(masses);
+		if (textureId >= 0) {
+			Vector2 texDelta;
+			Vector3 verDelta;
+			if (masses.x < 0.999f) {
+				texDelta = (face.tex.a - pos);
+				verDelta = (face.vert.a - face.vert.massCenter(masses));
+			}
+			else {
+				texDelta = (face.tex.b - pos);
+				verDelta = (face.vert.b - face.vert.massCenter(masses));
+			}
+			Vector3 verCoDelta = (verDelta & n).normalized();
+			verDelta = (verCoDelta & n);
+
+			Vector3 u = ((verDelta * texDelta.y) - (verCoDelta * texDelta.x)).normalized();
+
+			n = getNormal(n, u, pos, context);
+		}
+		return n;
 	}
 };
 

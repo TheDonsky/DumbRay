@@ -28,12 +28,12 @@ __dumb__ Color LenseFunctionPack::getPixelColor(const void *lense, const LenseGe
 }
 
 template<typename LenseType>
-__dumb__ void LenseFunctionPack::getPixelSamplesGeneric(const void *lense, const LenseGetPixelSamplesRequest &request, RaySamples *samples) {
+__dumb__ void LenseFunctionPack::getPixelSamplesGeneric(const void *lense, const LenseGetPixelSamplesRequest request, RaySamples *samples) {
 	((const LenseType*)lense)->getPixelSamples(request, samples);
 }
 
 template<typename LenseType>
-__dumb__ Color LenseFunctionPack::getPixelColorGeneric(const void *lense, const LenseGetPixelColorRequest &request) {
+__dumb__ Color LenseFunctionPack::getPixelColorGeneric(const void *lense, const LenseGetPixelColorRequest request) {
 	return ((const LenseType*)lense)->getPixelColor(request);
 }
 

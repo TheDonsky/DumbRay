@@ -37,10 +37,10 @@ public:
 
 
 private:
-	void(*getVertexPhotonsFn)(const void *lightSource, const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows);
+	void(*getVertexPhotonsFn)(const void *lightSource, const LightVertexSampleRequest request, PhotonSamples *result, bool *castShadows);
 
 	template<typename LightType>
-	__dumb__ static void getVertexPhotonsAbstract(const void *lightSource, const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows);
+	__dumb__ static void getVertexPhotonsAbstract(const void *lightSource, const LightVertexSampleRequest request, PhotonSamples *result, bool *castShadows);
 };
 
 

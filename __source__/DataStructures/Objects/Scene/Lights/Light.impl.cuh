@@ -20,7 +20,7 @@ __dumb__ void LightInterface::getVertexPhotons(const void *lightSource, const Li
 }
 
 template<typename LightType>
-__dumb__ void LightInterface::getVertexPhotonsAbstract(const void *lightSource, const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows) {
+__dumb__ void LightInterface::getVertexPhotonsAbstract(const void *lightSource, const LightVertexSampleRequest request, PhotonSamples *result, bool *castShadows) {
 	((LightType*)lightSource)->getVertexPhotons(request, result, castShadows);
 }
 

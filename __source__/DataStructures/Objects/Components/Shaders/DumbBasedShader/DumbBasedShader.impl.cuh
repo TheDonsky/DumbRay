@@ -22,7 +22,7 @@ __dumb__ void DumbBasedShader::requestIndirectSamples(const ShaderIndirectSample
 	}
 
 	if (request.context->entropy->getBool(specMass)) {
-		Vector3 n = request.object->norm.massCenter(request.object->vert.getMasses(request.hitPoint)).normalized();
+		Vector3 n = normalColor.getNormal(*request.object, request.object->vert.getMasses(request.hitPoint), request.context);
 		if ((n * (request.ray.direction)) >= 0.0f) return;
 		Vector3 r = (request.ray.direction).reflection(n).normalized();
 		if (r * normal < 0) normal *= -1;
@@ -51,32 +51,14 @@ __dumb__ void DumbBasedShader::requestIndirectSamples(const ShaderIndirectSample
 	samples->set(SampleRay(Ray(request.hitPoint, sampleDir), 1.0f, request.significance, sampleType));
 }
 __dumb__ Color DumbBasedShader::getReflectedColor(const ShaderReflectedColorRequest<BakedTriFace> &request)const {
-	if ((request.object->vert.normal().normalized() * (request.photon.ray.direction)) > 0.0f)
+	BakedTriFace object = (*request.object);
+	if ((object.vert.normal().normalized() * (request.photon.ray.direction)) > 0.0f)
 		if (request.photonType != PHOTON_TYPE_DIRECT_ILLUMINATION)
 			return request.photon.color;
-	Vector3 hitMasses = request.object->vert.getMasses(request.hitPoint);
-	Vector2 textureCoordinate = request.object->tex.massCenter(hitMasses);
-	Vector3 n = request.object->norm.massCenter(hitMasses).normalized();
-	if ((n * request.observerDirection) < 0.0f) return Color(0.0f, 0.0f, 0.0f);
-	if (normalColor.textureId >= 0) {
-		// __TODO__: Fix normal with normal map here...
-		Vector2 texDelta;
-		Vector3 verDelta;
-		if (hitMasses.x < 0.999f) {
-			texDelta = (request.object->tex.a - textureCoordinate);
-			verDelta = (request.object->vert.a - request.hitPoint);
-		}
-		else {
-			texDelta = (request.object->tex.b - textureCoordinate);
-			verDelta = (request.object->vert.b - request.hitPoint);
-		}
-		Vector3 verCoDelta = (verDelta & n).normalized();
-		verDelta = (verCoDelta & n);
-
-		Vector3 u = ((verDelta * texDelta.y) - (verCoDelta * texDelta.x)).normalized();
-
-		n = normalColor.getNormal(n, u, textureCoordinate, request.context);
-	}
+	Vector3 hitMasses = object.vert.getMasses(request.hitPoint);
+	Vector2 textureCoordinate = object.tex.massCenter(hitMasses);
+	if ((object.norm.massCenter(hitMasses) * request.observerDirection) < 0.0f) return Color(0.0f, 0.0f, 0.0f);
+	Vector3 n = normalColor.getNormal(object, hitMasses, request.context);
 	Vector3 wi = -request.photon.ray.direction.normalized();
 
 	Color brdf;

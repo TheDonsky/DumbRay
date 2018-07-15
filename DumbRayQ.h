@@ -13,5 +13,7 @@ public:
 
 private:
 	Ui::DumbRayQClass ui;
-	RenderViewport viewport;
+
+private slots:
+	void souceFilechanged(const std::string &filename);
 };

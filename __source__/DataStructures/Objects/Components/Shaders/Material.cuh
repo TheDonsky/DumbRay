@@ -85,14 +85,14 @@ public:
 
 
 private:
-	void(*requestIndirectSamplesFn)(const void *shader, const ShaderIndirectSamplesRequest<HitType> &request, RaySamples *samples);
-	Color(*getReflectedColorFn)(const void *shader, const ShaderReflectedColorRequest<HitType> &request);
+	void(*requestIndirectSamplesFn)(const void *shader, const ShaderIndirectSamplesRequest<HitType> request, RaySamples *samples);
+	Color(*getReflectedColorFn)(const void *shader, const ShaderReflectedColorRequest<HitType> request);
 
 
 	template<typename ShaderType>
-	__dumb__ static void requestIndirectSamplesGeneric(const void *shader, const ShaderIndirectSamplesRequest<HitType> &request, RaySamples *samples);
+	__dumb__ static void requestIndirectSamplesGeneric(const void *shader, const ShaderIndirectSamplesRequest<HitType> request, RaySamples *samples);
 	template<typename ShaderType>
-	__dumb__ static Color getReflectedColorGeneric(const void *shader, const ShaderReflectedColorRequest<HitType> &request);
+	__dumb__ static Color getReflectedColorGeneric(const void *shader, const ShaderReflectedColorRequest<HitType> request);
 };
 
 

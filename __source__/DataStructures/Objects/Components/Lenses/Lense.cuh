@@ -56,13 +56,13 @@ public:
 
 
 private:
-	void(*getPixelSamplesFn)(const void *lense, const LenseGetPixelSamplesRequest &request, RaySamples *samples);
-	Color(*getPixelColorFn)(const void *lense, const LenseGetPixelColorRequest &request);
+	void(*getPixelSamplesFn)(const void *lense, const LenseGetPixelSamplesRequest request, RaySamples *samples);
+	Color(*getPixelColorFn)(const void *lense, const LenseGetPixelColorRequest request);
 
 	template<typename LenseType>
-	__dumb__ static void getPixelSamplesGeneric(const void *lense, const LenseGetPixelSamplesRequest &request, RaySamples *samples);
+	__dumb__ static void getPixelSamplesGeneric(const void *lense, const LenseGetPixelSamplesRequest request, RaySamples *samples);
 	template<typename LenseType>
-	__dumb__ static Color getPixelColorGeneric(const void *lense, const LenseGetPixelColorRequest &request);
+	__dumb__ static Color getPixelColorGeneric(const void *lense, const LenseGetPixelColorRequest request);
 };
 
 

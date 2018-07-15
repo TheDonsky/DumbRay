@@ -32,12 +32,12 @@ __dumb__ Color Shader<HitType>::getReflectedColor(const void *shader, const Shad
 
 template<typename HitType>
 template<typename ShaderType>
-__dumb__ void Shader<HitType>::requestIndirectSamplesGeneric(const void *shader, const ShaderIndirectSamplesRequest<HitType> &request, RaySamples *samples) {
+__dumb__ void Shader<HitType>::requestIndirectSamplesGeneric(const void *shader, const ShaderIndirectSamplesRequest<HitType> request, RaySamples *samples) {
 	return ((ShaderType*)shader)->requestIndirectSamples(request, samples);
 }
 template<typename HitType>
 template<typename ShaderType>
-__dumb__ Color Shader<HitType>::getReflectedColorGeneric(const void *shader, const ShaderReflectedColorRequest<HitType> &request) {
+__dumb__ Color Shader<HitType>::getReflectedColorGeneric(const void *shader, const ShaderReflectedColorRequest<HitType> request) {
 	return ((ShaderType*)shader)->getReflectedColor(request);
 }
 
