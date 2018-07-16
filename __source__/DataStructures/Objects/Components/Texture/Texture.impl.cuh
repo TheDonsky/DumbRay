@@ -77,8 +77,8 @@ __device__ __host__ inline const Color& Texture::operator()(uint32_t x, uint32_t
 __device__ __host__ inline const Color Texture::operator()(const Vector2 &pos)const {
 	register float x = (pos.x + ((float)(((int)(-pos.x)) + 2))); x -= ((float)((int)x));
 	register float y = (pos.y + ((float)(((int)(-pos.y)) + 2))); y -= ((float)((int)y)); y = (1.0f - y);
-	register float posX = (x * ((float)(w - 1))), posY = (y * ((float)(h - 1)));
-	register uint32_t minX = ((uint32_t)posX), minY = ((uint32_t)posY);
+	register float posX = (x * ((float)w)), posY = (y * ((float)h));
+	register uint32_t minX = (((uint32_t)posX) % w), minY = (((uint32_t)posY) % h);
 	register uint32_t maxX = ((minX + 1) % w), maxY = ((minY + 1) % h);
 	register float offX = (posX - ((float)minX)), offY = (posY - ((float)minY));
 	// __TMP__:

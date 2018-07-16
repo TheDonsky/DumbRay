@@ -134,23 +134,9 @@ inline bool DumbBasedShader::fromDson(const Dson::Object &object, std::ostream *
 	ColoredTexture diffuse = diffuseColor;
 	diffuse.color /= ((metal == 1.0f) ? 1.0f : (1.0f - metal));
 	
-	//*
-
 	if (!fresnelFactor.fromDson(dict, errorStream, context, "fresnel", "fresnel_texture", "fresnel_tiling", "fresnel_offset")) return false;
 	if (!diffuse.fromDson(dict, errorStream, context, "diffuse", "diffuse_texture", "diffuse_tiling", "diffuse_offset")) return false;
 	if (!normalColor.fromDson(dict, errorStream, context, "normal_color", "normal_texture", "normal_tiling", "normal_offset")) return false;
-	/*/
-	if (dict.contains("fresnel")) {
-		Vector3 fresnelColorVector(0.0f, 0.0f, 0.0f);
-		if (!fresnelColorVector.fromDson(dict["fresnel"], errorStream)) return false;
-		fresnelFactor.color = (ColorRGB)fresnelColorVector;
-	}
-	if (dict.contains("diffuse")) {
-		Vector3 diffuseColorVector(0.0f, 0.0f, 0.0f);
-		if (!diffuseColorVector.fromDson(dict["diffuse"], errorStream)) return false;
-		diffuse.color = (ColorRGB)diffuseColorVector;
-	}
-	//*/
 	
 	if (dict.contains("specular")) {
 		const Dson::Number *specularValue = dict["specular"].safeConvert<Dson::Number>(errorStream, "Error: DumbBasedShader specular value hat to be a number...");
