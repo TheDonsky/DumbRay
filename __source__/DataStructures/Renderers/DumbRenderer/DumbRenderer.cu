@@ -314,7 +314,7 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::setSubPixelRenderPass
 		currentLayer++;
 		bounceLayers[currentLayer].setup(
 			layer->bounces.samples[layer->bounces.sampleCount], layer->absoluteWeight);
-		lightRays.sampleCount = 0;
+		// lightRays.sampleCount = 0;
 		return false;
 	}
 
@@ -325,7 +325,7 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::setSubPixelRenderPass
 			BounceLayer &layerBelow = bounceLayers[currentLayer - 1];
 			ShaderReflectedColorRequest<SceneType::SurfaceUnit> request;
 			request.object = &layerBelow.geometry.object->object;
-			request.photon = Photon(Ray(layerBelow.geometry.hitPoint, -layer->layerRay.direction), layer->color);
+			request.photon = Photon(Ray(layer->geometry.hitPoint, -layer->layerRay.direction), layer->color);
 			request.hitPoint = layerBelow.geometry.hitPoint;
 			request.observerDirection = (-layerBelow.layerRay.direction);
 			request.photonType = PHOTON_TYPE_INDIRECT_ILLUMINATION;
