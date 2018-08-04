@@ -17,10 +17,10 @@ __dumb__ void DumbBasedShader::requestIndirectSamples(const ShaderIndirectSample
 	Vector3 sampleDir; 
 	uint32_t sampleType;
 	Vector3 normal = request.object->vert.normal().normalized();
-	if ((normal * (request.ray.direction)) > 0.0f) {
-		samples->set(SampleRay(Ray(request.hitPoint - (request.ray.direction * (8.0f * VECTOR_EPSILON)), request.ray.direction), 1.0f, request.significance, 0));
-		return;
-	}
+	//if ((normal * (request.ray.direction)) > 0.0f) {
+		//samples->set(SampleRay(Ray(request.hitPoint - (normal * (8.0f * VECTOR_EPSILON)), request.ray.direction), 1.0f, request.significance, 0));
+		//return;
+	//}
 	if (request.context->entropy->getBool(specMass)) {
 		Vector3 n = normalColor.getNormal(*request.object, request.object->vert.getMasses(request.hitPoint), request.context);
 		if ((n * (request.ray.direction)) >= 0.0f) return;
