@@ -69,13 +69,18 @@ __dumb__ Color DumbBasedShader::getReflectedColor(const ShaderReflectedColorRequ
 		Color fres = (ColorRGB)fresnelColor(textureCoordinate, request.context);
 		Color fwi = Color(fresnel(fres.r, wh, wi), fresnel(fres.g, wh, wi), fresnel(fres.b, wh, wi));
 
-		float dwh = ((spec + 2) / (2.0f * PI));
-		if (request.photonType == PHOTON_TYPE_DIRECT_ILLUMINATION)
-			dwh *= pow(n * wh, spec);
+		float multiplier;
+		if (request.photonType == PHOTON_TYPE_DIRECT_ILLUMINATION) {
+			float dwh = ((spec + 2) / (2.0f * PI)) * pow(n * wh, spec);
+			//else dwh = 1.0f;
 
-		float gwiw0 = min(1.0f, min(2.0f * (n * wh) * (n * w0) / (w0 * wh), 2.0f * (n * wh) * (n * wi) / (w0 * wh)));
+			float gwiw0 = min(1.0f, min(2.0f * (n * wh) * (n * w0) / (w0 * wh), 2.0f * (n * wh) * (n * wi) / (w0 * wh)));
 
-		Color brdfBare = ((fwi * dwh * gwiw0) / (4.0f * (n * w0) * (n * wi)));
+			multiplier = (dwh * gwiw0) / (4.0f * (n * w0) * (n * wi));
+		}
+		else multiplier = 1.0f;
+
+		Color brdfBare = (fwi * multiplier);
 
 		brdf = Color(
 			max(0.0f, min(brdfBare.r, 1.0f)),
