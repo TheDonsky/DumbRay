@@ -32,6 +32,7 @@ __dumb__ void DumbBasedShader::requestIndirectSamples(const ShaderIndirectSample
 		a.normalize();
 		Vector3 b = (r & a);
 		while (true) {
+			// __TODO__: Fix this (cosine) distribution:
 			float cosine = pow(request.context->entropy->getFloat(), 1.0f / spec);
 			float sinus = sqrt(1.0f - (cosine * cosine));
 			float angle = (request.context->entropy->getFloat() * 2.0f * PI);
@@ -67,7 +68,7 @@ __dumb__ Color DumbBasedShader::getReflectedColor(const ShaderReflectedColorRequ
 		Vector3 w0 = request.observerDirection.normalized();
 		Vector3 wh = (w0 + wi).normalized();
 		Color fres = (ColorRGB)fresnelColor(textureCoordinate, request.context);
-		Color fwi = Color(fresnel(fres.r, wh, wi), fresnel(fres.g, wh, wi), fresnel(fres.b, wh, wi));
+		Color fwi = DumbTools::fresnel(fres, wh, wi);
 
 		float multiplier;
 		if (request.photonType == PHOTON_TYPE_DIRECT_ILLUMINATION) {
@@ -104,13 +105,6 @@ __dumb__ Color DumbBasedShader::getReflectedColor(const ShaderReflectedColorRequ
 	else color = (diffuse * (1.0f / (1.0f - specMass)));
 	
 	return (color * request.photon.color);
-}
-
-
-__dumb__ float DumbBasedShader::fresnel(float r, const Vector3 &wh, const Vector3 &wi) {
-	register float val = (1.0f - (wh * wi));
-	register float sqrVal = (val * val);
-	return (r + ((1.0f - r) * (sqrVal * sqrVal * val)));
 }
 
 

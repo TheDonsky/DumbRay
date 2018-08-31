@@ -27,8 +27,6 @@ private:
 	ColoredTexture normalColor;
 	float spec;
 	float specMass;
-
-	__dumb__ static float fresnel(float r, const Vector3 &wh, const Vector3 &wi);
 };
 
 #include "DumbBasedShader.impl.cuh"

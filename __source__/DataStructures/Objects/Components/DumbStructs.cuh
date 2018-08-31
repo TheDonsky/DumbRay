@@ -5,6 +5,7 @@
 #include"../../GeneralPurpose/DumbRand/DumbRand.cuh"
 #include"../Meshes/BakedTriMesh/BakedTriMesh.h"
 #include"Texture/Texture.cuh"
+#include<iostream>
 
 
 
@@ -130,3 +131,41 @@ struct ColoredTexture {
 	}
 };
 
+
+namespace DumbTools {
+	__dumb__ Color fresnel(Color fesnelColor, const Vector3 &normal, const Vector3 &ray) {
+		register float val = (1.0f - (normal * ray));
+		register float sqrVal = (val * val);
+		return (fesnelColor + ((Color(1.0f, 1.0f, 1.0f, 1.0f) - fesnelColor) * (sqrVal * sqrVal * val)));
+	}
+
+	namespace Colors {
+		__dumb__ static Color iron() { return Color(0.56f, 0.57f, 0.58f); }
+		__dumb__ static Color copper() { return Color(0.95f, 0.64f, 0.54f); }
+		__dumb__ static Color gold() { return Color(1.0f, 0.71f, 0.29f); }
+		__dumb__ static Color aluminum() { return Color(0.91f, 0.92f, 0.92f); }
+		__dumb__ static Color silver() { return Color(0.95f, 0.93f, 0.88f); }
+
+		inline bool getColor(const Dson::Object &object, std::ostream *errorStream, const std::string &keyName, Color &result, bool *changed) {
+			const Dson::Dict *dict = object.safeConvert<Dson::Dict>(errorStream, "Error: Fresnel Shader can only be constructed from a dict");
+			if (dict == NULL) return false;
+			if (dict->contains(keyName)) {
+				const Dson::String *colorObject = dict->operator[](keyName).safeConvert<Dson::String>(errorStream, "Error: " + keyName + " should be of a string type...");
+				if (colorObject == NULL) return false;
+				const std::string &color = colorObject->value();
+				if (color == "iron") result = iron();
+				else if (color == "copper") result = copper();
+				else if (color == "gold") result = gold();
+				else if (color == "aluminum") result = aluminum();
+				else if (color == "silver") result = silver();
+				else {
+					if (errorStream != NULL) (*errorStream) << ("Error: " + keyName + " \"" + color + "\" does not exist...") << std::endl;
+					return false;
+				}
+				if (changed != NULL) (*changed) = true;
+			}
+			else if (changed != NULL) (*changed) = false;
+			return true;
+		}
+	}
+}

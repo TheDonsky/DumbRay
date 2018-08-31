@@ -3,10 +3,12 @@
 
 #include "../Objects/Components/Shaders/DumbBasedShader/DumbBasedShader.cuh"
 #include "../Objects/Components/Shaders/SimpleStochasticShader/SimpleStochasticShader.cuh"
+#include "../Objects/Components/Shaders/FresnelShader/FresnelShader.cuh"
 
 void DumbRenderContextRegistry::registerMaterials() {
 	registerMaterialType<DumbBasedShader>("dumb_based");
 	registerMaterialType<SimpleStochasticShader>("simple_stochastic");
+	registerMaterialType<Shaders::FresnelShader>("fresnel_color");
 }
 
 
