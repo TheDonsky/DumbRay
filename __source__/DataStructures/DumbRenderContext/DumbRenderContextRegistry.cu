@@ -22,9 +22,11 @@ void DumbRenderContextRegistry::registerLights() {
 
 
 #include "../Objects/Components/Lenses/SimpleStochasticLense/SimpleStochasticLense.cuh"
+#include "../Objects/Components/Lenses/SphericalSegmentLense/SphericalSegmentLense.cuh"
 
 void DumbRenderContextRegistry::registerLenses() {
 	registerLenseType<SimpleStochasticLense>("simple_stochastic");
+	registerLenseType<Lenses::SphericalSegmentLense>("spherical_segment");
 }
 
 
