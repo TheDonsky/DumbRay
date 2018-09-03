@@ -101,8 +101,10 @@ bool DumbRenderer::renderBlocksGPU(
 	DumbRendererPrivateKernels::renderBlocks
 		<<<blockCount, host->getBlockSize(), 0, renderStream>>>
 		(sceneConfiguration, renderContext, startBlock, endBlock);
-	if (cudaStreamSynchronize(renderStream) != cudaSuccess)
+	if (cudaStreamSynchronize(renderStream) != cudaSuccess) {
 		printf("error: %d\n", (int)cudaGetLastError());
+		return false;
+	}
 	return true;
 }
 

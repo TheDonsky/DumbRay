@@ -86,7 +86,10 @@ void BlockRenderer::iterateGPU(const Info &info) {
 	int start = 0, end = 0;
 	cudaStream_t &renderStream = blockManager->getRenderStream();
 	while ((!renderInterrupted()) && blockManager->getBlocks(start, end, synchNeeded))
-		if (!renderBlocksGPU(info, host, device, start, end, renderStream)) return;
+		if (!renderBlocksGPU(info, host, device, start, end, renderStream)) {
+			threadConfiguration().configureGPU(info.device, 0);
+			return;
+		}
 
 	// __TODO__: record errors if (blockManager->errors() != 0) 
 	if (hostBlockSynchNeeded) { blockManager->synchBlockSynchStream(); /* THIS MAY FAIL AS WELL.. */ }
