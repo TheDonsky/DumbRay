@@ -267,6 +267,7 @@ void RenderViewport::resetRender() {
 	instance.~RenderInstance();
 	new (&instance) DumbRenderContext::RenderInstance(&context, &window);
 	instance.onIterationComplete(iterationEndedCallback, this);
+	updateResources();
 	instance.start();
 	emit issueEnableButtons(false, true, true);
 }
