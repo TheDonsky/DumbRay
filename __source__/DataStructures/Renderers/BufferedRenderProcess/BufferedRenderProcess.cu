@@ -42,18 +42,24 @@ BufferedRenderProcess::~BufferedRenderProcess() { end(); }
 void BufferedRenderProcess::start() {
 	std::lock_guard<std::mutex> guard(threadLock);
 	if (HAS_FLAG(FLAG_RENDER_PROCESS_THREAD_STARTED)) return;
+	lockSettings();
 	SET_FLAG(FLAG_RENDER_PROCESS_THREAD_KILL_ISSUED, false);
 	SET_FLAG(FLAG_RENDER_PROCESS_THREAD_STARTED, true);
+	unlockSettings();
 	renderThread = std::thread(renderProcess, this);
 	startClock = clock();
 }
 void BufferedRenderProcess::end() {
 	std::lock_guard<std::mutex> guard(threadLock);
 	if (!HAS_FLAG(FLAG_RENDER_PROCESS_THREAD_STARTED)) return;
+	lockSettings();
 	SET_FLAG(FLAG_RENDER_PROCESS_THREAD_KILL_ISSUED, true);
+	unlockSettings();
 	renderThread.join();
 	renderClocks = renderTime();
+	lockSettings();
 	SET_FLAG(FLAG_RENDER_PROCESS_THREAD_STARTED, false);
+	unlockSettings();
 }
 
 void BufferedRenderProcess::lockSettings() { settingsLock.lock(); }

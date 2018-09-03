@@ -30,6 +30,10 @@ public:
 		RenderInstance(DumbRenderContext *context, Window *window);
 		~RenderInstance();
 
+		void interruptRender();
+		void uninterruptRender();
+		bool renderInterrupted()const;
+
 		void reset();
 
 		void start();
@@ -43,6 +47,13 @@ public:
 
 		int iteration()const;
 		double renderTime()const;
+
+		int cpuThreads()const;
+		void setCpuThreads(int count);
+
+		int gpuCount()const;
+		bool gpuOn(int index)const;
+		void setGpu(int index, bool on);
 
 
 	private:

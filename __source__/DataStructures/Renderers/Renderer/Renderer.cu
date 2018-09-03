@@ -159,12 +159,20 @@ int Renderer::deviceThreadCount() { return gpuThreads; }
 
 int Renderer::hostThreadCount() { return cpuThreads; }
 
-const Renderer::ThreadConfiguration &Renderer::threadConfiguration() { return configuration; }
+Renderer::ThreadConfiguration &Renderer::threadConfiguration() { return configuration; }
+
+const Renderer::ThreadConfiguration &Renderer::threadConfiguration()const { return configuration; }
+
+void Renderer::interruptRender() { command |= INTERRUPT_RENDER; }
+
+void Renderer::uninterruptRender() { command &= (~((uint8_t)INTERRUPT_RENDER)); }
+
+bool Renderer::renderInterrupted()const { return ((command & INTERRUPT_RENDER) != 0); }
 
 void Renderer::killRenderThreads() {
 	startRenderThreads();
 	if (configured()) {
-		command = QUIT;
+		command |= QUIT;
 		for (int i = 0; i < totalThreadCount; i++)
 			threads[i].properties.startLock.post();
 		for (int i = 0; i < totalThreadCount; i++)
@@ -179,6 +187,7 @@ void Renderer::killRenderThreads() {
 		gpuLocks = NULL;
 	}
 }
+
 
 bool Renderer::Info::isGPU()const {
 	return (device != DEVICE_CPU);
@@ -203,8 +212,10 @@ void Renderer::threadCPU(ThreadAttributes *attributes) {
 	bool canIterate = (!attributes->setupFailed);
 	while (true) {
 		attributes->startLock.wait();
-		if (command == QUIT) break;
-		if (canIterate) iterateCPU(attributes->info);
+		if ((command & QUIT) != 0) break;
+		else if ((command & INTERRUPT_RENDER) != 0) {}
+		else if (attributes->info.deviceThreadId >= configuration.numHostThreads()) {}
+		else if (canIterate) iterateCPU(attributes->info);
 		attributes->endLock.post();
 	}
 }
@@ -212,8 +223,10 @@ void Renderer::threadGPU(ThreadAttributes *attributes) {
 	bool canIterate = ((!attributes->setupFailed) && (!attributes->device->setupFailed));
 	while (true) {
 		attributes->startLock.wait(); 
-		if (command == QUIT) break;
-		if (canIterate) iterateGPU(attributes->info);
+		if ((command & QUIT) != 0) break;
+		else if ((command & INTERRUPT_RENDER) != 0) {}
+		else if (attributes->info.deviceThreadId >= configuration.numDeviceThreads(attributes->info.device)) {}
+		else if (canIterate) iterateGPU(attributes->info);
 		attributes->endLock.post();
 	}
 }

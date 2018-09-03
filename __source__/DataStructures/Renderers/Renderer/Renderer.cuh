@@ -79,9 +79,9 @@ public:
 
 	private:
 		friend class Renderer;
-		int threadsOnCPU;
+		volatile int threadsOnCPU;
 		Stacktor<int> threadsPerGPU;
-		uint8_t flags;
+		volatile uint8_t flags;
 		void fixCpuThreadCount();
 	};
 
@@ -131,9 +131,29 @@ public:
 	int hostThreadCount();
 
 	/*
-	Initial thread configuration:
+	Thread configuration:
 	*/
-	const ThreadConfiguration &threadConfiguration();
+	ThreadConfiguration &threadConfiguration();
+
+	/*
+	Thread configuration:
+	*/
+	const ThreadConfiguration &threadConfiguration()const;
+
+	/*
+	Call this to interrupt render process and "skip" iteration:
+	*/
+	void interruptRender();
+
+	/*
+	Call this to cancel whatever interruptRender did:
+	*/
+	void uninterruptRender();
+
+	/*
+	You may check, if killRenderThreads() was already called by calling this:
+	*/
+	bool renderInterrupted()const;
 
 
 
@@ -146,6 +166,9 @@ protected:
 	in order to avoid memory leaks and/or random crashes.
 	*/
 	void killRenderThreads();
+
+
+
 
 
 protected:
@@ -179,8 +202,9 @@ protected:
 
 private:
 	enum Command {
-		ITERATE,
-		QUIT
+		ITERATE = 0,
+		QUIT = 1,
+		INTERRUPT_RENDER = 2
 	};
 	struct Device {
 		Semaphore setup;
@@ -209,7 +233,7 @@ private:
 
 	volatile bool threadsStarted;
 	volatile bool destructorCalled;
-	volatile Command command;
+	volatile uint8_t command;
 	int cpuThreads;
 	int gpuThreads;
 	int totalThreadCount;

@@ -68,7 +68,7 @@ void BlockRenderer::iterateCPU(const Info &info) {
 	FrameBuffer *buffer = getFrameBuffer()->cpuHandle();
 	if (buffer == NULL) return;
 	int start, end;
-	while (blockBank.getBlocks(4, &start, &end))
+	while ((!renderInterrupted()) && blockBank.getBlocks(4, &start, &end))
 		if (!renderBlocksCPU(info, buffer, start, end)) return;
 }
 void BlockRenderer::iterateGPU(const Info &info) {
@@ -85,7 +85,7 @@ void BlockRenderer::iterateGPU(const Info &info) {
 	bool synchNeeded = ((iteration() > 1) && hostBlockSynchNeeded);
 	int start = 0, end = 0;
 	cudaStream_t &renderStream = blockManager->getRenderStream();
-	while (blockManager->getBlocks(start, end, synchNeeded))
+	while ((!renderInterrupted()) && blockManager->getBlocks(start, end, synchNeeded))
 		if (!renderBlocksGPU(info, host, device, start, end, renderStream)) return;
 
 	// __TODO__: record errors if (blockManager->errors() != 0) 

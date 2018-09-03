@@ -799,6 +799,9 @@ DumbRenderContext::RenderInstance::RenderInstance(DumbRenderContext *context, Wi
 	reset();
 }
 DumbRenderContext::RenderInstance::~RenderInstance() {
+	DATA process.lockSettings();
+	DATA renderer.interruptRender();
+	DATA process.unlockSettings();
 	stop();
 	RenderInstanceData* instanceData = DATA_PTR;
 	if (instanceData != NULL) {
@@ -806,6 +809,18 @@ DumbRenderContext::RenderInstance::~RenderInstance() {
 		data = NULL;
 	}
 }
+
+void DumbRenderContext::RenderInstance::interruptRender() { 
+	DATA process.lockSettings();
+	DATA renderer.interruptRender();
+	DATA process.unlockSettings();
+}
+void DumbRenderContext::RenderInstance::uninterruptRender() { 
+	DATA process.lockSettings();
+	DATA renderer.uninterruptRender();
+	DATA process.unlockSettings();
+}
+bool DumbRenderContext::RenderInstance::renderInterrupted()const { return DATA renderer.renderInterrupted(); }
 
 void DumbRenderContext::RenderInstance::reset() {
 	initBuffer();
@@ -845,6 +860,16 @@ double DumbRenderContext::RenderInstance::renderTime()const {
 	return (((double)DATA process.renderTime()) / CLOCKS_PER_SEC);
 }
 
+int DumbRenderContext::RenderInstance::cpuThreads()const { return DATA renderer.threadConfiguration().numHostThreads(); }
+void DumbRenderContext::RenderInstance::setCpuThreads(int count) { DATA renderer.threadConfiguration().configureCPU(count); }
+
+int DumbRenderContext::RenderInstance::gpuCount()const { return DATA renderer.threadConfiguration().numDevices(); }
+bool DumbRenderContext::RenderInstance::gpuOn(int index)const { return (DATA renderer.threadConfiguration().numDeviceThreads(index) > 0); }
+void DumbRenderContext::RenderInstance::setGpu(int index, bool on) { DATA renderer.threadConfiguration().configureGPU(index, on ? CTX threadConfiguration.numDeviceThreads(index) : 0); }
+
+
+
+
 
 void DumbRenderContext::RenderInstance::initBuffer() {
 	DATA frameBuffer.~FrameBufferManager();
@@ -853,11 +878,15 @@ void DumbRenderContext::RenderInstance::initBuffer() {
 }
 void DumbRenderContext::RenderInstance::initRenderer() {
 	DATA renderer.~DumbRenderer();
-	new (&DATA renderer) DumbRenderer(CTX threadConfiguration, CTX blockConfiguration,
+	Renderer::ThreadConfiguration threadConfiguration = CTX threadConfiguration;
+	int threadsOnCpu = threadConfiguration.numHostThreads();
+	threadConfiguration.configureCPU(Renderer::ThreadConfiguration::ALL);
+	new (&DATA renderer) DumbRenderer(threadConfiguration, CTX blockConfiguration,
 		&DATA frameBuffer, &CTX scene, &CTX camera,
 		CTX rendererSettings.boxingMode, CTX rendererSettings.maxBounces,
 		CTX rendererSettings.samplesPerPixelX, CTX rendererSettings.samplesPerPixelY,
 		CTX rendererSettings.pixelsPerGPUThread);
+	DATA renderer.threadConfiguration().configureCPU(threadsOnCpu);
 }
 void DumbRenderContext::RenderInstance::initWindow() {
 	DATA bufferedWindow.~BufferedWindow();
