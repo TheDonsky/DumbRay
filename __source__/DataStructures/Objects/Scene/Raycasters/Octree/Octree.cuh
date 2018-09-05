@@ -12,6 +12,15 @@
 #define OCTREE_VOXEL_LOCAL_CAPACITY OCTREE_POLYCOUNT_TO_SPLIT_NODE
 #define OCTREE_MAX_DEPTH 24
 
+#define OCTREE_CACHE_INTERSECTION_INFO
+#ifndef __CUDA_ARCH__
+#define OCTREE_USE_THREAD_POOL_ON_BULD
+#endif // !__CUDA_ARCH__
+#ifdef OCTREE_USE_THREAD_POOL_ON_BULD
+#include"../../../../../Namespaces/Callbacks/ThreadPools.h"
+#include"../../../../GeneralPurpose/ReaderWriterLock/ReaderWriterLock.cuh"
+#endif
+
 
 template<typename ElemType>
 class Octree;
@@ -174,9 +183,19 @@ private:
 	__device__ __host__ inline void flushTree();
 
 	/** ========================================================== **/
+
+#ifdef OCTREE_USE_THREAD_POOL_ON_BULD
+	__device__ __host__ inline void split(int index, int depth, ReaderWriterLock *lock, void *threadPoolAddr);
+#else
 	__device__ __host__ __noinline__ void split(int index, int depth);
+#endif
 	__device__ __host__ inline static void splitAABB(const AABB &aabb, const Vertex &center, AABB *result);
-	__device__ __host__ inline bool splittingMakesSence(int index, const AABB *sub);
+#ifdef OCTREE_CACHE_INTERSECTION_INFO
+	typedef Stacktor<uint8_t, (OCTREE_VOXEL_LOCAL_CAPACITY << 2)> IntersectionCache;
+	__device__ __host__ inline bool splittingMakesSence(int index, const AABB *sub, IntersectionCache &cache)const;
+#else
+	__device__ __host__ inline bool splittingMakesSence(int index, const AABB *sub)const;
+#endif
 	__device__ __host__ inline void splitNode(int index, const AABB *sub);
 	__device__ __host__ inline void reduceNode(int index);
 

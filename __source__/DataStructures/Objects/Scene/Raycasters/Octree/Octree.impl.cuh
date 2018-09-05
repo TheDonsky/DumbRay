@@ -112,7 +112,15 @@ __host__ inline void Octree<ElemType>::push(const ElemType &object){
 template<typename ElemType>
 // Builds the Octree (needed if and only if it was filled with push() calls, not put()-s)
 __host__ inline void Octree<ElemType>::build(){
+#ifdef OCTREE_USE_THREAD_POOL_ON_BULD
+	{
+		ReaderWriterLock lock;
+		Donsky::ThreadPools::MethodThreadPool<Octree, int, int, ReaderWriterLock*, void*> threadPool;
+		split(0, 0, &lock, (void*)(&threadPool));
+	}
+#else
 	split(0, 0);
+#endif
 	reduceNodes();
 }
 template<typename ElemType>
@@ -317,11 +325,23 @@ __device__ __host__ inline void Octree<ElemType>::flushTree(){
 
 /** ========================================================== **/
 template<typename ElemType>
-__device__ __host__ __noinline__ void Octree<ElemType>::split(int index, int depth){
+#ifdef OCTREE_USE_THREAD_POOL_ON_BULD
+__device__ __host__ inline void Octree<ElemType>::split(int index, int depth, ReaderWriterLock *lock, void *threadPoolAddr) {
+#else
+__device__ __host__ __noinline__ void Octree<ElemType>::split(int index, int depth) {
+#endif
+	AABB sub[8];
+#ifdef OCTREE_CACHE_INTERSECTION_INFO
+	IntersectionCache intesections;
+#endif
+#ifdef OCTREE_USE_THREAD_POOL_ON_BULD
+	{
+		ReaderWriterLock::ReadLock readLock(lock);
+#endif
 	if (depth >= OCTREE_MAX_DEPTH) return;
 	int nodeCount = nodeData[index].size();
 	if (nodeCount < OCTREE_POLYCOUNT_TO_SPLIT_NODE) return;
-	
+
 	Vector3 center(0, 0, 0);
 	const AABB& bounds = tree[index].bounds;
 	const Vertex bndStart = bounds.getMin() + OCTREE_AABB_EPSILON_VECTOR;
@@ -329,22 +349,45 @@ __device__ __host__ __noinline__ void Octree<ElemType>::split(int index, int dep
 	for (int i = 0; i < nodeData[index].size(); i++)
 		center += Shapes::intersectionCenter<AABB, ElemType>(bounds, *nodeData[index][i]);
 	center /= ((float)nodeData[index].size());
-	AABB sub[8];
+	
 	splitAABB(tree[index].bounds, center, sub);
-	if (!splittingMakesSence(index, sub)) return; 
+#ifdef OCTREE_CACHE_INTERSECTION_INFO
+	if (!splittingMakesSence(index, sub, intesections)) return;
+#else
+	if (!splittingMakesSence(index, sub)) return;
+#endif
+
+#ifdef OCTREE_USE_THREAD_POOL_ON_BULD
+	}
+	{
+		ReaderWriterLock::WriteLock writeLock(lock);
+#endif
 
 	splitNode(index, sub);
 	for (int i = 0; i < nodeData[index].size(); i++){
 		ElemReference dataPtr = nodeData[index][i];
 		for (int j = 0; j < 8; j++){
 			int childIndex = (int)(tree[index].children + j - (tree + 0));
+#ifdef OCTREE_CACHE_INTERSECTION_INFO
+			if ((intesections[i] & (1 << j)) != 0)
+#else
 			if (Shapes::intersect<AABB, ElemType>(tree[childIndex].bounds, *dataPtr))
+#endif
 				nodeData[childIndex].push(dataPtr);
 		}
 	}
 	nodeData[index].clear();
+#ifdef OCTREE_USE_THREAD_POOL_ON_BULD
+	}
+	ReaderWriterLock::ReadLock readLock(lock);
+#endif
 	for (int i = 0; i < 8; i++)
+#ifdef OCTREE_USE_THREAD_POOL_ON_BULD
+		((Donsky::ThreadPools::MethodThreadPool<Octree, int, int, ReaderWriterLock*, void*>*)threadPoolAddr)->schedule(
+			this, &Octree::split, (int)(tree[index].children + i - (tree + 0)), depth + 1, lock, threadPoolAddr);
+#else
 		split((int)(tree[index].children + i - (tree + 0)), depth + 1);
+#endif
 }
 template<typename ElemType>
 __device__ __host__ inline void Octree<ElemType>::splitAABB(const AABB &aabb, const Vertex &center, AABB *result) {
@@ -360,7 +403,13 @@ __device__ __host__ inline void Octree<ElemType>::splitAABB(const AABB &aabb, co
 	result[7] = AABB(center - OCTREE_AABB_EPSILON_VECTOR, end);
 }
 template<typename ElemType>
-__device__ __host__ inline bool Octree<ElemType>::splittingMakesSence(int index, const AABB *sub){
+#ifdef OCTREE_CACHE_INTERSECTION_INFO
+__device__ __host__ inline bool Octree<ElemType>::splittingMakesSence(int index, const AABB *sub, IntersectionCache &cache)const {
+	cache.flush(max(nodeData[index].size() - cache.size(), 0));
+	for (int i = 0; i < nodeData[index].size(); i++) cache[i] = 0;
+#else
+__device__ __host__ inline bool Octree<ElemType>::splittingMakesSence(int index, const AABB *sub)const {
+#endif
 	const AABB &boundingBox = tree[index].bounds;
 	/*
 	const int nodeCount = (nodeData[index].size() - 1);
@@ -380,7 +429,12 @@ __device__ __host__ inline bool Octree<ElemType>::splittingMakesSence(int index,
 		const AABB &subBox = sub[i];
 		int insiders = 0;
 		for (int j = 0; j < nodeCount; j++)
-			if (Shapes::intersect<AABB, ElemType>(subBox, *(nodeData[index][j]))) insiders++;
+			if (Shapes::intersect<AABB, ElemType>(subBox, *(nodeData[index][j]))) {
+				insiders++;
+#ifdef OCTREE_CACHE_INTERSECTION_INFO
+				cache[j] |= (1 << i);
+#endif
+			}
 		if (insiders >= nodeCount) full++;
 		else if (insiders == 0) empty++;
 		load += ((float)insiders) / ((float)nodeCount);
@@ -448,8 +502,13 @@ __device__ __host__ __noinline__ void Octree<ElemType>::put(ElemReference elem, 
 			if (nodeCount < OCTREE_POLYCOUNT_TO_SPLIT_NODE) return;
 
 			AABB sub[8];
-			splitAABB(tree[nodeIndex].bounds, tree[nodeIndex].bounds.getCenter(), sub);
+			splitAABB(tree[nodeIndex].bounds, tree[nodeIndex].bounds.getCenter(), sub);			
+#ifdef OCTREE_CACHE_INTERSECTION_INFO
+			IntersectionCache cache;
+			if (splittingMakesSence(nodeIndex, sub, cache)) {
+#else
 			if (splittingMakesSence(nodeIndex, sub)){
+#endif
 				splitNode(nodeIndex, sub);
 				for (int i = 0; i < nodeData[nodeIndex].size(); i++){
 					for (int j = 0; j < 8; j++) put(nodeData[nodeIndex][i], (int)(tree[nodeIndex].children + j - (tree + 0)), depth + 1);

@@ -83,29 +83,28 @@ bool DumbRenderer::renderBlocksGPU(
 	const Info &info, FrameBuffer *host, FrameBuffer *device, 
 	int startBlock, int endBlock, cudaStream_t &renderStream) {
 	DumbRandHolder *randHolder = getThreadData<DumbRandHolder>(info);
-	if (randHolder == NULL) return false;
+	if (randHolder != NULL) {
+		const int blocksToRender = (endBlock - startBlock);
+		const int blockCount = ((blocksToRender + pxPerGPUThread - 1) / pxPerGPUThread);
 
-	const int blocksToRender = (endBlock - startBlock);
-	const int blockCount = ((blocksToRender + pxPerGPUThread - 1) / pxPerGPUThread);
-
-	DumbRand *entropy = randHolder->getGPU(blockCount * host->getBlockSize(), info.device, false);
-	if (entropy == NULL) return false;
-	RenderContext renderContext;
-	renderContext.entropy = entropy;
-	renderContext.textures = getScene()->textures.gpuHandle(info.device);
-	if (renderContext.textures == NULL) return false;
-
-	PixelRenderProcess::SceneConfiguration sceneConfiguration;
-	float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
-	if (!sceneConfiguration.device(getScene(), getCamera(), device, host, boxing, info.device, blending, getMaxBounces(), fsaaX, fsaaY)) return false;
-	DumbRendererPrivateKernels::renderBlocks
-		<<<blockCount, host->getBlockSize(), 0, renderStream>>>
-		(sceneConfiguration, renderContext, startBlock, endBlock);
-	if (cudaStreamSynchronize(renderStream) != cudaSuccess) {
-		printf("error: %d\n", (int)cudaGetLastError());
-		return false;
+		DumbRand *entropy = randHolder->getGPU(blockCount * host->getBlockSize(), info.device, false);
+		if (entropy != NULL) {
+			RenderContext renderContext;
+			renderContext.entropy = entropy;
+			renderContext.textures = getScene()->textures.gpuHandle(info.device);
+			if (renderContext.textures != NULL) {
+				PixelRenderProcess::SceneConfiguration sceneConfiguration;
+				float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
+				if (sceneConfiguration.device(getScene(), getCamera(), device, host, boxing, info.device, blending, getMaxBounces(), fsaaX, fsaaY)) {
+					DumbRendererPrivateKernels::renderBlocks<<<blockCount, host->getBlockSize(), 0, renderStream>>>(sceneConfiguration, renderContext, startBlock, endBlock);
+					if (cudaStreamSynchronize(renderStream) != cudaSuccess) printf("error: %d\n", (int)cudaGetLastError());
+					else return true;
+				}
+			}
+		}
 	}
-	return true;
+	renderBlocksCPU(info, host, startBlock, endBlock);
+	return false;
 }
 
 
