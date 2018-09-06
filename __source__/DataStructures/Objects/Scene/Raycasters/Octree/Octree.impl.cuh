@@ -121,13 +121,21 @@ __host__ inline void Octree<ElemType>::build(){
 #else
 	split(0, 0);
 #endif
+#ifdef OCTREE_REDUCE_NODES_ON_SPLIT
+	reduceNode(0, false);
+#else
 	reduceNodes();
+#endif
 }
 template<typename ElemType>
 // Optimizes tree nodes so that their sizes are no larger than they need to be for the current configuration
 // (Recommended after pushing/putting the entire scene in the Octree; after this function, addition will become unreliable)
 __host__ inline void Octree<ElemType>::reduceNodes() {
+#ifdef OCTREE_REDUCE_NODES_ON_SPLIT
+	reduceNode(0, true);
+#else
 	reduceNode(0);
+#endif
 }
 
 
@@ -338,9 +346,19 @@ __device__ __host__ __noinline__ void Octree<ElemType>::split(int index, int dep
 	{
 		ReaderWriterLock::ReadLock readLock(lock);
 #endif
-	if (depth >= OCTREE_MAX_DEPTH) return;
+	if (depth >= OCTREE_MAX_DEPTH) {
+#ifdef OCTREE_REDUCE_NODES_ON_SPLIT
+		reduceNode(index, true);
+#endif
+		return;
+	}
 	int nodeCount = nodeData[index].size();
-	if (nodeCount < OCTREE_POLYCOUNT_TO_SPLIT_NODE) return;
+	if (nodeCount < OCTREE_POLYCOUNT_TO_SPLIT_NODE) {
+#ifdef OCTREE_REDUCE_NODES_ON_SPLIT
+		reduceNode(index, true);
+#endif
+		return;
+	}
 
 	Vector3 center(0, 0, 0);
 	const AABB& bounds = tree[index].bounds;
@@ -352,9 +370,19 @@ __device__ __host__ __noinline__ void Octree<ElemType>::split(int index, int dep
 	
 	splitAABB(tree[index].bounds, center, sub);
 #ifdef OCTREE_CACHE_INTERSECTION_INFO
-	if (!splittingMakesSence(index, sub, intesections)) return;
+	if (!splittingMakesSence(index, sub, intesections)) {
+#ifdef OCTREE_REDUCE_NODES_ON_SPLIT
+		reduceNode(index, true);
+#endif
+		return;
+	}
 #else
-	if (!splittingMakesSence(index, sub)) return;
+	if (!splittingMakesSence(index, sub)) {
+#ifdef OCTREE_REDUCE_NODES_ON_SPLIT
+		reduceNode(index, true);
+#endif
+		return;
+	}
 #endif
 
 #ifdef OCTREE_USE_THREAD_POOL_ON_BULD
@@ -455,12 +483,20 @@ __device__ __host__ inline void Octree<ElemType>::splitNode(int index, const AAB
 	}
 }
 template<typename ElemType>
+#ifdef OCTREE_REDUCE_NODES_ON_SPLIT
+__device__ __host__ inline void Octree<ElemType>::reduceNode(int index, bool reduceLeaves) {
+#else
 __device__ __host__ inline void Octree<ElemType>::reduceNode(int index){
+#endif
 	Vertex start = tree[index].bounds.getMax();
 	Vertex end = tree[index].bounds.getMin();
 	if (tree[index].children != NULL) {
 		for (int i = 0; i < 8; i++)
+#ifdef OCTREE_REDUCE_NODES_ON_SPLIT
+			reduceNode((int)((tree[index].children + i) - (tree + 0)), reduceLeaves);
+#else
 			reduceNode((int)((tree[index].children + i) - (tree + 0)));
+#endif
 		for (int i = 0; i < 8; i++) {
 			AABB bounds = tree[index].children[i].bounds;
 			const Vertex bStart = bounds.getMin();
@@ -469,16 +505,21 @@ __device__ __host__ inline void Octree<ElemType>::reduceNode(int index){
 			end(max(end.x, bEnd.x), max(end.y, bEnd.y), max(end.z, bEnd.z));
 		}
 	}
-	else for (int i = 0; i < nodeData[index].size(); i++) {
-		/*
-		AABB objectBounds = Shapes::boundingBox<ElemType>(*nodeData[index][i]);
-		/*/
-		AABB objectBounds = Shapes::intersectionBounds<AABB, ElemType>(tree[index].bounds, *nodeData[index][i]);
-		//*/
-		const Vertex bStart = objectBounds.getMin();
-		const Vertex bEnd = objectBounds.getMax();
-		start(min(start.x, bStart.x), min(start.y, bStart.y), min(start.z, bStart.z));
-		end(max(end.x, bEnd.x), max(end.y, bEnd.y), max(end.z, bEnd.z));
+	else {
+#ifdef OCTREE_REDUCE_NODES_ON_SPLIT
+		if (!reduceLeaves) return;
+#endif
+		for (int i = 0; i < nodeData[index].size(); i++) {
+			/*
+			AABB objectBounds = Shapes::boundingBox<ElemType>(*nodeData[index][i]);
+			/*/
+			AABB objectBounds = Shapes::intersectionBounds<AABB, ElemType>(tree[index].bounds, *nodeData[index][i]);
+			//*/
+			const Vertex bStart = objectBounds.getMin();
+			const Vertex bEnd = objectBounds.getMax();
+			start(min(start.x, bStart.x), min(start.y, bStart.y), min(start.z, bStart.z));
+			end(max(end.x, bEnd.x), max(end.y, bEnd.y), max(end.z, bEnd.z));
+		}
 	}
 	start -= OCTREE_AABB_EPSILON_VECTOR;
 	end += OCTREE_AABB_EPSILON_VECTOR;

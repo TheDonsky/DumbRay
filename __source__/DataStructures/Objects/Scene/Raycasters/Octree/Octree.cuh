@@ -13,6 +13,7 @@
 #define OCTREE_MAX_DEPTH 24
 
 #define OCTREE_CACHE_INTERSECTION_INFO
+#define OCTREE_REDUCE_NODES_ON_SPLIT
 #ifndef __CUDA_ARCH__
 #define OCTREE_USE_THREAD_POOL_ON_BULD
 #endif // !__CUDA_ARCH__
@@ -197,7 +198,11 @@ private:
 	__device__ __host__ inline bool splittingMakesSence(int index, const AABB *sub)const;
 #endif
 	__device__ __host__ inline void splitNode(int index, const AABB *sub);
+#ifdef OCTREE_REDUCE_NODES_ON_SPLIT
+	__device__ __host__ inline void reduceNode(int index, bool reduceLeaves);
+#else
 	__device__ __host__ inline void reduceNode(int index);
+#endif
 
 	/** ========================================================== **/
 	__device__ __host__ __noinline__ void put(ElemReference elem, int nodeIndex, int depth);
