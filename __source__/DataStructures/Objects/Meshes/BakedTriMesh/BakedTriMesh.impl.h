@@ -13,13 +13,13 @@ __device__ __host__ inline BakedTriFace::BakedTriFace(const Triangle &verts, con
 
 
 
-__device__ __host__ inline BakedTriFace operator>>(BakedTriFace &face, const Transform &trans) {
+__device__ __host__ inline BakedTriFace operator>>(const BakedTriFace &face, const Transform &trans) {
 	return BakedTriFace(face.vert >> trans, (face.norm >> trans) - trans.getPosition(), face.tex);
 }
 __device__ __host__ inline BakedTriFace& operator>>=(BakedTriFace &face, const Transform &trans) {
 	return (face = (face >> trans));
 }
-__device__ __host__ inline BakedTriFace operator<<(BakedTriFace &face, const Transform &trans) {
+__device__ __host__ inline BakedTriFace operator<<(const BakedTriFace &face, const Transform &trans) {
 	return BakedTriFace(face.vert << trans, (face.norm + trans.getPosition()) << trans, face.tex);
 }
 __device__ __host__ inline BakedTriFace& operator<<=(BakedTriFace &face, const Transform &trans) {

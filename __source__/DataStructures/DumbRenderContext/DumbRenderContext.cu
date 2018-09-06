@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 #include <mutex>
 #include <set>
 
@@ -22,6 +23,7 @@ namespace {
 	LightParserMap lightParsers;
 	LenseParserMap lenseParsers;
 
+	struct DumbRenderContextData;
 
 	typedef std::unordered_map<std::string, PolyMesh> MeshDict;
 	typedef std::unordered_map<std::string, MeshDict> ObjDict;
@@ -46,7 +48,203 @@ namespace {
 			int pixelsPerGPUThread;
 		};
 		RendererSettings rendererSettings;
+
+		struct Group {
+			struct Item {
+				std::string fileName;
+				std::string objectName;
+				Transform transform;
+				int materialId;
+
+				inline Item() { materialId = -1; }
+				inline Stacktor<DumbRenderer::SceneType::GeometryUnit> resolve(const DumbRenderContextData *data)const;
+				inline bool fromDson(const Dson::Object *object, std::ostream *errorStream, DumbRenderContextData *data);
+			};
+			struct SubGroup {
+				std::string group;
+				Transform transform;
+				int fallbackMaterial;
+				int overrideMaterial;
+
+				inline SubGroup() { fallbackMaterial = overrideMaterial = -1; }
+				inline Stacktor<DumbRenderer::SceneType::GeometryUnit> resolve(const DumbRenderContextData *data)const;
+				inline bool fromDson(const Dson::Object *object, std::ostream *errorStream, DumbRenderContextData *data);
+			};
+			std::string name;
+			std::vector<Item> groupItems;
+			std::vector<SubGroup> subGroups;
+			Transform transform;
+			int fallbackMaterial;
+			int overrideMaterial;
+
+			inline Group() { fallbackMaterial = overrideMaterial = -1; }
+			inline Stacktor<DumbRenderer::SceneType::GeometryUnit> resolve(const DumbRenderContextData *data)const;
+			inline bool fromDson(const Dson::Object *object, std::ostream *errorStream, DumbRenderContextData *data);
+		};
+
+		std::map<std::string, Group> groups;
+
+		bool parseMaterials(const Dson::Object &object, std::ostream *errorStream);
+		bool parseLights(const Dson::Object &object, std::ostream *errorStream);
+		bool parseObjects(const Dson::Object &object, std::ostream *errorStream);
+		bool parseCamera(const Dson::Object &object, std::ostream *errorStream);
+		bool parseRenderer(const Dson::Object &object, std::ostream *errorStream);
+		bool includeFiles(const Dson::Object &object, std::ostream *errorStream);
+
+		bool parseMaterial(const Dson::Object &object, std::ostream *errorStream, int *materialId = NULL);
+		bool parseLight(const Dson::Object &object, std::ostream *errorStream);
+		bool parseObject(const Dson::Object &object, std::ostream *errorStream);
+
+		bool loadObjFile(const std::string &filename, std::ostream *errorStream);
+		bool getMaterialId(const Dson::Object &object, std::ostream *errorStream, int &materialId);
+
+		void *data;
+		DumbRenderContext *owner;
+		inline DumbRenderContextData(DumbRenderContext *o) { data = this; owner = o; }
 	};
+
+	inline Stacktor<DumbRenderer::SceneType::GeometryUnit> DumbRenderContextData::Group::Item::resolve(const DumbRenderContextData *data)const {
+		Stacktor<DumbRenderer::SceneType::GeometryUnit> resolved;
+		if (objectName != "") {
+			const BakedTriMesh mesh = data->objectFiles.find(fileName)->second.find(objectName)->second.bake();
+			for (int i = 0; i < mesh.size(); i++)
+				resolved.push(DumbRenderer::SceneType::GeometryUnit(mesh[i] >> transform, materialId));
+		}
+		else {
+			const MeshDict &meshes = data->objectFiles.find(fileName)->second;
+			for (MeshDict::const_iterator it = meshes.begin(); it != meshes.end(); it++) {
+				const BakedTriMesh mesh = it->second.bake();
+				for (int i = 0; i < mesh.size(); i++)
+					resolved.push(DumbRenderer::SceneType::GeometryUnit(mesh[i] >> transform, materialId));
+			}
+		}
+		return resolved;
+	}
+
+	inline Stacktor<DumbRenderer::SceneType::GeometryUnit> DumbRenderContextData::Group::SubGroup::resolve(const DumbRenderContextData *data)const {
+		Stacktor<DumbRenderer::SceneType::GeometryUnit> resolved = data->groups.find(group)->second.resolve(data);
+		for (int i = 0; i < resolved.size(); i++) {
+			if (overrideMaterial >= 0) resolved[i].materialId = overrideMaterial;
+			else if (resolved[i].materialId < 0) resolved[i].materialId = fallbackMaterial;
+			resolved[i].object >>= transform;
+		}
+		return resolved;
+	}
+
+	inline Stacktor<DumbRenderer::SceneType::GeometryUnit> DumbRenderContextData::Group::resolve(const DumbRenderContextData *data)const {
+		Stacktor<DumbRenderer::SceneType::GeometryUnit> resolved;
+		for (size_t i = 0; i < groupItems.size(); i++) {
+			Stacktor<DumbRenderer::SceneType::GeometryUnit> addition = groupItems[i].resolve(data);
+			for (int j = 0; j < addition.size(); j++) resolved.push(addition[i]);
+		}
+		for (size_t i = 0; i < subGroups.size(); i++) {
+			Stacktor<DumbRenderer::SceneType::GeometryUnit> addition = subGroups[i].resolve(data);
+			for (int j = 0; j < addition.size(); j++) resolved.push(addition[i]);
+		}
+		for (int i = 0; i < resolved.size(); i++) {
+			if (overrideMaterial >= 0) resolved[i].materialId = overrideMaterial;
+			else if (resolved[i].materialId < 0) resolved[i].materialId = fallbackMaterial;
+			resolved[i].object >>= transform;
+		}
+		return resolved;
+	}
+
+	inline bool DumbRenderContextData::Group::Item::fromDson(const Dson::Object *object, std::ostream *errorStream, DumbRenderContextData *data) {
+		const Dson::Dict *dict = object->safeConvert<Dson::Dict>(errorStream, "Error: Group item can only be made from a dictionary"); if (dict == NULL) return false;
+		if (dict->contains("mesh")) {
+			const Dson::Dict *meshDict = dict->get("mesh").safeConvert<Dson::Dict>(errorStream, "Error: Item 'mesh' entry has to be a dict"); if (meshDict == NULL) return false;
+			if (meshDict->contains("obj")) {
+				const Dson::String *objFileName = meshDict->get("obj").safeConvert<Dson::String>(errorStream, "Error: .obj file name must be a string"); if (objFileName == NULL) return false;
+				if (!data->loadObjFile(objFileName->value(), errorStream)) return false;
+				fileName = ("obj::" + objFileName->value());
+			}
+			else if (meshDict->contains("primitive")) {
+				// __TODO__: create a primitive...
+			}
+			else {
+				if (errorStream != NULL) (*errorStream) << "Error: Object mesh could not be parsed" << std::endl;
+				return false;
+			}
+
+			if (meshDict->contains("object")) {
+				const Dson::String *meshName = meshDict->get("object").safeConvert<Dson::String>(errorStream, "Error: .obj mesh name must be a string"); if (meshName == NULL) return false;
+				const MeshDict &fileMeshes = data->objectFiles[fileName];
+				if (fileMeshes.find(meshName->value()) == fileMeshes.end()) {
+					if (errorStream != NULL) (*errorStream) << "Error: Object [" + meshName->value() + "] not found in [" + fileName + "]\n";
+					return false;
+				}
+				objectName = meshName->value();
+			}
+			else objectName = "";
+		}
+		else {
+			if (errorStream != NULL) (*errorStream) << "Error: Item has to have a 'mesh' entry" << std::endl;
+			return false;
+		}
+
+		if (dict->contains("transform")) if (!transform.fromDson(dict->get("transform"), errorStream)) return false;
+
+		if (dict->contains("material")) if (!data->getMaterialId(dict->get("material"), errorStream, materialId)) return false;
+
+		return true;
+	}
+	inline bool DumbRenderContextData::Group::SubGroup::fromDson(const Dson::Object *object, std::ostream *errorStream, DumbRenderContextData *data) {
+		if (object->type() == Dson::Object::DSON_STRING) {
+			group = ("named::" + ((const Dson::String*)object)->value());
+			if (data->groups.find(group) == data->groups.end()) {
+				if (errorStream != NULL) (*errorStream) << ("Error: Group [" + ((Dson::String*)object)->value() + "] not found\n");
+				return false;
+			}
+		}
+		else {
+			const Dson::Dict *groupDict = object->safeConvert<Dson::Dict>(errorStream, "Error: Subgroup should be expressed either as a string, or a dict"); if (groupDict == NULL) return false;
+			if (groupDict->contains("group")) {
+				const Dson::String *groupName = groupDict->get("group").safeConvert<Dson::String>(errorStream, "Error: Subgroup with pre-defined group reference must have 'group' key, paired with string value"); if (groupName == NULL) return false;
+				group = ("named::" + groupName->value());
+				if (data->groups.find(group) == data->groups.end()) {
+					if (errorStream != NULL) (*errorStream) << ("Error: Group [" + group + "] not found\n");
+					return false;
+				}
+				if (groupDict->contains("transform")) if (!transform.fromDson(groupDict->get("transform"), errorStream)) return false;
+				if (groupDict->contains("fallback_material")) if (!data->getMaterialId(groupDict->get("material"), errorStream, fallbackMaterial)) return false;
+				if (groupDict->contains("override_material")) if (!data->getMaterialId(groupDict->get("material"), errorStream, overrideMaterial)) return false;
+			}
+			else {
+				Group subGroup; if (!subGroup.fromDson(groupDict, errorStream, data)) return false;
+				group = subGroup.name;
+			}
+		}
+		return true;
+	}
+	inline bool DumbRenderContextData::Group::fromDson(const Dson::Object *object, std::ostream *errorStream, DumbRenderContextData *data) {
+		const Dson::Dict *dict = object->safeConvert<Dson::Dict>(errorStream, "Error: Group can only be made from a dictionary"); if (dict == NULL) return false;
+		if (dict->contains("objects")) {
+			const Dson::Array *objects = dict->get("objects").safeConvert<Dson::Array>(errorStream, "Error: Group objects should be contained in an array"); if (objects == NULL) return false;
+			for (int i = 0; i < objects->size(); i++) {
+				Item item; if (!item.fromDson(&objects->get(i), errorStream, data)) return false;
+				groupItems.push_back(item);
+			}
+		}
+		if (dict->contains("groups")) {
+			const Dson::Array *groups = dict->get("groups").safeConvert<Dson::Array>(errorStream, "Error: Group subgroups should be contained in an array"); if (groups == NULL) return false;
+			for (int i = 0; i < groups->size(); i++) {
+				SubGroup group; if (!group.fromDson(&groups->get(i), errorStream, data)) return false;
+				subGroups.push_back(group);
+			}
+		}
+		if (dict->contains("transform")) if (!transform.fromDson(dict->get("transform"), errorStream)) return false;
+		
+		if (dict->contains("fallback_material")) if (!data->getMaterialId(dict->get("material"), errorStream, fallbackMaterial)) return false;
+		if (dict->contains("override_material")) if (!data->getMaterialId(dict->get("material"), errorStream, overrideMaterial)) return false;
+		
+		if (dict->contains("name")) {
+			const Dson::String *nameObject = dict->get("name").safeConvert<Dson::String>(errorStream, "Error: Group name must be a string"); if (nameObject == NULL) return false;
+			name = ("named::" + nameObject->value());
+		}
+		else name = ("unnamed::" + ((std::stringstream*)(&(std::stringstream() << (data->groups.size()))))->str());
+		data->groups[name] = (*this);
+		return true;
+	}
 }
 
 
@@ -71,7 +269,7 @@ DumbRenderContext::DumbRenderContext() {
 		std::lock_guard<std::mutex> guard(registryLock);
 		if (registry == NULL) registry = new DumbRenderContextRegistry();
 	}
-	DumbRenderContextData *dataObject = new DumbRenderContextData();
+	DumbRenderContextData *dataObject = new DumbRenderContextData(this);
 	data = ((void*)dataObject);
 	if (data == NULL) return;
 	dataObject->threadConfiguration = Renderer::ThreadConfiguration(Renderer::ThreadConfiguration::ALL_BUT_GPU_THREADS, 2);
@@ -140,24 +338,24 @@ bool DumbRenderContext::fromDson(const Dson::Object *object, std::ostream *error
 	}
 	const Dson::Dict &dict = (*((const Dson::Dict*)object));
 	if (dict.contains("include")) {
-		if (!includeFiles(dict.get("include"), errorStream)) return false;
+		if (!CONTEXT includeFiles(dict.get("include"), errorStream)) return false;
 	}
 	if (dict.contains("materials")) {
-		if (!parseMaterials(dict.get("materials"), errorStream)) return false;
+		if (!CONTEXT parseMaterials(dict.get("materials"), errorStream)) return false;
 	}
 	if (dict.contains("lights")) {
-		if (!parseLights(dict.get("lights"), errorStream)) return false;
+		if (!CONTEXT parseLights(dict.get("lights"), errorStream)) return false;
 	}
 	if (dict.contains("objects")) {
-		if (!parseObjects(dict.get("objects"), errorStream)) return false;
+		if (!CONTEXT parseObjects(dict.get("objects"), errorStream)) return false;
 	}
 	if (dict.contains("camera")) {
-		if (!parseCamera(dict.get("camera"), errorStream)) return false;
+		if (!CONTEXT parseCamera(dict.get("camera"), errorStream)) return false;
 	}
 	if (CONTEXT camera.cpuHandle()->lense.object() == NULL)
 		CONTEXT camera.cpuHandle()->lense.use<SimpleStochasticLense>(64.0f);
 	if (dict.contains("renderer")) {
-		if (!parseRenderer(dict.get("renderer"), errorStream)) return false;
+		if (!CONTEXT parseRenderer(dict.get("renderer"), errorStream)) return false;
 	}
 	return true;
 }
@@ -239,7 +437,7 @@ bool DumbRenderContext::getImageId(const Dson::Object &object, int *imageId, std
 
 
 
-bool DumbRenderContext::parseMaterials(const Dson::Object &object, std::ostream *errorStream) {
+bool DumbRenderContextData::parseMaterials(const Dson::Object &object, std::ostream *errorStream) {
 	if (object.type() != Dson::Object::DSON_ARRAY) {
 		if (errorStream != NULL) (*errorStream) << "Error: Materials should be contained in Dson::Array" << std::endl;
 		return false;
@@ -249,7 +447,7 @@ bool DumbRenderContext::parseMaterials(const Dson::Object &object, std::ostream 
 		if (!parseMaterial(arr[i], errorStream)) return false;
 	return true;
 }
-bool DumbRenderContext::parseLights(const Dson::Object &object, std::ostream *errorStream) {
+bool DumbRenderContextData::parseLights(const Dson::Object &object, std::ostream *errorStream) {
 	if (object.type() != Dson::Object::DSON_ARRAY) {
 		if (errorStream != NULL) (*errorStream) << "Error: Lights should be contained in Dson::Array" << std::endl;
 		return false;
@@ -259,7 +457,7 @@ bool DumbRenderContext::parseLights(const Dson::Object &object, std::ostream *er
 		if (!parseLight(arr[i], errorStream)) return false;
 	return true;
 }
-bool DumbRenderContext::parseObjects(const Dson::Object &object, std::ostream *errorStream) {
+bool DumbRenderContextData::parseObjects(const Dson::Object &object, std::ostream *errorStream) {
 	if (object.type() != Dson::Object::DSON_ARRAY) {
 		if (errorStream != NULL) (*errorStream) << "Error: Objects should be contained in Dson::Array" << std::endl;
 		return false;
@@ -269,7 +467,7 @@ bool DumbRenderContext::parseObjects(const Dson::Object &object, std::ostream *e
 		if (!parseObject(arr[i], errorStream)) return false;
 	return true;
 }
-bool DumbRenderContext::parseCamera(const Dson::Object &object, std::ostream *errorStream) {
+bool DumbRenderContextData::parseCamera(const Dson::Object &object, std::ostream *errorStream) {
 	if (object.type() != Dson::Object::DSON_DICT) {
 		if (errorStream != NULL) (*errorStream) << "Error: Camera should be contained in Dson::Dict" << std::endl;
 		return false;
@@ -299,7 +497,7 @@ bool DumbRenderContext::parseCamera(const Dson::Object &object, std::ostream *er
 				return false;
 			}
 			Lense tmpLense;
-			if (!it->second(tmpLense, lense, errorStream, this)) return false;
+			if (!it->second(tmpLense, lense, errorStream, this->owner)) return false;
 			CONTEXT camera.cpuHandle()->lense = tmpLense;
 		}
 	}
@@ -310,7 +508,7 @@ bool DumbRenderContext::parseCamera(const Dson::Object &object, std::ostream *er
 	}
 	return true;
 }
-bool DumbRenderContext::parseRenderer(const Dson::Object &object, std::ostream *errorStream) {
+bool DumbRenderContextData::parseRenderer(const Dson::Object &object, std::ostream *errorStream) {
 	const Dson::Dict *renderer = object.safeConvert<Dson::Dict>(errorStream, "Error: Renderer should be contained in Dson::Dict");
 	if (renderer == NULL) return false;
 
@@ -419,7 +617,7 @@ bool DumbRenderContext::parseRenderer(const Dson::Object &object, std::ostream *
 
 	return true;
 }
-bool DumbRenderContext::includeFiles(const Dson::Object &object, std::ostream *errorStream) {
+bool DumbRenderContextData::includeFiles(const Dson::Object &object, std::ostream *errorStream) {
 	const Dson::Array *include = object.safeConvert<Dson::Array>(errorStream, "Error: Include should be a list of strings");
 	if (include == NULL) return false;
 	for (size_t i = 0; i < include->size(); i++) {
@@ -433,13 +631,13 @@ bool DumbRenderContext::includeFiles(const Dson::Object &object, std::ostream *e
 			stream.open(filePath);
 			if (stream.fail()) filePath = fileName;
 		}
-		if (!fromFile(filePath, errorStream)) return false;
+		if (!owner->fromFile(filePath, errorStream)) return false;
 	}
 	return true;
 }
 
 
-bool DumbRenderContext::parseMaterial(const Dson::Object &object, std::ostream *errorStream, int *materialId) {
+bool DumbRenderContextData::parseMaterial(const Dson::Object &object, std::ostream *errorStream, int *materialId) {
 	if (object.type() != Dson::Object::DSON_DICT) {
 		if (errorStream != NULL) (*errorStream) << "Error: Material should be contained in Dson::Dict" << std::endl;
 		return false;
@@ -462,7 +660,7 @@ bool DumbRenderContext::parseMaterial(const Dson::Object &object, std::ostream *
 			return false;
 		}
 		Material<BakedTriFace> material;
-		if (!it->second(material, dict, errorStream, this)) return false;
+		if (!it->second(material, dict, errorStream, this->owner)) return false;
 		if (materialId != NULL) (*materialId) = CONTEXT scene.materials.cpuHandle()->size();
 		CONTEXT scene.materials.cpuHandle()->push(material);
 	}
@@ -473,7 +671,7 @@ bool DumbRenderContext::parseMaterial(const Dson::Object &object, std::ostream *
 	}
 	return true;
 }
-bool DumbRenderContext::parseLight(const Dson::Object &object, std::ostream *errorStream) {
+bool DumbRenderContextData::parseLight(const Dson::Object &object, std::ostream *errorStream) {
 	if (object.type() != Dson::Object::DSON_DICT) {
 		if (errorStream != NULL) (*errorStream) << "Error: Light should be contained in Dson::Dict" << std::endl;
 		return false;
@@ -496,8 +694,35 @@ bool DumbRenderContext::parseLight(const Dson::Object &object, std::ostream *err
 			return false;
 		}
 		Light light;
-		if (!it->second(light, dict, errorStream, this)) return false;
+		if (!it->second(light, dict, errorStream, this->owner)) return false;
 		CONTEXT scene.lights.cpuHandle()->push(light);
+	}
+	return true;
+}
+bool DumbRenderContextData::loadObjFile(const std::string &filename, std::ostream *errorStream) {
+	if (CONTEXT objectFiles.find("obj::" + filename) == CONTEXT objectFiles.end()) {
+		Stacktor<PolyMesh> meshes;
+		Stacktor<String> names;
+		std::string objFilePath;
+		{
+			std::ifstream stream;
+			const std::string relativePath = (CONTEXT sourcePath + filename);
+			stream.open(relativePath);
+			if (!stream.fail()) objFilePath = relativePath;
+			else objFilePath = filename;
+		}
+		if (!MeshReader::readObj(meshes, names, objFilePath)) {
+			if (errorStream != NULL) (*errorStream) << ("Error: Could not read file: '" + filename + "' (" + objFilePath + ")") << std::endl;
+			return false;
+		}
+		if (meshes.size() != names.size()) {
+			if (errorStream != NULL) (*errorStream) << ("Error: File '" + filename + "' does not have equal amount of names and meshes") << std::endl;
+			return false;
+		}
+		CONTEXT objectFiles["obj::" + filename] = MeshDict();
+		MeshDict &polyMeshDict = CONTEXT objectFiles["obj::" + filename];
+		for (int i = 0; i < meshes.size(); i++)
+			polyMeshDict[names[i] + 0] = meshes[i];
 	}
 	return true;
 }
@@ -511,32 +736,10 @@ bool getObjMesh(void *data, const Dson::Dict &dict, BakedTriMesh &mesh, std::ost
 		if (errorStream != NULL) (*errorStream) << "Error: Value 'obj' entry must be a string." << std::endl;
 		return false;
 	}
-	const std::string &objFileName = ((Dson::String*)(&objObject))->value();
-	if (CONTEXT objectFiles.find(objFileName) == CONTEXT objectFiles.end()) {
-		Stacktor<PolyMesh> meshes;
-		Stacktor<String> names;
-		std::string objFilePath;
-		{
-			std::ifstream stream;
-			const std::string relativePath = (CONTEXT sourcePath + objFileName);
-			stream.open(relativePath);
-			if (!stream.fail()) objFilePath = relativePath;
-			else objFilePath = objFileName;
-		}
-		if (!MeshReader::readObj(meshes, names, objFilePath)) {
-			if (errorStream != NULL) (*errorStream) << ("Error: Could not read file: '" + objFileName + "' (" + objFilePath + ")") << std::endl;
-			return false;
-		}
-		if (meshes.size() != names.size()) {
-			if (errorStream != NULL) (*errorStream) << ("Error: File '" + objFileName + "' does not have equal amount of names and meshes") << std::endl;
-			return false;
-		}
-		CONTEXT objectFiles[objFileName] = MeshDict();
-		MeshDict &polyMeshDict = CONTEXT objectFiles[objFileName];
-		for (int i = 0; i < meshes.size(); i++)
-			polyMeshDict[names[i] + 0] = meshes[i];
-	}
-	const MeshDict &meshDict = CONTEXT objectFiles[objFileName];
+	const std::string objFileName = ((const Dson::String*)(&objObject))->value();
+	if (!CONTEXT loadObjFile(objFileName, errorStream)) return false;
+
+	const MeshDict &meshDict = CONTEXT objectFiles["obj::" + objFileName];
 	if (dict.contains("object")) {
 		const Dson::Object &objectObject = dict["object"];
 		if (objectObject.type() != Dson::Object::DSON_STRING) {
@@ -559,7 +762,16 @@ bool getObjMesh(void *data, const Dson::Dict &dict, BakedTriMesh &mesh, std::ost
 	return true;
 }
 
-bool DumbRenderContext::parseObject(const Dson::Object &object, std::ostream *errorStream) {
+bool DumbRenderContextData::parseObject(const Dson::Object &object, std::ostream *errorStream) {
+	//*
+	Group::Item item; if (!item.fromDson(&object, errorStream, this)) return false;
+	if (item.materialId < 0) {
+		if (errorStream != NULL) (*errorStream) << "Error: Object MUST have a material attached to it\n";
+		return false;
+	}
+	scene.geometry.cpuHandle()->push(item.resolve(this));
+	return true;
+	/*/
 	if (object.type() != Dson::Object::DSON_DICT) {
 		if (errorStream != NULL) (*errorStream) << "Error: Object should be contained in Dson::Dict" << std::endl;
 		return false;
@@ -617,6 +829,20 @@ bool DumbRenderContext::parseObject(const Dson::Object &object, std::ostream *er
 	for (int i = 0; i < mesh.size(); i++)
 		CONTEXT scene.geometry.cpuHandle()->push(DumbRenderer::SceneType::GeometryUnit(mesh[i] >> transform, materialId));
 	
+	return true;
+	//*/
+}
+bool DumbRenderContextData::getMaterialId(const Dson::Object &object, std::ostream *errorStream, int &materialId) {
+	if (object.type() == Dson::Object::DSON_STRING) {
+		const std::string &name = ((Dson::String*)(&object))->value();
+		std::unordered_map<std::string, int>::const_iterator it = materials.find(name);
+		if (it == materials.end()) {
+			if (errorStream != NULL) (*errorStream) << ("Error: Material not found: \"" + name + "\"") << std::endl;
+			return false;
+		}
+		else materialId = it->second;
+	}
+	else if (!parseMaterial(object, errorStream, &materialId)) return false;
 	return true;
 }
 

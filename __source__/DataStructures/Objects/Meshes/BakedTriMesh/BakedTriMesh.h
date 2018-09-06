@@ -14,9 +14,9 @@ struct BakedTriFace{
 typedef Stacktor<BakedTriFace, 1> BakedTriMesh;
 
 
-__device__ __host__ inline BakedTriFace operator>>(BakedTriFace &face, const Transform &trans);
+__device__ __host__ inline BakedTriFace operator>>(const BakedTriFace &face, const Transform &trans);
 __device__ __host__ inline BakedTriFace& operator>>=(BakedTriFace &face, const Transform &trans);
-__device__ __host__ inline BakedTriFace operator<<(BakedTriFace &face, const Transform &trans);
+__device__ __host__ inline BakedTriFace operator<<(const BakedTriFace &face, const Transform &trans);
 __device__ __host__ inline BakedTriFace& operator<<=(BakedTriFace &face, const Transform &trans);
 
 

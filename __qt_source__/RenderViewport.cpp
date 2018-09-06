@@ -79,6 +79,8 @@ RenderViewport::~RenderViewport() {
 	flags |= STATE_DESTRUCTOR_CALLED;
 	commandThread.join();
 	updateThread.join();
+	instance.~RenderInstance();
+	new(&instance)DumbRenderContext::RenderInstance(&context, &window);
 }
 
 
