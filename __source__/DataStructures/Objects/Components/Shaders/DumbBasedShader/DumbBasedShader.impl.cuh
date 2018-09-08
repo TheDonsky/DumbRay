@@ -65,8 +65,8 @@ __dumb__ Color DumbBasedShader::getReflectedColor(const ShaderReflectedColorRequ
 	Vector3 hitMasses = object.vert.getMasses(request.hitPoint);
 	Vector2 textureCoordinate = object.tex.massCenter(hitMasses);
 
-	if ((alphaCutout.textureId >= 0) && (alphaCutoutThreshold >= alphaCutout(textureCoordinate, request.context).a)) 
-		return ((request.sampleType == 3) ? request.photon.color : Color(0, 0, 0));
+	if ((alphaCutout.textureId >= 0) && (alphaCutoutThreshold >= alphaCutout(textureCoordinate, request.context).a))
+		return (((request.observerDirection.normalized() * request.photon.ray.direction.normalized()) >= 0.9999f) ? request.photon.color : Color(0, 0, 0));
 
 	if ((object.vert.normal().normalized() * (request.photon.ray.direction)) > 0.0f)
 		if (request.photonType != PHOTON_TYPE_DIRECT_ILLUMINATION)

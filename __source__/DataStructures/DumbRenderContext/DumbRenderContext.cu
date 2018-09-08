@@ -46,6 +46,7 @@ namespace {
 			int maxBounces;
 			int samplesPerPixelX, samplesPerPixelY;
 			int pixelsPerGPUThread;
+			bool ignoreBackfaces;
 		};
 		RendererSettings rendererSettings;
 
@@ -281,6 +282,7 @@ DumbRenderContext::DumbRenderContext() {
 	dataObject->rendererSettings.samplesPerPixelX = 1;
 	dataObject->rendererSettings.samplesPerPixelY = 1;
 	dataObject->rendererSettings.pixelsPerGPUThread = 1;
+	dataObject->rendererSettings.ignoreBackfaces = true;
 }
 DumbRenderContext::~DumbRenderContext() {
 	DumbRenderContextData *dataObject = ((DumbRenderContextData*)data);
@@ -628,6 +630,11 @@ bool DumbRenderContextData::parseRenderer(const Dson::Object &object, std::ostre
 			if (pixelsPerGpuThread == NULL) return false;
 			CONTEXT rendererSettings.pixelsPerGPUThread = pixelsPerGpuThread->intValue();
 		}
+		if (pixel->contains("ignore_backfaces")) {
+			const Dson::Bool *ignoreBackfacesObject = pixel->get("ignore_backfaces").safeConvert<Dson::Bool>(errorStream, "Error: Renderer Pixel ignore_backfaces has to have a boolean value");
+			if (ignoreBackfacesObject == NULL) return false;
+			CONTEXT rendererSettings.ignoreBackfaces = ignoreBackfacesObject->value();
+		}
 	}
 
 	return true;
@@ -867,7 +874,7 @@ void DumbRenderContext::runWindowRender() {
 		&frameBuffer, &CONTEXT scene, &CONTEXT camera,
 		CONTEXT rendererSettings.boxingMode, CONTEXT rendererSettings.maxBounces,
 		CONTEXT rendererSettings.samplesPerPixelX, CONTEXT rendererSettings.samplesPerPixelY,
-		CONTEXT rendererSettings.pixelsPerGPUThread);
+		CONTEXT rendererSettings.pixelsPerGPUThread, CONTEXT rendererSettings.ignoreBackfaces);
 
 	int renderingDevice = 0;
 	for (int i = 0; i < CONTEXT threadConfiguration.numDevices(); i++)
@@ -1042,7 +1049,7 @@ void DumbRenderContext::RenderInstance::initRenderer() {
 		&DATA frameBuffer, &CTX scene, &CTX camera,
 		CTX rendererSettings.boxingMode, CTX rendererSettings.maxBounces,
 		CTX rendererSettings.samplesPerPixelX, CTX rendererSettings.samplesPerPixelY,
-		CTX rendererSettings.pixelsPerGPUThread);
+		CTX rendererSettings.pixelsPerGPUThread, CTX rendererSettings.ignoreBackfaces);
 	DATA renderer.threadConfiguration().configureCPU(threadsOnCpu);
 }
 void DumbRenderContext::RenderInstance::initWindow() {

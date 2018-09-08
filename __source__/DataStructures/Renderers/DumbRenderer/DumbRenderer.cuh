@@ -27,7 +27,8 @@ public:
 		int maxBounces = 2,
 		int samplesPerPixelX = 1,
 		int samplesPerPixelY = 1,
-		int pixelsPerGPUThread = 1);
+		int pixelsPerGPUThread = 1,
+		bool ignoreBackfaces = true);
 
 	void setScene(SceneType *scene);
 	SceneType* getScene()const;
@@ -52,6 +53,9 @@ public:
 	void setPixelsPerGPUThread(int count);
 	int getPixelsPerGPUThread()const;
 
+	void setIgnoreBackfaces(bool count);
+	bool getIgnoreBackfaces()const;
+
 
 protected:
 	bool renderBlocksCPU(const Info &info, FrameBuffer *buffer, int startBlock, int endBlock);
@@ -65,6 +69,7 @@ private:
 	volatile int bounceLimit;
 	volatile int fsaaX, fsaaY;
 	volatile int pxPerGPUThread;
+	volatile bool ignoreBackfaces;
 
 
 public:
@@ -79,13 +84,14 @@ public:
 			float blendingAmount;
 			int maxBounces;
 			int fsaaX, fsaaY;
+			bool cullBackfaces;
 
 			bool host(
 				SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, 
-				BoxingMode boxingMode, float blending, int bounces, int samplesX, int samplesY);
+				BoxingMode boxingMode, float blending, int bounces, int samplesX, int samplesY, bool ignoreBackfaces);
 			bool device(
 				SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, FrameBuffer *hostFrameBuffer, 
-				BoxingMode boxingMode, int deviceId, float blending, int bounces, int samplesX, int samplesY);
+				BoxingMode boxingMode, int deviceId, float blending, int bounces, int samplesX, int samplesY, bool ignoreBackfaces);
 			bool hasError();
 		};
 

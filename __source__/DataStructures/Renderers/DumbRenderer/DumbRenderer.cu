@@ -11,7 +11,8 @@ DumbRenderer::DumbRenderer(
 	int maxBounces,
 	int samplesPerPixelX,
 	int samplesPerPixelY,
-	int pixelsPerGPUThread)
+	int pixelsPerGPUThread,
+	bool ignoreBackfaces)
 	: BlockRenderer(configuration, blockSettings, buffer) {
 	setScene(scene);
 	setCamera(camera);
@@ -19,6 +20,7 @@ DumbRenderer::DumbRenderer(
 	setMaxBounces(maxBounces);
 	setSamplesPerPixel(samplesPerPixelX, samplesPerPixelY);
 	setPixelsPerGPUThread(pixelsPerGPUThread);
+	setIgnoreBackfaces(ignoreBackfaces);
 }
 
 void DumbRenderer::setScene(SceneType *scene) { sceneManager = scene; }
@@ -44,6 +46,9 @@ int DumbRenderer::getSamplesPerPixelY()const { return fsaaY; }
 void DumbRenderer::setPixelsPerGPUThread(int count) { pxPerGPUThread = count; }
 int DumbRenderer::getPixelsPerGPUThread()const { return pxPerGPUThread; }
 
+void DumbRenderer::setIgnoreBackfaces(bool ignore) { ignoreBackfaces = ignore; }
+bool DumbRenderer::getIgnoreBackfaces()const { return ignoreBackfaces; }
+
 bool DumbRenderer::renderBlocksCPU(
 	const Info &info, FrameBuffer *buffer, int startBlock, int endBlock) {
 	DumbRandHolder *randHolder = getThreadData<DumbRandHolder>(info);
@@ -57,7 +62,7 @@ bool DumbRenderer::renderBlocksCPU(
 
 	PixelRenderProcess::SceneConfiguration sceneConfiguration;
 	float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
-	if (!sceneConfiguration.host(getScene(), getCamera(), buffer, boxing, blending, getMaxBounces(), fsaaX, fsaaY)) return false;
+	if (!sceneConfiguration.host(getScene(), getCamera(), buffer, boxing, blending, getMaxBounces(), fsaaX, fsaaY, ignoreBackfaces)) return false;
 	PixelRenderProcess pixelRenderProcess;
 	pixelRenderProcess.configure(sceneConfiguration);
 	pixelRenderProcess.setContext(renderContext, 0);
@@ -95,7 +100,7 @@ bool DumbRenderer::renderBlocksGPU(
 			if (renderContext.textures != NULL) {
 				PixelRenderProcess::SceneConfiguration sceneConfiguration;
 				float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
-				if (sceneConfiguration.device(getScene(), getCamera(), device, host, boxing, info.device, blending, getMaxBounces(), fsaaX, fsaaY)) {
+				if (sceneConfiguration.device(getScene(), getCamera(), device, host, boxing, info.device, blending, getMaxBounces(), fsaaX, fsaaY, ignoreBackfaces)) {
 					DumbRendererPrivateKernels::renderBlocks<<<blockCount, host->getBlockSize(), 0, renderStream>>>(sceneConfiguration, renderContext, startBlock, endBlock);
 					if (cudaStreamSynchronize(renderStream) != cudaSuccess) printf("error: %d\n", (int)cudaGetLastError());
 					else return true;
@@ -110,7 +115,7 @@ bool DumbRenderer::renderBlocksGPU(
 
 bool DumbRenderer::PixelRenderProcess::SceneConfiguration::host(
 	SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, 
-	BoxingMode boxingMode, float blending, int bounces, int samplesX, int samplesY) {
+	BoxingMode boxingMode, float blending, int bounces, int samplesX, int samplesY, bool ignoreBackfaces) {
 	context.host(scene);
 	camera = cameraManager->cpuHandle();
 	buffer = frameBuffer;
@@ -120,11 +125,12 @@ bool DumbRenderer::PixelRenderProcess::SceneConfiguration::host(
 	maxBounces = bounces;
 	fsaaX = samplesX;
 	fsaaY = samplesY;
+	cullBackfaces = ignoreBackfaces;
 	return (!hasError());
 }
 bool DumbRenderer::PixelRenderProcess::SceneConfiguration::device(
 	SceneType *scene, CameraManager *cameraManager, FrameBuffer *frameBuffer, FrameBuffer *hostFrameBuffer, 
-	BoxingMode boxingMode, int deviceId, float blending, int bounces, int samplesX, int samplesY) {
+	BoxingMode boxingMode, int deviceId, float blending, int bounces, int samplesX, int samplesY, bool ignoreBackfaces) {
 	context.device(scene, deviceId);
 	camera = cameraManager->gpuHandle(deviceId);
 	buffer = frameBuffer;
@@ -134,6 +140,7 @@ bool DumbRenderer::PixelRenderProcess::SceneConfiguration::device(
 	maxBounces = bounces;
 	fsaaX = samplesX;
 	fsaaY = samplesY;
+	cullBackfaces = ignoreBackfaces;
 	return (!hasError());
 }
 bool DumbRenderer::PixelRenderProcess::SceneConfiguration::hasError() {
@@ -234,6 +241,7 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::setSubPixel() {
 			subPixelWeight = (1.0f / (((float)configuration.fsaaX) * ((float)configuration.fsaaY)));
 			fsaaJ++; if (fsaaJ >= configuration.fsaaY) { fsaaJ = 0; fsaaI++; }
 			currentLayer = -1;
+			restrictionObject = NULL;
 		}
 		return true;
 	}
@@ -267,7 +275,6 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::setupSubPixelRenderPa
 __device__ __host__ bool DumbRenderer::PixelRenderProcess::setSubPixelRenderPassJob() {
 	// We may need to cast the ray either to investigate the direction of the layer,
 	// or illuminate it. Regardless, we'll need a reference to a ray to cast (this way we decrease diverency):
-	restrictionObject = NULL;
 
 	// We may need to call the shader's getReflectedColor for aome amount of photons:
 	numIlluminationPhotons = 0;
@@ -356,7 +363,7 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::castSubPixelRenderPas
 		// If we have a ray to cast, we should be here at some point:
 		RaycastHit<SceneType::GeometryUnit> hit;
 		if (configuration.context.geometry->cast(
-			*rayToCast, hit, false, Octree<SceneType::GeometryUnit>::validateNotSameAsObject, restrictionObject)) {
+			*rayToCast, hit, configuration.cullBackfaces, Octree<SceneType::GeometryUnit>::validateNotSameAsObject, restrictionObject)) {
 			// If raycast hit something and it was a geometry ray,
 			// we need to set the layer up:
 			if (rayToCast == (&layer->layerRay)) {
@@ -376,6 +383,7 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::castSubPixelRenderPas
 					configuration.context.materials->operator[](
 						hit.object->materialId).requestIndirectSamples(request, &layer->bounces);
 				}
+				restrictionObject = NULL;
 				return false;
 			}
 			// If the ray was an illumination ray and it hit the same old object or point, we count it as a light:
@@ -383,6 +391,7 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::castSubPixelRenderPas
 				(hit.object == layer->geometry.object) ||
 				((hit.hitPoint - layer->geometry.hitPoint).sqrMagnitude() <= (8.0f * VECTOR_EPSILON))) {
 				numIlluminationPhotons = 1;
+				restrictionObject = NULL;
 			} 
 			// If the ray was illumination ray and it hit some other surface, we need to check the surfec transparency and possibly reassign the light ray:
 			else {
@@ -398,12 +407,13 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::castSubPixelRenderPas
 				Color transparecyColor = configuration.context.materials->operator[](hit.object->materialId).getReflectedColor(request);
 				if ((transparecyColor.r + transparecyColor.g + transparecyColor.b) > VECTOR_EPSILON) {
 					lightRays.samples[lightRays.sampleCount].color = transparecyColor;
-					lightRays.samples[lightRays.sampleCount].ray.origin = (hit.hitPoint + (rayToCast->direction.normalized() * (64.0f * VECTOR_EPSILON)));
+					lightRays.samples[lightRays.sampleCount].ray.origin = (hit.hitPoint + (rayToCast->direction.normalized() * (8.0f * VECTOR_EPSILON)));
+					restrictionObject = ((void*)hit.object);
 					lightRays.sampleCount++;
 				}
+				else restrictionObject = NULL;
+				return false;
 			}
-			// If no illumination occured whatsoever, there's no point continuing the cycle:
-			//else return false;
 		}
 		// If raycast failed and it was a geometry ray, we have to give up on the current layer:
 		else if (rayToCast == (&layer->layerRay)) {
