@@ -188,8 +188,10 @@ void RenderViewport::enableButtons(bool enableStart, bool enableEnd, bool enable
 	ui.restartButton->setEnabled(enableRestart);
 }
 void RenderViewport::refreshIterationInfo(int iteration, double elapsed) {
-	ui.iterationValue->setText(QString::number(iteration));
-	ui.iterationTimeValue->setText((iteration > 0.0) ? QString::number(elapsed / ((double)iteration), 10, 4) : QString(""));
+	if (iteration >= 0) {
+		ui.iterationValue->setText(QString::number(iteration));
+		ui.iterationTimeValue->setText((iteration > 0.0) ? QString::number(elapsed / ((double)iteration), 10, 4) : QString(""));
+	}
 	long long elapsedSeconds = ((long long)elapsed);
 	long long elapsedMinutes = (elapsedSeconds / 60); elapsedSeconds -= (60 * elapsedMinutes);
 	long long elapsedHours = (elapsedMinutes / 60); elapsedMinutes -= (60 * elapsedHours);
@@ -295,7 +297,7 @@ void RenderViewport::controlThread(RenderViewport *viewport) {
 		else if (command == COMMAND_START_RENDER) viewport->continueRender();
 		else if (command == COMMAND_STOP_RENDER) viewport->interruptRender();
 		else if (command == COMMAND_RESTART_RENDER) viewport->resetRender();
-		else if (command == COMMAND_UPDATE_TIMES) viewport->emit issueRefreshIterationInfo(viewport->instance.iteration(), viewport->instance.renderTime());
+		else if (command == COMMAND_UPDATE_TIMES) viewport->emit issueRefreshIterationInfo((viewport->instance.iteration() == 1) ? 1 : (-1), viewport->instance.renderTime());
 		else if (command == COMMAND_UPDATE_RESOURCES) viewport->updateResources();
 		else if (command == COMMAND_QUIT) break;
 	}
