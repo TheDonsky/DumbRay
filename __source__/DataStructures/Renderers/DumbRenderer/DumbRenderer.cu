@@ -407,7 +407,7 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::castSubPixelRenderPas
 				Color transparecyColor = configuration.context.materials->operator[](hit.object->materialId).getReflectedColor(request);
 				if ((transparecyColor.r + transparecyColor.g + transparecyColor.b) > VECTOR_EPSILON) {
 					lightRays.samples[lightRays.sampleCount].color = transparecyColor;
-					lightRays.samples[lightRays.sampleCount].ray.origin = (hit.hitPoint + (rayToCast->direction.normalized() * (8.0f * VECTOR_EPSILON)));
+					lightRays.samples[lightRays.sampleCount].ray.origin = (hit.hitPoint + (rayToCast->direction.normalized() * (64.0f * VECTOR_EPSILON)));
 					restrictionObject = ((void*)hit.object);
 					lightRays.sampleCount++;
 				}
