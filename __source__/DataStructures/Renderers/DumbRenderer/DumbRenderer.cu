@@ -383,9 +383,27 @@ __device__ __host__ bool DumbRenderer::PixelRenderProcess::castSubPixelRenderPas
 				(hit.object == layer->geometry.object) ||
 				((hit.hitPoint - layer->geometry.hitPoint).sqrMagnitude() <= (8.0f * VECTOR_EPSILON))) {
 				numIlluminationPhotons = 1;
+			} 
+			// If the ray was illumination ray and it hit some other surface, we need to check the surfec transparency and possibly reassign the light ray:
+			else {
+				ShaderReflectedColorRequest<SceneType::SurfaceUnit> request;
+				request.object = &hit.object->object;
+				request.photon = lightRays.samples[lightRays.sampleCount];
+				request.hitPoint = hit.hitPoint;
+				request.observerDirection = rayToCast->direction;
+				request.photonType = PHOTON_TYPE_DIRECT_ILLUMINATION;
+				request.significance = 1.0f;
+				request.sampleType = 0;
+				request.context = (&renderContext);
+				Color transparecyColor = configuration.context.materials->operator[](hit.object->materialId).getReflectedColor(request);
+				if ((transparecyColor.r + transparecyColor.g + transparecyColor.b) > VECTOR_EPSILON) {
+					lightRays.samples[lightRays.sampleCount].color = transparecyColor;
+					lightRays.samples[lightRays.sampleCount].ray.origin = (hit.hitPoint + (rayToCast->direction.normalized() * (64.0f * VECTOR_EPSILON)));
+					lightRays.sampleCount++;
+				}
 			}
 			// If no illumination occured whatsoever, there's no point continuing the cycle:
-			else return false;
+			//else return false;
 		}
 		// If raycast failed and it was a geometry ray, we have to give up on the current layer:
 		else if (rayToCast == (&layer->layerRay)) {

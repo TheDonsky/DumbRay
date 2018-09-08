@@ -240,11 +240,10 @@ void RenderViewport::imageUpdated() {
 
 void RenderViewport::loadScene() {
 	emit issueEnableButtons(false, false, false);
-	//instance.interruptRender();
-	//instance.stop();
 	instance.~RenderInstance();
 	emit issueSetStatusText(QString("Loading...\n[") + sceneFile.c_str() + "]");
-	bool built = context.buildFromFile(sceneFile, &std::cout);
+	std::stringstream errorStream;
+	bool built = context.buildFromFile(sceneFile, &errorStream);
 	new (&instance) DumbRenderContext::RenderInstance(&context, &window);
 	instance.onIterationComplete(iterationEndedCallback, this);
 	if (built) {
@@ -253,7 +252,7 @@ void RenderViewport::loadScene() {
 		emit issueSetStatusText("");
 		ui.cpuThreadCount->setCurrentIndex(instance.cpuThreads());
 	}
-	else emit issueSetStatusText(QString("File is invalid...\n[") + sceneFile.c_str() + "]");
+	else emit issueSetStatusText(QString("File is invalid...\n[") + sceneFile.c_str() + "]\n" + errorStream.str().c_str());
 }
 void RenderViewport::continueRender() {
 	instance.start();

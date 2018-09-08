@@ -10,6 +10,8 @@ __dumb__ DumbBasedShader::DumbBasedShader(const ColoredTexture &fresnelFactor, f
 	normalColor = normal;
 	spec = cpecular;
 	specMass = metal;
+	alphaCutout = (ColoredTexture)ColorRGB(1, 1, 1);
+	alphaCutoutThreshold = 0.5f;
 }
 
 
@@ -21,8 +23,15 @@ __dumb__ void DumbBasedShader::requestIndirectSamples(const ShaderIndirectSample
 		//samples->set(SampleRay(Ray(request.hitPoint - (normal * (8.0f * VECTOR_EPSILON)), request.ray.direction), 1.0f, request.significance, 0));
 		//return;
 	//}
-	if (request.context->entropy->getBool(specMass)) {
-		Vector3 n = normalColor.getNormal(*request.object, request.object->vert.getMasses(request.hitPoint), request.context);
+
+	Vector3 hitMasses = request.object->vert.getMasses(request.hitPoint);
+	Vector2 textureCoordinate = request.object->tex.massCenter(hitMasses);
+	if ((alphaCutout.textureId >= 0) && (alphaCutoutThreshold >= alphaCutout(textureCoordinate, request.context).a)) {
+		sampleDir = request.ray.direction;
+		sampleType = 3;
+	}
+	else if (request.context->entropy->getBool(specMass)) {
+		Vector3 n = normalColor.getNormal(*request.object, hitMasses, request.context);
 		if ((n * (request.ray.direction)) >= 0.0f) return;
 		Vector3 r = (request.ray.direction).reflection(n).normalized();
 		if (r * normal < 0) normal *= -1;
@@ -53,11 +62,16 @@ __dumb__ void DumbBasedShader::requestIndirectSamples(const ShaderIndirectSample
 }
 __dumb__ Color DumbBasedShader::getReflectedColor(const ShaderReflectedColorRequest<BakedTriFace> &request)const {
 	BakedTriFace object = (*request.object);
+	Vector3 hitMasses = object.vert.getMasses(request.hitPoint);
+	Vector2 textureCoordinate = object.tex.massCenter(hitMasses);
+
+	if ((alphaCutout.textureId >= 0) && (alphaCutoutThreshold >= alphaCutout(textureCoordinate, request.context).a)) 
+		return ((request.sampleType == 3) ? request.photon.color : Color(0, 0, 0));
+
 	if ((object.vert.normal().normalized() * (request.photon.ray.direction)) > 0.0f)
 		if (request.photonType != PHOTON_TYPE_DIRECT_ILLUMINATION)
 			return request.photon.color;
-	Vector3 hitMasses = object.vert.getMasses(request.hitPoint);
-	Vector2 textureCoordinate = object.tex.massCenter(hitMasses);
+
 	if ((object.norm.massCenter(hitMasses) * request.observerDirection) < 0.0f) return Color(0.0f, 0.0f, 0.0f);
 	Vector3 n = normalColor.getNormal(object, hitMasses, request.context);
 	Vector3 wi = -request.photon.ray.direction.normalized();
@@ -132,11 +146,20 @@ inline bool DumbBasedShader::fromDson(const Dson::Object &object, std::ostream *
 	float specular = spec;
 	ColoredTexture diffuse = diffuseColor;
 	diffuse.color /= ((metal == 1.0f) ? 1.0f : (1.0f - metal));
-	
+	ColoredTexture alphaCut = alphaCutout;
+	float alphaThresh = alphaCutoutThreshold;
+
 	if (!fresnelFactor.fromDson(dict, errorStream, context, "fresnel", "fresnel_texture", "fresnel_tiling", "fresnel_offset")) return false;
 	if (!diffuse.fromDson(dict, errorStream, context, "diffuse", "diffuse_texture", "diffuse_tiling", "diffuse_offset")) return false;
 	if (!normalColor.fromDson(dict, errorStream, context, "normal_color", "normal_texture", "normal_tiling", "normal_offset")) return false;
+	if (!alphaCut.fromDson(dict, errorStream, context, "alpha_cutout_color", "alpha_cutout_texture", "alpha_cutout_tiling", "alpha_cutout_offset")) return false;
 	
+	if (dict.contains("alpha_cutout_threshold")) {
+		const Dson::Number *alphaValue = dict["alpha_cutout_threshold"].safeConvert<Dson::Number>(errorStream, "Error: DumbBasedShader alpha_cutout_threshold value hat to be a number...");
+		if (alphaValue == NULL) return false;
+		alphaThresh = alphaValue->floatValue();
+	}
+
 	if (dict.contains("specular")) {
 		const Dson::Number *specularValue = dict["specular"].safeConvert<Dson::Number>(errorStream, "Error: DumbBasedShader specular value hat to be a number...");
 		if (specularValue == NULL) return false;
@@ -147,6 +170,10 @@ inline bool DumbBasedShader::fromDson(const Dson::Object &object, std::ostream *
 		if (metalValue == NULL) return false;
 		metal = metalValue->floatValue();
 	}
+
 	(*this) = DumbBasedShader(fresnelFactor, specular, diffuse, metal, normalColor);
+	alphaCutout = alphaCut;
+	alphaCutoutThreshold = alphaThresh;
+
 	return true;
 }

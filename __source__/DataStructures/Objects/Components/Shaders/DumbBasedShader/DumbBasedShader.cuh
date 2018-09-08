@@ -25,6 +25,8 @@ private:
 	ColoredTexture fresnelColor;
 	ColoredTexture diffuseColor;
 	ColoredTexture normalColor;
+	ColoredTexture alphaCutout;
+	float alphaCutoutThreshold;
 	float spec;
 	float specMass;
 };

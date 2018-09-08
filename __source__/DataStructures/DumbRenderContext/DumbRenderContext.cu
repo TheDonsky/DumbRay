@@ -219,20 +219,22 @@ namespace {
 	}
 	inline bool DumbRenderContextData::Group::fromDson(const Dson::Object *object, std::ostream *errorStream, DumbRenderContextData *data) {
 		const Dson::Dict *dict = object->safeConvert<Dson::Dict>(errorStream, "Error: Group can only be made from a dictionary"); if (dict == NULL) return false;
-		if (dict->contains("objects")) {
-			const Dson::Array *objects = dict->get("objects").safeConvert<Dson::Array>(errorStream, "Error: Group objects should be contained in an array"); if (objects == NULL) return false;
-			for (int i = 0; i < objects->size(); i++) {
-				Item item; if (!item.fromDson(&objects->get(i), errorStream, data)) return false;
-				groupItems.push_back(item);
+		if (dict->contains("elements")) {
+			const Dson::Array *elements = dict->get("elements").safeConvert<Dson::Array>(errorStream, "Error: Group elements should be contained in an array"); if (elements == NULL) return false;
+			for (int i = 0; i < elements->size(); i++) {
+				const Dson::Object &elementObject = elements->get(i);
+				const Dson::Dict *elementDict = elementObject.safeConvert<Dson::Dict>();
+				if (elementDict != NULL && elementDict->contains("mesh")) {
+					Item item; if (!item.fromDson(&elementObject, errorStream, data)) return false;
+					groupItems.push_back(item);
+				}
+				else {
+					SubGroup group; if (!group.fromDson(&elementObject, errorStream, data)) return false;
+					subGroups.push_back(group);
+				}
 			}
 		}
-		if (dict->contains("groups")) {
-			const Dson::Array *groups = dict->get("groups").safeConvert<Dson::Array>(errorStream, "Error: Group subgroups should be contained in an array"); if (groups == NULL) return false;
-			for (int i = 0; i < groups->size(); i++) {
-				SubGroup group; if (!group.fromDson(&groups->get(i), errorStream, data)) return false;
-				subGroups.push_back(group);
-			}
-		}
+		
 		if (dict->contains("transform")) if (!transform.fromDson(dict->get("transform"), errorStream)) return false;
 		
 		if (dict->contains("fallback_material")) if (!data->getMaterialId(dict->get("fallback_material"), errorStream, fallbackMaterial)) return false;
@@ -305,27 +307,26 @@ bool DumbRenderContext::fromFile(const std::string &filename, std::ostream *erro
 	stream.open(filename.c_str());
 	std::string string((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
 	if (stream.fail()) {
-		if (errorStream != NULL) (*errorStream) << ("Error: Could not read file: \"" + filename + "\"..") << std::endl;
+		if (errorStream != NULL) (*errorStream) << ("Error: Could not open file: \"" + filename + "\"..") << std::endl;
 		return false;
 	}
 	Dson::Object *object = Dson::parse(string, errorStream);
-	const std::string &src = CONTEXT sourcePath;
-	{
-		size_t len = (filename.length());
-		while ((len <= filename.length()) && (len > 0) && (filename[len - 1] != '/') && (filename[len - 1] != '\\')) len--;
-		CONTEXT sourcePath = filename.substr(0, len);
-	}
-	bool rv;
 	if (object != NULL) {
-		rv = fromDson(object, errorStream);
+		const std::string src = CONTEXT sourcePath;
+		{
+			size_t len = (filename.length());
+			while ((len <= filename.length()) && (len > 0) && (filename[len - 1] != '/') && (filename[len - 1] != '\\')) len--;
+			CONTEXT sourcePath = filename.substr(0, len);
+		}
+		bool rv = fromDson(object, errorStream);
+		CONTEXT sourcePath = src;
 		delete object;
+		return rv;
 	}
 	else {
 		if (errorStream != NULL) (*errorStream) << "Error: Could not parse file: \"" << filename << "\"" << std::endl;
-		rv = false;
+		return false;
 	}
-	CONTEXT sourcePath = src;
-	return rv;
 }
 
 bool DumbRenderContext::fromDson(const Dson::Object *object, std::ostream *errorStream) {
@@ -743,17 +744,22 @@ bool DumbRenderContextData::loadObjFile(const std::string &filename, std::ostrea
 
 bool DumbRenderContextData::parseObject(const Dson::Object &object, std::ostream *errorStream) {
 	const Dson::Dict *dict = object.safeConvert<Dson::Dict>();
-	if (dict != NULL && dict->contains("group")) {
-		Group::SubGroup group; if (!group.fromDson(&dict->get("group"), errorStream, this)) return false;
-		scene.geometry.cpuHandle()->push(group.resolve(this));
-	}
-	else {
+	if (dict != NULL && dict->contains("mesh")) {
 		Group::Item item; if (!item.fromDson(&object, errorStream, this)) return false;
 		if (item.materialId < 0) {
 			if (errorStream != NULL) (*errorStream) << "Error: Object MUST have a material attached to it\n";
 			return false;
 		}
 		scene.geometry.cpuHandle()->push(item.resolve(this));
+	}
+	else {
+		Group::SubGroup group; if (!group.fromDson(&object, errorStream, this)) return false;
+		Stacktor<DumbRenderer::SceneType::GeometryUnit> resolved = group.resolve(this);
+		for (int i = 0; i < resolved.size(); i++) if (resolved[i].materialId < 0) {
+			if (errorStream != NULL) (*errorStream) << "Error: Resolved group must have a material attached to it\n";
+			return false;
+		}
+		scene.geometry.cpuHandle()->push(resolved);
 	}
 	return true;
 }
