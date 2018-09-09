@@ -14,10 +14,12 @@ void DumbRenderContextRegistry::registerMaterials() {
 
 #include "../Objects/Scene/Lights/SimpleSoftDirectionalLight/SimpleSoftDirectionalLight.cuh"
 #include "../Objects/Scene/Lights/SphericalLightEmitter/SphericalLightEmitter.cuh"
+#include "../Objects/Scene/Lights/Spotlight/Spotlight.cuh"
 
 void DumbRenderContextRegistry::registerLights() {
 	registerLightType<SimpleSoftDirectionalLight>("simple_soft_directional");
 	registerLightType<SphericalLightEmitter>("simple_spherical");
+	registerLightType<Lights::Spotlight>("spotlight");
 }
 
 
