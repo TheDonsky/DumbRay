@@ -17,7 +17,7 @@ namespace Lights {
 		direction = dir.normalized();
 
 
-		if (discSize < 0) discSize = 0;
+		if (discSize < (32 * VECTOR_EPSILON)) discSize = (32 * VECTOR_EPSILON);
 		emitterSize = discSize;
 
 		if (innerAngle < 0.0f) innerAngle = (-innerAngle);
@@ -56,15 +56,19 @@ namespace Lights {
 
 			Vector3 delta = (request.point - pos);
 			float sqrDistance = delta.sqrMagnitude();
-
-			Color col = (color / (((float)resultCount) * sqrDistance));
-			if (sqrDistance < (32.0f * VECTOR_EPSILON)) {
-				col.a = 1.0f;
-				result->add(Photon(Ray(request.point - (direction * (32.0f * VECTOR_EPSILON)), direction), col));
-				continue;
-			}
 			
-			Vector3 dir = (delta / sqrt(sqrDistance));
+			if (sqrDistance < VECTOR_EPSILON) continue;
+			register float distance = sqrt(sqrDistance);
+
+			Color col;
+			{
+				register float baseSurface = (emitterSize * emitterSize);
+				register float spreadFactor = (1.0f - (innerCosine * innerCosine));
+				register float surface = (baseSurface + (distance * spreadFactor));
+				col = (color * (baseSurface / (((float)resultCount) * surface)));
+			}
+
+			Vector3 dir = (delta / distance);
 			
 			float cosine = (dir * direction);
 			
