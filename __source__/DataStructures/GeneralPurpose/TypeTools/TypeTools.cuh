@@ -74,7 +74,8 @@ if the user is going to upload anything on CUDA device, or initialise from raw d
 		DEFINE_TYPE_TOOLS_CONTENT_FOR(ElemType); \
 	}
 
-#define DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(ElemType) \
+#define DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(ElemType) friend class TypeTools<ElemType>
+/*
 	__device__ __host__ inline friend void TypeTools<ElemType>::init(ElemType &t); \
 	__device__ __host__ inline friend void TypeTools<ElemType>::dispose(ElemType &t); \
 	__device__ __host__ inline friend void TypeTools<ElemType>::swap(ElemType &a, ElemType &b); \
@@ -84,7 +85,7 @@ if the user is going to upload anything on CUDA device, or initialise from raw d
 	inline friend void TypeTools<ElemType>::undoCpyLoadPreparations(const ElemType *source, ElemType *hosClone, ElemType *devTarget, int count); \
 	inline friend bool TypeTools<ElemType>::devArrayNeedsToBeDisposed(); \
 	inline friend bool TypeTools<ElemType>::disposeDevArray(ElemType *arr, int count)
-
+*/
 #define SPECIALISE_TYPE_TOOLS_FOR(ElemType) \
 	template<> __device__ __host__ inline void TypeTools<ElemType>::init(ElemType &t); \
 	template<> __device__ __host__ inline void TypeTools<ElemType>::dispose(ElemType &t); \
