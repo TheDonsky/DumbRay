@@ -100,9 +100,9 @@ if the user is going to upload anything on CUDA device, or initialise from raw d
 
 
 
-template<typename Type>
+template<typename ElemType>
 class TypeTools{
-	DEFINE_TYPE_TOOLS_CONTENT_FOR(Type);
+	DEFINE_TYPE_TOOLS_CONTENT_FOR(ElemType);
 };
 
 
