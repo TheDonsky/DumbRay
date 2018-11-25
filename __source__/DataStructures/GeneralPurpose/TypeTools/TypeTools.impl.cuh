@@ -130,19 +130,19 @@
 #undef TYPE_TOOLS_ADD_COMPONENT_GETTER
 #define TYPE_TOOLS_ADD_COMPONENT_GETTER(ClassName, VariableName0) \
 	DEFINE_TYPE_TOOLS_FRIENDSHIP_FOR(ClassName); \
-	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(TypeTools<ClassName>::PartType0, component0, VariableName0)
+	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(typename TypeTools<ClassName>::PartType0, component0, VariableName0)
 #undef TYPE_TOOLS_ADD_COMPONENT_GETTERS_2
 #define TYPE_TOOLS_ADD_COMPONENT_GETTERS_2(ClassName, VariableName0, VariableName1) \
 	TYPE_TOOLS_ADD_COMPONENT_GETTER(ClassName, VariableName0); \
-	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(TypeTools<ClassName>::PartType1, component1, VariableName1)
+	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(typename TypeTools<ClassName>::PartType1, component1, VariableName1)
 #undef TYPE_TOOLS_ADD_COMPONENT_GETTERS_3
 #define TYPE_TOOLS_ADD_COMPONENT_GETTERS_3(ClassName, VariableName0, VariableName1, VariableName2) \
 	TYPE_TOOLS_ADD_COMPONENT_GETTERS_2(ClassName, VariableName0, VariableName1); \
-	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(TypeTools<ClassName>::PartType2, component2, VariableName2)
+	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(typename TypeTools<ClassName>::PartType2, component2, VariableName2)
 #undef TYPE_TOOLS_ADD_COMPONENT_GETTERS_4
 #define TYPE_TOOLS_ADD_COMPONENT_GETTERS_4(ClassName, VariableName0, VariableName1, VariableName2, VariableName3) \
 	TYPE_TOOLS_ADD_COMPONENT_GETTERS_3(ClassName, VariableName0, VariableName1, VariableName2); \
-	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(TypeTools<ClassName>::PartType3, component3, VariableName3)
+	TYPE_TOOLS_ADD_GENERIC_COMPONENT_GETTER(typename TypeTools<ClassName>::PartType3, component3, VariableName3)
 
 
 
