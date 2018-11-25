@@ -7,7 +7,7 @@ namespace Lights {
 	__dumb__ Spotlight::Spotlight(
 		Color shade, float lum, Vertex pos, Vector3 dir,
 		float innerAngle, float outerAngle, float falloffPower, 
-		float discSize, bool castShadows, int samples) {
+		float emitSize, bool emitFromSphere, bool castShadows, int samples) {
 		
 		color = shade;
 		color *= lum;
@@ -17,8 +17,8 @@ namespace Lights {
 		direction = dir.normalized();
 
 
-		if (discSize < (32 * VECTOR_EPSILON)) discSize = (32 * VECTOR_EPSILON);
-		emitterSize = discSize;
+		if (emitSize < (32 * VECTOR_EPSILON)) emitSize = (32 * VECTOR_EPSILON);
+		emitterSize = emitSize;
 
 		if (innerAngle < 0.0f) innerAngle = (-innerAngle);
 		if (innerAngle > 180.0f) innerAngle = 180.0f;
@@ -34,6 +34,7 @@ namespace Lights {
 
 		flags = ((samples > 0) ? ((samples > 16) ? 16 : samples) : 0);
 		if (castShadows) flags |= FLAGS_CAST_SHADOWS;
+		if (emitFromSphere) flags |= FLAGS_EMIT_FROM_SPHERE;
 	}
 
 	__dumb__ void Spotlight::getVertexPhotons(
@@ -42,6 +43,8 @@ namespace Lights {
 		
 		int resultCount = (((int)flags) & FLAGS_SAMPLE_COUNT_MASK);
 		
+		bool emitFromSphere = ((flags & FLAGS_EMIT_FROM_SPHERE) != 0);
+
 		Vector3 nonDir = ((direction.z > 0.9f) ? Vector3(1.0f, 0.0f, 0.0f) : Vector3(0.0f, 0.0f, 1.0f));
 		Vector3 ver = (direction & nonDir).normalized();
 		Vector3 hor = (direction & ver);
@@ -49,7 +52,12 @@ namespace Lights {
 		result->sampleCount = 0;
 		for (int i = 0; i < resultCount; i++) {
 			Vector3 pos;
-			{
+			if (emitFromSphere) {
+				request.context->entropy->pointOnSphere(pos.x, pos.y, pos.z, emitterSize);
+				pos *= request.context->entropy->getFloat();
+				pos += position;
+			}
+			else {
 				float angle = request.context->entropy->range(0.0f, 2.0f * PI);
 				pos = (position + (((ver * cos(angle)) + (hor * sin(angle))) * emitterSize * sqrt(request.context->entropy->getFloat())));
 			}
@@ -63,8 +71,8 @@ namespace Lights {
 			Color col;
 			{
 				register float baseSurface = (emitterSize * emitterSize);
-				register float spreadFactor = (1.0f - (innerCosine * innerCosine));
-				register float surface = (baseSurface + (distance * spreadFactor));
+				register float spreadFactor = max(1.0f - outerCosine, VECTOR_EPSILON);
+				register float surface = ((emitFromSphere ? 0 : baseSurface) + (sqrDistance * spreadFactor));
 				col = (color * (baseSurface / (((float)resultCount) * surface)));
 			}
 
@@ -130,10 +138,20 @@ namespace Lights {
 			falloffPower = number->floatValue();
 		}
 		
-		float discSize = 0.25f;
+		float emitSize = 0.25f;
 		if (dict->contains("emitter_size")) {
 			const Dson::Number *number = dict->get("emitter_size").safeConvert<Dson::Number>(errorStream, "Error: Spotlight emitter size must be a number"); if (number == NULL) return false;
-			discSize = number->floatValue();
+			emitSize = number->floatValue();
+		}
+
+		bool emitFromSphere = false;
+		if (dict->contains("emitter_shape")) {
+			const Dson::String *text = dict->get("emitter_shape").safeConvert<Dson::String>(errorStream, "Error: Spotlight emitter shape must be a string"); if (text == NULL) return false;
+			if (text->value() == "disc") emitFromSphere = false;
+			else if (text->value() == "sphere") emitFromSphere = true;
+			else {
+				if (errorStream != NULL) (*errorStream) << "Error: Spotlight emitter shape should be from {[disc];sphere}\n";
+			}
 		}
 
 		bool castShadows = true;
@@ -148,7 +166,7 @@ namespace Lights {
 			samples = number->intValue();
 		}
 
-		new(this)Spotlight(shade, lum, pos, dir, innerAngle, outerAngle, falloffPower, discSize, castShadows, samples);
+		new(this)Spotlight(shade, lum, pos, dir, innerAngle, outerAngle, falloffPower, emitSize, emitFromSphere, castShadows, samples);
 		return true;
 	}
 }

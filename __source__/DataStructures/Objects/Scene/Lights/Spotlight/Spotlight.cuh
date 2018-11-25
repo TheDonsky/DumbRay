@@ -13,7 +13,7 @@ namespace Lights {
 			Color shade = Color(1, 1, 1), float lum = 1500, 
 			Vertex pos = Vertex(0, 0, 0), Vector3 dir = Vector3(0, 0, 1),
 			float innerAngle = 16, float outerAngle = 64, float falloffPower = 1,
-			float discSize = 0.25, bool castShadows = true, int samples = 1);
+			float emitSize = 0.25, bool emitFromSphere = false, bool castShadows = true, int samples = 1);
 		__dumb__ void getVertexPhotons(
 			const LightVertexSampleRequest &request, PhotonSamples *result, bool *castShadows)const;
 
@@ -31,7 +31,8 @@ namespace Lights {
 		float outerFalloff;
 		enum Flags {
 			FLAGS_SAMPLE_COUNT_MASK = 31,
-			FLAGS_CAST_SHADOWS = 32
+			FLAGS_CAST_SHADOWS = 32,
+			FLAGS_EMIT_FROM_SPHERE = 64
 		};
 		uint8_t flags;
 	};

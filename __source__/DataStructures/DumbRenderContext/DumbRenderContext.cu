@@ -245,7 +245,10 @@ namespace {
 			const Dson::String *nameObject = dict->get("name").safeConvert<Dson::String>(errorStream, "Error: Group name must be a string"); if (nameObject == NULL) return false;
 			name = ("named::" + nameObject->value());
 		}
-		else name = ("unnamed::" + ((std::stringstream*)(&(std::stringstream() << (data->groups.size()))))->str());
+		else {
+			std::stringstream stream;
+			name = ("unnamed::" + ((std::stringstream*)(&(stream << (data->groups.size()))))->str());
+		}
 		data->groups[name] = (*this);
 		return true;
 	}

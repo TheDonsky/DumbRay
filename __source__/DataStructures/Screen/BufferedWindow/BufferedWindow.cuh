@@ -19,7 +19,7 @@ public:
 		Window *target = NULL,
 		const char *windowName = "BufferedWindow",
 		FrameBufferManager *frameBufferManager = NULL,
-		int renderingDeviceId = 0);
+		int renderingDeviceId = 0, int refreshIntervalMilliseconds = 1024);
 	~BufferedWindow();
 
 	void setBuffer(FrameBufferManager *frameBufferManager);
@@ -57,7 +57,11 @@ private:
 
 	std::thread windowThread;
 
+	int autoRefreshInterval;
+	std::thread refreshThread;
+
 	Window *targetWindow;
 
 	static void bufferedWindowThread(BufferedWindow *bufferedWindow);
+	static void autoRefreshThread(BufferedWindow *bufferedWindow);
 };

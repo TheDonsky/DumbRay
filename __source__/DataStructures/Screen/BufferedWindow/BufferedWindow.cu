@@ -3,7 +3,7 @@
 #include <new>
 
 
-BufferedWindow::BufferedWindow(OptionFlags optionFlags, Window *target, const char *windowName, FrameBufferManager *frameBufferManager, int renderingDeviceId) {
+BufferedWindow::BufferedWindow(OptionFlags optionFlags, Window *target, const char *windowName, FrameBufferManager *frameBufferManager, int renderingDeviceId, int refreshIntervalMilliseconds) {
 	options = optionFlags;
 	bufferManager = frameBufferManager;
 	deviceId = renderingDeviceId;
@@ -19,6 +19,9 @@ BufferedWindow::BufferedWindow(OptionFlags optionFlags, Window *target, const ch
 		state |= WINDOW_ALLOCATED_INTERNALLY;
 	}
 	windowThread = std::thread(bufferedWindowThread, this);
+	autoRefreshInterval = refreshIntervalMilliseconds;
+	if (autoRefreshInterval > 0)
+		refreshThread = std::thread(autoRefreshThread, this);
 }
 BufferedWindow::~BufferedWindow() { 
 	closeWindow();
@@ -49,11 +52,14 @@ void BufferedWindow::closeWindow() {
 		state |= BUFFERED_WINDOW_SHOULD_EXIT;
 		bufferCond.notify_one();
 	}
-	std::lock_guard<std::mutex> guard(bufferLock);
-	if ((state & WINDOW_DESTROYED) != 0) return;
-	state |= WINDOW_DESTROYED;
+	{
+		std::lock_guard<std::mutex> guard(bufferLock);
+		if ((state & WINDOW_DESTROYED) != 0) return;
+		state |= WINDOW_DESTROYED;
+		targetWindow->close();
+	}
 	windowThread.join();
-	targetWindow->close();
+	if (autoRefreshInterval > 0) refreshThread.join();
 }
 
 size_t BufferedWindow::framesDisplayed()const { return numFramesDisplayed; }
@@ -87,7 +93,30 @@ void BufferedWindow::bufferedWindowThread(BufferedWindow *bufferedWindow) {
 				Color color = cpuHandle->getColor(i, j);
 				bufferedWindow->targetWindow->setPixel(i, j, color.r, color.g, color.b, color.a);
 			}
-		bufferedWindow->targetWindow->endUpdate();;
+		bufferedWindow->targetWindow->endUpdate();
 		bufferedWindow->numFramesDisplayed++;
+	}
+}
+
+void BufferedWindow::autoRefreshThread(BufferedWindow *bufferedWindow) {
+	while (true) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(bufferedWindow->autoRefreshInterval));
+		{
+			std::lock_guard<std::mutex> guard(bufferedWindow->bufferLock);
+			if (bufferedWindow->windowClosed() || ((bufferedWindow->state & BUFFERED_WINDOW_SHOULD_EXIT) != 0)) break;
+			if (bufferedWindow->bufferManager == NULL) continue;
+			FrameBuffer *cpuHandle = ((FrameBufferManager*)bufferedWindow->bufferManager)->cpuHandle();
+			if (cpuHandle == NULL) continue;
+			bufferedWindow->targetWindow->startUpdate();
+			int handleWidth, handleHeight; 
+			cpuHandle->getSize(&handleWidth, &handleHeight);
+			bufferedWindow->targetWindow->setImageResolution(handleWidth, handleHeight);
+			for (int j = 0; j < handleHeight; j++)
+				for (int i = 0; i < handleWidth; i++) {
+					Color color = cpuHandle->getColor(i, j);
+					bufferedWindow->targetWindow->setPixel(i, j, color.r, color.g, color.b, color.a);
+				}
+			bufferedWindow->targetWindow->endUpdate();
+		}
 	}
 }
