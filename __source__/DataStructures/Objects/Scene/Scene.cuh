@@ -37,9 +37,9 @@ struct Scene {
 template<typename HitType, typename GeometryType>
 struct SceneContext {
 	typedef Scene<HitType, GeometryType> SceneType;
-	SceneType::MaterialList *materials;
-	SceneType::Geometry *geometry;
-	SceneType::LightList *lights;
+	typename SceneType::MaterialList *materials;
+	typename SceneType::Geometry *geometry;
+	typename SceneType::LightList *lights;
 
 	inline bool hasError() {
 		return ((materials == NULL) || (geometry == NULL) || (lights == NULL));
