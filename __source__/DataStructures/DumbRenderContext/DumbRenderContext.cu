@@ -898,7 +898,15 @@ void DumbRenderContext::runWindowRender() {
 	process.setIterationCompletionCallback(IterationObserver::iterationCompleteCallback, &observer);
 
 	process.start();
-	while (!bufferedWindow.windowClosed()) std::this_thread::sleep_for(std::chrono::milliseconds(32));
+#ifndef _WIN32
+	int sleeps = 0;
+#endif	
+	while (!bufferedWindow.windowClosed()) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(32));
+#ifndef _WIN32
+		sleeps++; if (sleeps % 512 == 0) Images::saveBufferPNG(*frameBuffer.cpuHandle(), "test_image.png");
+#endif
+	}
 	process.end();
 	{
 		std::cout << std::endl << "Enter a name ending with '.png' to save the image: ";

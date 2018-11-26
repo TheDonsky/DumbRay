@@ -377,6 +377,7 @@ bool Windows::Window::inFocus()const { return false; }
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
+void Windows::Window::updateFromHost(const FrameBuffer &image) {}
 void Windows::Window::updateFrameHost(const Matrix<Color> &image) {}
 void Windows::Window::updateFrameHost(const Color *devImage, int width, int height) {}
 void Windows::Window::updateFrameDevice(const Matrix<Color> *devImage) {}
