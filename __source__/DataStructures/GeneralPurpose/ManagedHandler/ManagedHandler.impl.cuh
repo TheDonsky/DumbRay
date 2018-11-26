@@ -120,15 +120,15 @@ inline void ManagedHandler<Type>::cleanEveryGPU() {
 	if (deviceData.size() <= 0) return;
 	//std::lock_guard<std::mutex> guard(lock);
 	std::thread *threads = new std::thread[deviceData.size()];
-	for (int i = 0; i < deviceData.size(); i++) threads[i] = std::thread(cleanDeviceInstanceThread, this, i);
+	for (int i = 0; i < deviceData.size(); i++) threads[i] = std::thread(cleanDeviceInstanceThread, CleanDeviceInstanceThreadArgs {this, i});
 	for (int i = 0; i < deviceData.size(); i++) threads[i].join();
 	delete[] threads;
 	//for (int i = 0; i < deviceData.size(); i++) cleanGPU(i);
 }
 
 template <typename Type>
-inline void ManagedHandler<Type>::cleanDeviceInstanceThread(ManagedHandler *self, int deviceId) {
-	if (self->selectGPU(deviceId)) self->cleanGPU(deviceId);
+inline void ManagedHandler<Type>::cleanDeviceInstanceThread(CleanDeviceInstanceThreadArgs args) {
+	if (args.self->selectGPU(args.deviceId)) args.self->cleanGPU(args.deviceId);
 }
 /*template <typename Type>
 inline bool ManagedHandler<Type>::cleanDeviceInstanceNoLock(int index) {

@@ -13,10 +13,16 @@ namespace CutexTest {
 				value++;
 				return value;
 			}
+			
+			struct HostThreadParams {
+				volatile int *value;
+				Cutex *mutex;
+				int iterations;
+			};
 
-			inline static void hostThread(volatile int *value, Cutex *mutex, int iterations) {
-				for (int i = 0; i < iterations; i++)
-					mutex->atomicCall(increase, *value);
+			inline static void hostThread(HostThreadParams params) {
+				for (int i = 0; i < params.iterations; i++)
+					params.mutex->atomicCall(increase, *params.value);
 			}
 
 			inline static void testHost() {
@@ -26,7 +32,7 @@ namespace CutexTest {
 				std::thread threads[32];
 				Cutex mutex;
 				for (int i = 0; i < numThreads; i++)
-					threads[i] = std::thread(hostThread, &value, &mutex, iterationsPerThread);
+					threads[i] = std::thread(hostThread, HostThreadParams { &value, &mutex, iterationsPerThread });
 				for (int i = 0; i < numThreads; i++)
 					threads[i].join();
 				if (value == iterationsPerThread * numThreads)

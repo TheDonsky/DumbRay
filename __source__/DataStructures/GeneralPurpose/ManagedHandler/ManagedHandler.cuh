@@ -76,7 +76,13 @@ private:
 	inline ManagedHandler(const ManagedHandler &other) {}
 	inline ManagedHandler &operator=(const ManagedHandler &other) { return (*this); }
 
-	inline static void cleanDeviceInstanceThread(ManagedHandler *self, int deviceId);
+	
+	struct CleanDeviceInstanceThreadArgs {
+		ManagedHandler *self;
+		int deviceId;
+	};
+		
+	inline static void cleanDeviceInstanceThread(CleanDeviceInstanceThreadArgs args);
 	inline static void createDeviceInstandeThread(ManagedHandler *self, int deviceId, bool overrideExisting);
 };
 

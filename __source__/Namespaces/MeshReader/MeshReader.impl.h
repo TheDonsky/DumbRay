@@ -241,37 +241,40 @@ namespace MeshReaderPrivate{
 		return true;
 	}
 
-	inline static void extructObject(
-			PolyMesh *meshAddr, 
-			const PolyMesh::VertexList *vertsAddr, 
-			const PolyMesh::VertexList *vertexNormalsAddr, 
-			const PolyMesh::VertexList *normsAddr, 
-			const PolyMesh::VertexList *texsAddr, 
-			const PolyMesh::FaceList *facesAddr, 
-			const int start, const int end, 
-			volatile bool *passed,
-			bool dump){
+	struct ExtructObjectParamPack {
+		PolyMesh *meshAddr;
+		const PolyMesh::VertexList *vertsAddr;
+		const PolyMesh::VertexList *vertexNormalsAddr; 
+		const PolyMesh::VertexList *normsAddr; 
+		const PolyMesh::VertexList *texsAddr; 
+		const PolyMesh::FaceList *facesAddr; 
+		int start, end; 
+		volatile bool *passed;
+		bool dump;
+	};
+
+	inline static void extructObject(ExtructObjectParamPack pack){
 		
 
-		PolyMesh &mesh = (*meshAddr);
-		const PolyMesh::VertexList &verts = (*vertsAddr);
-		const PolyMesh::VertexList &vertexNormals = (*vertexNormalsAddr);
-		const PolyMesh::VertexList &norms = (*normsAddr);
-		const PolyMesh::VertexList &texs = (*texsAddr);
-		const PolyMesh::FaceList &faces = (*facesAddr);
+		PolyMesh &mesh = (*pack.meshAddr);
+		const PolyMesh::VertexList &verts = (*pack.vertsAddr);
+		const PolyMesh::VertexList &vertexNormals = (*pack.vertexNormalsAddr);
+		const PolyMesh::VertexList &norms = (*pack.normsAddr);
+		const PolyMesh::VertexList &texs = (*pack.texsAddr);
+		const PolyMesh::FaceList &faces = (*pack.facesAddr);
 		
 		IntMap<int> vertIndexes;
 		IntMap<int> normIndexes;
 		IntMap<int> texIndexes;
 
-		for (int i = start; i < end; i++){
+		for (int i = pack.start; i < pack.end; i++){
 			mesh.addFace(PolyMesh::IndexFace());
 			PolyMesh::IndexFace &face = mesh.indexFace(mesh.faceCount() - 1);
 			for (int j = 0; j < faces[i].size(); j++){
 				if (!vertIndexes.contains(faces[i][j].vert)){
 					if (faces[i][j].vert < 0 || faces[i][j].vert >= verts.size()){
-						(*passed) = false;
-						if(dump) std::cout << "VERTEX ERROR" << std::endl;
+						(*pack.passed) = false;
+						if(pack.dump) std::cout << "VERTEX ERROR" << std::endl;
 						return;
 					}
 					vertIndexes[faces[i][j].vert] = mesh.vertextCount();
@@ -279,8 +282,8 @@ namespace MeshReaderPrivate{
 				}
 				if (!normIndexes.contains(faces[i][j].norm)){
 					if (faces[i][j].norm >= norms.size()){
-						(*passed) = false;
-						if (dump) std::cout << "NORMAL ERROR" << std::endl;
+						(*pack.passed) = false;
+						if (pack.dump) std::cout << "NORMAL ERROR" << std::endl;
 						return;
 					}
 					normIndexes[faces[i][j].norm] = mesh.normalCount();
@@ -290,8 +293,8 @@ namespace MeshReaderPrivate{
 				}
 				if (!texIndexes.contains(faces[i][j].tex)){
 					if (faces[i][j].tex >= texs.size()){
-						(*passed) = false;
-						if (dump) std::cout << "TEXTURE ERROR" << std::endl;
+						(*pack.passed) = false;
+						if (pack.dump) std::cout << "TEXTURE ERROR" << std::endl;
 						return;
 					}
 					texIndexes[faces[i][j].tex] = mesh.textureCount();
@@ -326,7 +329,8 @@ namespace MeshReaderPrivate{
 		meshList.flush(objects.size());
 		std::thread *threads = new std::thread[objects.size()];
 		for (int i = 0; i < objects.size(); i++)
-			threads[i] = std::thread(extructObject, meshList + i + start, &verts, &vertexNormals, &norms, &texs, &faces, objects[i].first, objects[i].second, &passed, dump);
+			threads[i] = std::thread(extructObject, 
+				ExtructObjectParamPack{meshList + i + start, &verts, &vertexNormals, &norms, &texs, &faces, objects[i].first, objects[i].second, &passed, dump});
 		for (int i = 0; i < objects.size(); i++)
 			threads[i].join();
 		delete[] threads;

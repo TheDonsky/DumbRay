@@ -1,4 +1,4 @@
-nvcc -cubin -dlink -rdc=true -dc -ccbin g++-6 -std=c++11 -o UBUNTU_BUILD/DumbRay \
+nvcc -cubin -dlink -rdc=true -dc -ccbin g++-6 -std=c++14 -o UBUNTU_BUILD/DumbRay \
 	__source__/DataStructures/DumbRenderContext/DumbRenderContext.cu \
 	__source__/DataStructures/DumbRenderContext/DumbRenderContextConnector.cu \
 	__source__/DataStructures/DumbRenderContext/DumbRenderContextRegistry.cu \
