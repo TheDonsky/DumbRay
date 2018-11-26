@@ -121,7 +121,7 @@ Renderer::Renderer(const ThreadConfiguration &config) {
 	}
 	command = ITERATE;
 	for (int i = 0; i < totalThreadCount; i++)
-		threads[i].thread = std::thread(thread, this, &threads[i].properties);
+		threads[i].thread = std::thread(thread, ThreadParams { this, &threads[i].properties });
 	destructorCalled = false;
 	threadsStarted = false;
 	resetIterations();
@@ -230,7 +230,9 @@ void Renderer::threadGPU(ThreadAttributes *attributes) {
 		attributes->endLock.post();
 	}
 }
-void Renderer::thread(Renderer *renderer, ThreadAttributes *attributes) {
+void Renderer::thread(ThreadParams params) {
+	Renderer *renderer = params.renderer;
+	ThreadAttributes *attributes = params.attributes;
 	attributes->startLock.wait();
 	if (attributes->info.manageSharedData) {
 		if (!renderer->destructorCalled)

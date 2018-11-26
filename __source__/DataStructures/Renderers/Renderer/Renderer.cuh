@@ -226,6 +226,11 @@ private:
 		std::thread thread;
 		ThreadAttributes properties;
 	};
+	
+	struct ThreadParams {
+		Renderer *renderer;
+		ThreadAttributes *attributes;
+	};
 
 	ThreadConfiguration configuration;
 
@@ -247,5 +252,5 @@ private:
 	void startRenderThreads();
 	void threadCPU(ThreadAttributes *attributes);
 	void threadGPU(ThreadAttributes *attributes);
-	static void thread(Renderer *renderer, ThreadAttributes *attributes);
+	static void thread(ThreadParams params);
 };

@@ -427,7 +427,7 @@ template<typename HitType>
 // Adds the object to the Octree (returns material id)
 __host__ inline int ShadedOctree<HitType>::put(const HitType &elem, const Material<HitType> &material) {
 	int materialId = addMaterial(material);
-	put(object, materialId);
+	put(elem, materialId);
 	return materialId;
 }
 

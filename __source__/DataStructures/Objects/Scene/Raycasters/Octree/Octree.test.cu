@@ -287,7 +287,16 @@ namespace OctreeTest {
 			// ########################################
 			// ######### HOST RENDER ROUTINE: #########
 			// ########################################
-			inline static void cpuRenderThread(const Octree<Renderable<BakedTriFace> > *octree, Matrix<Color> *image, Transform trans, int step, int startI, int frame) {
+			struct CpuRenderThreadParams {
+				const Octree<Renderable<BakedTriFace> > *octree;
+				Matrix<Color> *image;
+				Transform trans;
+				int step;
+				int startI;
+				int frame;
+			};
+
+			inline static void cpuRenderThread(CpuRenderThreadParams params) {
 				/*
 				const int width = image->width();
 				const int height = image->height();
@@ -307,16 +316,16 @@ namespace OctreeTest {
 							colorPixel(*octree, image->operator[](i)[j], trans, i, j, width, height, frame);
 				}
 				/*/
-				for (int i = startI; i < image->height(); i += step)
-					for (int j = 0; j < image->width(); j++)
-						colorPixel(*octree, image->operator[](i)[j], trans, i, j, image->width(), image->height(), frame);
+				for (int i = params.startI; i < params.image->height(); i += params.step)
+					for (int j = 0; j < params.image->width(); j++)
+						colorPixel(*params.octree, params.image->operator[](i)[j], params.trans, i, j, params.image->width(), params.image->height(), params.frame);
 				//*/
 			}
 			inline void renderOnCPU(int width, int height, int frame) {
 				if (width != image->width() || height != image->height()) { image->setDimensions(width, height); }
 				int numThreads = min(max(std::thread::hardware_concurrency(), 1), 32);
 				std::thread threads[32];
-				for (int i = 0; i < numThreads; i++) threads[i] = std::thread(cpuRenderThread, &octree, image, trans, numThreads, i, frame);
+				for (int i = 0; i < numThreads; i++) threads[i] = std::thread(cpuRenderThread, CpuRenderThreadParams { &octree, image, trans, numThreads, i, frame });
 				for (int i = 0; i < numThreads; i++) threads[i].join();
 				if (colorLock.try_lock()) {
 					Matrix<Color> *tmp = image;

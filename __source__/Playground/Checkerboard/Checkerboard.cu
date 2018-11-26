@@ -59,53 +59,94 @@ namespace {
 
 
 #define CHUNK_COUNT(total, chunkSize) ((total + chunkSize - 1) / chunkSize)
+	struct TestCheckerboardCPUThreadMainArgs {
+		Color *color;
+		int width;
+		int height;
+		int threadWidth;
+		int threadHeight;
+		volatile int *frameId;
+		bool checkerboard;
+		Semaphore *semaphore;
+		Semaphore *release;
+		std::mutex *blockLock;
+		volatile int *numBlocks;
+		volatile bool *killSwitch;
+	};
 
-	void testCheckerboardCPUThreadMain(
-		Color *color, int width, int height, int threadWidth, int threadHeight, volatile int *frameId, bool checkerboard,
-		Semaphore *semaphore, Semaphore *release, std::mutex *blockLock, volatile int *numBlocks, volatile bool *killSwitch) {
-		int kernelWidth = CHUNK_COUNT(width, threadWidth);
+	void testCheckerboardCPUThreadMain(TestCheckerboardCPUThreadMainArgs args) {
+		int kernelWidth = CHUNK_COUNT(args.width, args.threadWidth);
 		while (true) {
-			semaphore->wait();
-			if (!(*killSwitch)) while (true) {
-				blockLock->lock();
-				int blockId = ((*numBlocks) - 1);
-				(*numBlocks)--;
-				blockLock->unlock();
+			args.semaphore->wait();
+			if (!(*args.killSwitch)) while (true) {
+				args.blockLock->lock();
+				int blockId = ((*args.numBlocks) - 1);
+				(*args.numBlocks)--;
+				args.blockLock->unlock();
 				if (blockId >= 0) {
 					int blockY = (blockId / kernelWidth);
 					int blockX = (blockId - (blockY * kernelWidth));
-					renderBlock(color, width, height, threadWidth, threadHeight, *frameId, checkerboard, blockX, blockY);
+					renderBlock(args.color, args.width, args.height, args.threadWidth, args.threadHeight, *args.frameId, args.checkerboard, blockX, blockY);
 				}
 				else break;
 			}
-			release->post();
-			if (*killSwitch) break;
+			args.release->post();
+			if (*args.killSwitch) break;
 		}
 	}
-	void testCheckerboardCPUThreadFix(
-		Color *color, int width, int height, int threadWidth, int threadHeight, volatile int *, bool checkerboard,
-		Semaphore *semaphore, Semaphore *release, std::mutex *blockLock, volatile int *numBlocks, volatile bool *killSwitch) {
-		int kernelWidth = CHUNK_COUNT(width, threadWidth);
+	
+	struct TestCheckerboardCPUThreadFixArgs {
+		Color *color;
+		int width;
+		int height;
+		int threadWidth;
+		int threadHeight;
+		volatile int *frameId;
+		bool checkerboard;
+		Semaphore *semaphore;
+		Semaphore *release;
+		std::mutex *blockLock;
+		volatile int *numBlocks;
+		volatile bool *killSwitch;
+	};
+
+	void testCheckerboardCPUThreadFix(TestCheckerboardCPUThreadFixArgs args) {
+		int kernelWidth = CHUNK_COUNT(args.width, args.threadWidth);
 		while (true) {
-			semaphore->wait();
-			if (!(*killSwitch)) while (true) {
-				blockLock->lock();
-				int blockId = ((*numBlocks) - 1);
-				(*numBlocks)--;
-				blockLock->unlock();
+			args.semaphore->wait();
+			if (!(*args.killSwitch)) while (true) {
+				args.blockLock->lock();
+				int blockId = ((*args.numBlocks) - 1);
+				(*args.numBlocks)--;
+				args.blockLock->unlock();
 				if (blockId >= 0) {
 					int blockY = (blockId / kernelWidth);
 					int blockX = (blockId - (blockY * kernelWidth));
-					if (checkerboard) checkerboardFixBlock(color, width, height, threadWidth, threadHeight, blockX, blockY);
+					if (args.checkerboard) checkerboardFixBlock(args.color, args.width, args.height, args.threadWidth, args.threadHeight, blockX, blockY);
 				}
 				else break;
 			}
-			release->post();
-			if (*killSwitch) break;
+			args.release->post();
+			if (*args.killSwitch) break;
 		}
 	}
 
-	void testCheckerboardCPU(int width, int height, int threadWidth, int threadHeight, bool checkerboard, std::mutex *ioLock) {
+	struct TestCheckerboardCPUArgs {
+		int width;
+		int height;
+		int threadWidth;
+		int threadHeight;
+		bool checkerboard;
+		std::mutex *ioLock;	
+	};
+
+	void testCheckerboardCPU(TestCheckerboardCPUArgs args) {
+		int width = args.width;
+		int height = args.height;
+		int threadWidth = args.threadWidth;
+		int threadHeight = args.threadHeight;
+		bool checkerboard = args.checkerboard;
+		std::mutex *ioLock = args.ioLock;
 		Color *color = new Color[width * height];
 		if (color == NULL) { std::cout << "ERROR(testCheckerboardCPU): Buffer allocation failed" << std::endl; return; }
 		Windows::Window window((std::string("testCheckerboardCPU") + (checkerboard ? " (checkerboard)" : " (native)")).c_str());
@@ -124,12 +165,12 @@ namespace {
 		time_t lastCheck = clock();
 		volatile bool killSwitch = false;
 		for (int i = 0; i < numThreads; i++) {
-			threads[i] = std::thread(
-				testCheckerboardCPUThreadMain, color, width, height, threadWidth, threadHeight, &frameId, checkerboard,
-				semaphores + i, &semaphore, &blockLock, &numBlocks, &killSwitch);
-			if (checkerboard) fixThreads[i] = std::thread(
-				testCheckerboardCPUThreadFix, color, width, height, threadWidth, threadHeight, &frameId, checkerboard,
-				fixSemaphores + i, &semaphore, &blockLock, &numBlocks, &killSwitch);
+			threads[i] = std::thread(testCheckerboardCPUThreadMain, TestCheckerboardCPUThreadMainArgs {
+				color, width, height, threadWidth, threadHeight, &frameId, checkerboard,
+				semaphores + i, &semaphore, &blockLock, &numBlocks, &killSwitch });
+			if (checkerboard) fixThreads[i] = std::thread(testCheckerboardCPUThreadFix, TestCheckerboardCPUThreadFixArgs {
+				color, width, height, threadWidth, threadHeight, &frameId, checkerboard,
+				fixSemaphores + i, &semaphore, &blockLock, &numBlocks, &killSwitch });
 		}
 		while (!window.dead()) {
 			numBlocks = (kernelWidth * kernelHeight);
@@ -185,7 +226,7 @@ namespace CheckerboardTest {
 		Windows::Window checkerboard("testCheckerboard window (checkerboard)");
 		Windows::Window native("testCheckerboard window (native)");
 		std::mutex ioLock;
-		std::thread cpuRenderer(testCheckerboardCPU, width, height, threadWidth, threadHeight, true, &ioLock);
+		std::thread cpuRenderer(testCheckerboardCPU, TestCheckerboardCPUArgs { width, height, threadWidth, threadHeight, true, &ioLock });
 		int kernelWidth = CHUNK_COUNT(width, threadWidth);
 		int kernelHeight = CHUNK_COUNT(height, threadHeight);
 		int frameId = 0;
