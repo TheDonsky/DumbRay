@@ -12,7 +12,7 @@ nvcc -cubin -dlink -rdc=true -dc -ccbin g++-6 -std=c++14 -o UBUNTU_BUILD/DumbRay
 	__source__/DataStructures/GeneralPurpose/Stacktor/Stacktor.test.cu \
 	__source__/DataStructures/GeneralPurpose/TypeTools/TypeTools.test.cu \
 	__source__/DataStructures/Objects/Components/DumbStructs.cu \
-	__source__/DataStructures/Scene/Octree/Octree.test.cu \
+	__source__/DataStructures/Objects/Scene/Raycasters/Octree/Octree.test.cu \
 	__source__/DataStructures/Renderers/BlockRenderer/BlockRenderer.cu \
 	__source__/DataStructures/Renderers/BufferedRenderer/BufferedRenderer.cu \
 	__source__/DataStructures/Renderers/BufferedRenderProcess/BufferedRenderProcess.cu \

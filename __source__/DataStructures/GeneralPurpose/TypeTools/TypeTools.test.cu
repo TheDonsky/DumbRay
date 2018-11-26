@@ -5,6 +5,7 @@
 #include"../../../Namespaces/Tests/Tests.h"
 
 
+#ifndef __GNUC__
 namespace TypeToolsTest {
 	struct OneElem;
 	struct TwoElem;
@@ -280,8 +281,15 @@ namespace TypeToolsTest {
 		}
 		else std::cout << "NO ACTIVE CUDA DEVICE FOUND TO RUN THE TEST..." << std::endl;
 	}
+#else
+namespace TypeToolsTest {
+#endif
 	void test() {
+#ifdef __GNUC__
+		std::cout << "GCC does not compile what's tested here yet... Sorry..." << std::endl;
+#else
 		Tests::runTest(testFunction, "RUNNING TESTS FOR DEFAULT IMPLEMENTATIONS OF TYPE_TOOLS");
+#endif	
 	}
 }
 

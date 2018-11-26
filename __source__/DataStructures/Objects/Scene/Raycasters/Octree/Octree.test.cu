@@ -1,12 +1,10 @@
 #include"Octree.test.cuh"
-#pragma once
-
 #include"Octree.cuh"
 #include"../../../../../Namespaces/MeshReader/MeshReader.test.h"
 #include"../../../../../Namespaces/Tests/Tests.h"
 #include"../../../../../Namespaces/Windows/Windows.h"
 #include"../../../Components/Transform/Transform.h"
-#include"../../../Components/Shaders/DefaultSHader/DefaultShader.cuh"
+#include"../../../Components/Shaders/DefaultShader/DefaultShader.cuh"
 #include<iomanip>
 #include<thread>
 #include<mutex>
@@ -172,7 +170,9 @@ namespace OctreeTest {
 
 			bool onDevice, spacePressed;
 
+#ifdef _WIN32
 			POINT cursor;
+#endif
 			Vector3 euler;
 			Transform trans;
 			Vector3 pivot;
@@ -200,7 +200,13 @@ namespace OctreeTest {
 			// ############ DEVICE SWITCH: ############
 			// ########################################
 			inline void switchDevice() {
-				if (GetAsyncKeyState(VK_SPACE) & 0x8000) {
+				if (
+#ifdef _WIN32
+					GetAsyncKeyState(VK_SPACE) & 0x8000
+#else
+					false
+#endif
+					) {
 					if (!spacePressed) {
 						std::cout << "Changing state...";
 						colorLock.lock();
@@ -219,7 +225,14 @@ namespace OctreeTest {
 			// ########################################
 			inline void rotate() {
 				if (window().inFocus()) {
-					if (GetKeyState(VK_LBUTTON) & 0x100) {
+					if (
+#ifdef _WIN32
+						GetKeyState(VK_LBUTTON) & 0x100
+#else
+						false
+#endif
+						) {
+#ifdef _WIN32						
 						POINT newCursor; GetCursorPos(&newCursor);
 						if (mouseWasDown) {
 							euler.y += (newCursor.x - cursor.x) / 4.0f;
@@ -230,6 +243,7 @@ namespace OctreeTest {
 						}
 						else mouseWasDown = true;
 						cursor = newCursor;
+#endif
 					}
 					else mouseWasDown = false;
 				}
