@@ -1,4 +1,4 @@
-nvcc -rdc=true -dc -ccbin g++-6 -std=c++14 \
+nvcc -rdc=true -dc -ccbin g++-6 -std=c++14 -O2 -use_fast_math \
 	../__source__/DataStructures/DumbRenderContext/DumbRenderContext.cu \
 	../__source__/DataStructures/DumbRenderContext/DumbRenderContextConnector.cu \
 	../__source__/DataStructures/DumbRenderContext/DumbRenderContextRegistry.cu \
@@ -40,7 +40,7 @@ nvcc -rdc=true -dc -ccbin g++-6 -std=c++14 \
 	../__source__/Namespaces/Windows/Windows.cu \
 	../__source__/Playground/Checkerboard/Checkerboard.cu \
 	../__source__/TestingModule.cu \
-	../__source__/Main.cu && nvcc *.o -o=__DumbRay__
+	../__source__/Main.cu && nvcc *.o -o=__DumbRay__ && rm *.o
 
 
 	
