@@ -188,20 +188,25 @@ __device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit 
 		if (i < 0) return false;
 		else{
 			CastFrame &frame = stack[i];
+
+			register char curChild;
+			const register TreeNode *child;
+
+			while (frame.curChild < 8) {
+				curChild = (canonicalOrder ^ frame.curChild);
+				child = frame.node + curChild;
+				if (Shapes::castPreInversed<AABB>(inversedRay, child->bounds, false)) break;
+				frame.curChild++;
+			}
 			if (frame.curChild >= 8) i--;
 			else {
-				//register char curChild = (frame.priorityChild ^ frame.curChild);
-				register char curChild = (canonicalOrder ^ frame.curChild);
-				const register TreeNode *child = frame.node + curChild;
-				if (Shapes::castPreInversed<AABB>(inversedRay, child->bounds, false)) {
-					const register TreeNode *children = child->children;
-					if (children == NULL) {
-						if (castInLeaf(r, hit, (int)(child - root), clipBackfaces, validator, validatorArg)) return true;
-					}
-					else {
-						i++;
-						configureCastFrame(stack[i], children/*, r*/);
-					}
+				const register TreeNode *children = child->children;
+				if (children == NULL) {
+					if (castInLeaf(r, hit, (int)(child - root), clipBackfaces, validator, validatorArg)) return true;
+				}
+				else {
+					i++;
+					configureCastFrame(stack[i], children/*, r*/);
 				}
 				frame.curChild++;
 			}
