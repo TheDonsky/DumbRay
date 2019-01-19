@@ -177,39 +177,36 @@ __device__ __host__ inline bool Octree<ElemType>::cast(const Ray &r, RaycastHit 
 	if (root->children == NULL) return castInLeaf(r, hit, 0, clipBackfaces, validator, validatorArg);
 	if (!Shapes::castPreInversed<AABB>(inversedRay, (tree + 0)->bounds, false)) return false;
 	CastFrame stack[OCTREE_MAX_DEPTH + 1];
-	int i = 0;
-
+	
 	char canonicalOrder = ((r.direction.z < 0) ? 1 : 0);
 	if (r.direction.y < 0) canonicalOrder += 2;
 	if (r.direction.x < 0) canonicalOrder += 4;
 	
-	configureCastFrame(stack[0], root->children/*, r*/);
+	configureCastFrame(stack[0], root->children);
+	register int i = 0;
+	const register TreeNode *child;
 	while (true){
-		if (i < 0) return false;
-		else{
-			CastFrame &frame = stack[i];
+		CastFrame &frame = stack[i];
 
-			register char curChild;
-			const register TreeNode *child;
-
-			while (frame.curChild < 8) {
-				curChild = (canonicalOrder ^ frame.curChild);
-				child = frame.node + curChild;
-				if (Shapes::castPreInversed<AABB>(inversedRay, child->bounds, false)) break;
-				frame.curChild++;
+		while (frame.curChild < 8) {
+			child = frame.node + (canonicalOrder ^ frame.curChild);
+			if (Shapes::castPreInversed<AABB>(inversedRay, child->bounds, false)) break;
+			frame.curChild++;
+		}
+		if (frame.curChild >= 8) {
+			if (i == 0) return false;
+			else i--;
+		}
+		else {
+			const register TreeNode *children = child->children;
+			if (children == NULL) {
+				if (castInLeaf(r, hit, (int)(child - root), clipBackfaces, validator, validatorArg)) return true;
 			}
-			if (frame.curChild >= 8) i--;
 			else {
-				const register TreeNode *children = child->children;
-				if (children == NULL) {
-					if (castInLeaf(r, hit, (int)(child - root), clipBackfaces, validator, validatorArg)) return true;
-				}
-				else {
-					i++;
-					configureCastFrame(stack[i], children/*, r*/);
-				}
-				frame.curChild++;
+				i++;
+				configureCastFrame(stack[i], children);
 			}
+			frame.curChild++;
 		}
 	}
 }
