@@ -10,6 +10,7 @@
 !*.obj
 !*.ico
 !*.rc
+!*.ui
 !.gitignore
 !makefile
 !README.md
