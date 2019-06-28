@@ -1,8 +1,6 @@
 #include "DumbRayQ.h"
-#include <QtWidgets/QApplication>
+#include <QtWidgets/qapplication.h>
 #include "__source__/TestingModule.cuh"
-#include "__source__/Namespaces/Dson/Dson.h"
-#include "__source__/DataStructures/DumbRenderContext/DumbRenderContext.cuh"
 
 int main(int argc, char *argv[])
 {

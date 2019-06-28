@@ -40,6 +40,12 @@ void ImageWindow::setImageResolution(int width, int height) {
 	resolutionLock.unlock();
 }
 void ImageWindow::setPixel(int x, int y, float r, float g, float b, float a) {
+	//*
+	r = sqrt(r);
+	g = sqrt(g);
+	b = sqrt(b);
+	a = sqrt(a);
+	//*/
 	image.setPixel(x, y, qRgba(
 		(int)((std::min(std::max(r, 0.0f), 1.0f)) * 255),
 		(int)((std::min(std::max(g, 0.0f), 1.0f)) * 255),
