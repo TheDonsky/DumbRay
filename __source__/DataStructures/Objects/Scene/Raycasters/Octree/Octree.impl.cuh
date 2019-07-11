@@ -586,7 +586,6 @@ __device__ __host__ inline bool Octree<ElemType>::castInLeaf(const Ray &r, Rayca
 	const register int nodeTrisSize = nodeTris.size();
 	if (nodeTrisSize <= 0) return false;
 	const register ElemReference *elems = (nodeTris + 0);
-	const AABB &bounds = tree[index].bounds;
 
 	float bestDistance = FLT_MAX;
 	Vertex bestHitPoint;
@@ -598,14 +597,14 @@ __device__ __host__ inline bool Octree<ElemType>::castInLeaf(const Ray &r, Rayca
 		bool casted = Shapes::cast<ElemType>(r, *object, distance, hitPoint, clipBackfaces);
 		if (casted && (validator != NULL))
 			casted = validator(RaycastHit(*object, distance, hitPoint), r, validatorArg);
-		if (casted && distance < bestDistance && bounds.contains(hitPoint)){
+		if (casted && distance < bestDistance){
 			bestDistance = distance;
 			bestHitPoint = hitPoint;
 			bestHit = object;
 		}
 	}
 
-	if (bestDistance != FLT_MAX){
+	if (bestDistance != FLT_MAX && tree[index].bounds.contains(bestHitPoint)){
 		hit.set(*bestHit, bestDistance, bestHitPoint);
 		return true;
 	}
