@@ -14,7 +14,7 @@ public:
 	void setWidth(int width);
 	void setHeight(int height);
 
-	virtual void setName(const char *name);
+	virtual void setName(const wchar_t *name);
 
 	virtual bool getResolution(int &width, int &height)const;
 	virtual bool closed()const;

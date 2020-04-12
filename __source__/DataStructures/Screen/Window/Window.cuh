@@ -6,7 +6,7 @@ class Window {
 public:
 	virtual inline ~Window() {}
 
-	virtual void setName(const char *name) = 0;
+	virtual void setName(const wchar_t *name) = 0;
 
 	virtual bool getResolution(int &width, int &height)const = 0;
 	virtual bool closed()const = 0;

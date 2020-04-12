@@ -15,7 +15,7 @@ ImageWindow::~ImageWindow() { }
 void ImageWindow::setWidth(int width) { w = width; }
 void ImageWindow::setHeight(int height) { h = height; }
 
-void ImageWindow::setName(const char *name) { }
+void ImageWindow::setName(const wchar_t *name) { }
 
 bool ImageWindow::getResolution(int &width, int &height)const {
 	width = w;

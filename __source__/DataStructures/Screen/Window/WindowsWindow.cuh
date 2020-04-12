@@ -6,10 +6,10 @@
 
 class WindowsWindow : public Window {
 public:
-	WindowsWindow(const char *windowName);
+	WindowsWindow(const wchar_t *windowName);
 	virtual ~WindowsWindow();
 
-	virtual void setName(const char *name);
+	virtual void setName(const wchar_t *name);
 
 	virtual bool getResolution(int &width, int &height)const;
 	virtual bool closed()const;

@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>DumbRayQ</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>dumb_ray.ico</normaloff>dumb_ray.ico</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <property name="acceptDrops">
     <bool>true</bool>
@@ -39,8 +43,6 @@
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="DumbRayQ.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

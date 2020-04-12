@@ -26,7 +26,7 @@ namespace ImagesTest {
 			std::cout << "Status: " << error << std::endl;
 			std::cout << "Should have saved whatever's on screen:";
 			
-			Windows::Window window("Test window");
+			Windows::Window window(L"Test window");
 			window.updateFromHost(buffer);
 			int w = -1, h = -1;
 			while (!window.dead()) {
@@ -47,7 +47,7 @@ namespace ImagesTest {
 			std::cout << "Loading image..." << std::endl;
 			Images::Error error = Images::getTexturePNG(texture, "ImagesTest_testSavePng.png");
 			std::cout << "Status: " << error << std::endl;
-			Windows::Window window("Test window");
+			Windows::Window window(L"Test window");
 			window.updateFrameHost(texture[0], texture.width(), texture.height());
 			int w = -1, h = -1;
 			while (!window.dead()) {

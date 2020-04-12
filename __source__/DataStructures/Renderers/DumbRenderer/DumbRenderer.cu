@@ -102,7 +102,7 @@ bool DumbRenderer::renderBlocksGPU(
 				float blending = ((iteration() <= 1) ? 1.0f : (1.0f / ((float)iteration())));
 				if (sceneConfiguration.device(getScene(), getCamera(), device, host, boxing, info.device, blending, getMaxBounces(), fsaaX, fsaaY, ignoreBackfaces)) {
 					DumbRendererPrivateKernels::renderBlocks<<<blockCount, host->getBlockSize(), 0, renderStream>>>(sceneConfiguration, renderContext, startBlock, endBlock);
-					if (cudaStreamSynchronize(renderStream) != cudaSuccess) printf("error: %d\n", (int)cudaGetLastError());
+					if (cudaStreamSynchronize(renderStream) != cudaSuccess) printf("DumbRenderer::renderBlocksGPU - Synch error: %d\n", (int)cudaGetLastError());
 					else return true;
 				}
 			}

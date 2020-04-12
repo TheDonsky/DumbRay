@@ -885,7 +885,7 @@ void DumbRenderContext::runWindowRender() {
 			renderingDevice = i;
 			break;
 		}
-	BufferedWindow bufferedWindow(renderer.automaticallySynchesHostBlocks() ? 0 : BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE, NULL, "Render Viewport", NULL, renderingDevice);
+	BufferedWindow bufferedWindow(renderer.automaticallySynchesHostBlocks() ? 0 : BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE, NULL, L"Render Viewport", NULL, renderingDevice);
 
 	BufferedRenderProcess process;
 	process.setBuffer(&frameBuffer);
@@ -1073,7 +1073,7 @@ void DumbRenderContext::RenderInstance::initWindow() {
 		}
 	new (&DATA bufferedWindow) BufferedWindow(
 		DATA renderer.automaticallySynchesHostBlocks() ? 0 : BufferedWindow::SYNCH_FRAME_BUFFER_FROM_DEVICE, 
-		DATA window, "Render Viewport", NULL, renderingDevice);
+		DATA window, L"Render Viewport", NULL, renderingDevice);
 }
 void DumbRenderContext::RenderInstance::initRenderContext() {
 	DATA process.lockSettings();

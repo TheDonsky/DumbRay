@@ -19,3 +19,6 @@
 !/UBUNTU_BUILD
 !/example_scenes
 !/example_renders
+!DumbRay.vcxproj
+!DumbRay.vcxproj.filters
+!DumbRay.sln

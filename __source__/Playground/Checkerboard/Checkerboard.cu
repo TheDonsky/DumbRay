@@ -149,7 +149,7 @@ namespace {
 		std::mutex *ioLock = args.ioLock;
 		Color *color = new Color[width * height];
 		if (color == NULL) { std::cout << "ERROR(testCheckerboardCPU): Buffer allocation failed" << std::endl; return; }
-		Windows::Window window((std::string("testCheckerboardCPU") + (checkerboard ? " (checkerboard)" : " (native)")).c_str());
+		Windows::Window window((std::wstring(L"testCheckerboardCPU") + (checkerboard ? L" (checkerboard)" : L" (native)")).c_str());
 		const int numThreads = std::thread::hardware_concurrency();
 		std::thread *threads = new std::thread[numThreads];
 		std::thread *fixThreads = new std::thread[numThreads];
@@ -223,8 +223,8 @@ namespace CheckerboardTest {
 				cudaStreamDestroy(stream[0]); cudaStreamDestroy(stream[1]);
 				return;
 			}
-		Windows::Window checkerboard("testCheckerboard window (checkerboard)");
-		Windows::Window native("testCheckerboard window (native)");
+		Windows::Window checkerboard(L"testCheckerboard window (checkerboard)");
+		Windows::Window native(L"testCheckerboard window (native)");
 		std::mutex ioLock;
 		std::thread cpuRenderer(testCheckerboardCPU, TestCheckerboardCPUArgs { width, height, threadWidth, threadHeight, true, &ioLock });
 		int kernelWidth = CHUNK_COUNT(width, threadWidth);

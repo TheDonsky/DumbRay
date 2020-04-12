@@ -17,7 +17,7 @@ public:
 	BufferedWindow(
 		OptionFlags optionFlags = 0,
 		Window *target = NULL,
-		const char *windowName = "BufferedWindow",
+		const wchar_t *windowName = L"BufferedWindow",
 		FrameBufferManager *frameBufferManager = NULL,
 		int renderingDeviceId = 0, int refreshIntervalMilliseconds = 1024);
 	~BufferedWindow();

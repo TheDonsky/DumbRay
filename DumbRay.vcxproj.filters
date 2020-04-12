@@ -1,0 +1,367 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="__qt_source__\ImageWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="__qt_source__\RenderViewport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DumbRayQ.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="__qt_source__\ImageWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\IntMap\IntMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\IntMap\IntMap.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\IntMap\IntMap.test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Matrix\Matrix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Matrix\Matrix.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Semaphore\Semaphore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Vector\Vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Vector\Vector.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Transform\Transform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Transform\Transform.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Objects\Meshes\BakedTriMesh\BakedTriMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Objects\Meshes\BakedTriMesh\BakedTriMesh.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Objects\Meshes\PolyMesh\PolyMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Objects\Meshes\PolyMesh\PolyMesh.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Compound\AABB\AABB.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Compound\AABB\AABB.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Compound\AABB\AABB.test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Compound\Ray\Ray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Compound\Ray\Ray.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Compound\Triangle\Triangle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Compound\Triangle\Triangle.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Compound\Triangle\Triangle.test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Pure\Color\Color.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Pure\Color\Color.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Pure\Vector2\Vector2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Pure\Vector2\Vector2.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Pure\Vector3\Vector3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\Primitives\Pure\Vector3\Vector3.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\Callbacks\Function.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\Callbacks\ThreadPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\Callbacks\ThreadPools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\Dson\Dson.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\Dson\Dson.test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\Images\lodepng.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\MeshReader\MeshReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\MeshReader\MeshReader.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\MeshReader\MeshReader.test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\Tests\Tests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\Tests\Tests.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\TextParser\ByteMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\TextParser\ByteMap.impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\TextParser\ByteSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\TextParser\Error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\TextParser\ParserNetwork.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\TextParser\RecursiveParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\Namespaces\Windows\Windows.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__source__\DataStructures\DumbRenderContext\DumbRenderContext.cuh" />
+    <ClInclude Include="__source__\DataStructures\DumbRenderContext\DumbRenderContextConnector.cuh" />
+    <ClInclude Include="__source__\DataStructures\DumbRenderContext\DumbRenderContextRegistry.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Cutex\Cutex.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Cutex\Cutex.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Cutex\Cutex.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\DumbRand\DumbRand.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\DumbRand\DumbRand.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\DumbRand\DumbRand.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Generic\Generic.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Generic\Generic.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Generic\Generic.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Handler\Handler.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Handler\Handler.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Handler\Handler.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\ManagedHandler\ManagedHandler.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\ManagedHandler\ManagedHandler.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\ReaderWriterLock\ReaderWriterLock.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\ReferenceManager\ReferenceManager.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\ReferenceManager\ReferenceManager.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Stacktor\Stacktor.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Stacktor\Stacktor.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\Stacktor\Stacktor.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\TypeTools\TypeTools.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\TypeTools\TypeTools.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\GeneralPurpose\TypeTools\TypeTools.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Lenses\DefaultPerspectiveLense\DefaultPerspectiveLense.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Lenses\DefaultPerspectiveLense\DefaultPerspectiveLense.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Lenses\SimpleStochasticLense\SimpleStochasticLense.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Lenses\SimpleStochasticLense\SimpleStochasticLense.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Lenses\SphericalSegmentLense\SphericalSegmentLense.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Lenses\SphericalSegmentLense\SphericalSegmentLense.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Lenses\Lense.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Lenses\Lense.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Lenses\Lense.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\DefaultShader\DefaultShader.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\DefaultShader\DefaultShader.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\DumbBasedShader\DumbBasedShader.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\DumbBasedShader\DumbBasedShader.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\DummyShader\DummyShader.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\DummyShader\DummyShader.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\FresnelShader\FresnelShader.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\FresnelShader\FresnelShader.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\GaussianShader\GaussianShader.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\GaussianShader\GaussianShader.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\SimpleStochasticShader\SimpleStochasticShader.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\SimpleStochasticShader\SimpleStochasticShader.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\Material.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\Material.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Shaders\Material.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Texture\Texture.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\Texture\Texture.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Components\DumbStructs.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Camera\Camera.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Camera\Camera.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Lights\SimpleDirectionalLight\SimpleDirectionalLight.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Lights\SimpleDirectionalLight\SimpleDirectionalLight.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Lights\SimpleSoftDirectionalLight\SimpleSoftDirectionalLight.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Lights\SimpleSoftDirectionalLight\SimpleSoftDirectionalLight.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Lights\SphericalLightEmitter\SphericalLightEmitter.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Lights\SphericalLightEmitter\SphericalLightEmitter.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Lights\Spotlight\Spotlight.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Lights\Spotlight\Spotlight.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Lights\Light.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Lights\Light.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Raycasters\Octree\Octree.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Raycasters\Octree\Octree.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Raycasters\Octree\Octree.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Raycasters\ShadedOctree\ShadedOctree.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Raycasters\ShadedOctree\ShadedOctree.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Raycasters\Raycaster.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Raycasters\Raycaster.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Objects\Scene\Scene.cuh" />
+    <ClInclude Include="__source__\DataStructures\Primitives\Compound\Pair\Pair.cuh" />
+    <ClInclude Include="__source__\DataStructures\Primitives\Compound\Pair\Pair.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Primitives\Compound\Photon\Photon.cuh" />
+    <ClInclude Include="__source__\DataStructures\Primitives\Compound\Photon\Photon.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Primitives\Pure\ColorRGB\ColorRGB.cuh" />
+    <ClInclude Include="__source__\DataStructures\Primitives\Pure\ColorRGB\ColorRGB.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Renderers\BlockRenderer\BlockRenderer.cuh" />
+    <ClInclude Include="__source__\DataStructures\Renderers\BufferedRenderer\BufferedRenderer.cuh" />
+    <ClInclude Include="__source__\DataStructures\Renderers\BufferedRenderProcess\BufferedRenderProcess.cuh" />
+    <ClInclude Include="__source__\DataStructures\Renderers\BufferedRenderProcess\BufferedRenderProcess.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\Renderers\DumbRenderer\DumbRenderer.cuh" />
+    <ClInclude Include="__source__\DataStructures\Renderers\DumbRenderer\DumbRenderer.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\Renderers\Renderer\Renderer.cuh" />
+    <ClInclude Include="__source__\DataStructures\Renderers\Renderer\Renderer.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\Screen\BufferedWindow\BufferedWindow.cuh" />
+    <ClInclude Include="__source__\DataStructures\Screen\FrameBuffer\BlockBasedFrameBuffer\BlockBasedFrameBuffer.cuh" />
+    <ClInclude Include="__source__\DataStructures\Screen\FrameBuffer\BlockBasedFrameBuffer\BlockBasedFrameBuffer.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Screen\FrameBuffer\BlockBasedFrameBuffer\BlockBasedFrameBuffer.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\Screen\FrameBuffer\MemoryMappedFrameBuffer\MemoryMappedFrameBuffer.cuh" />
+    <ClInclude Include="__source__\DataStructures\Screen\FrameBuffer\MemoryMappedFrameBuffer\MemoryMappedFrameBuffer.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Screen\FrameBuffer\MemoryMappedFrameBuffer\MemoryMappedFrameBuffer.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\Screen\FrameBuffer\FrameBuffer.cuh" />
+    <ClInclude Include="__source__\DataStructures\Screen\FrameBuffer\FrameBuffer.impl.cuh" />
+    <ClInclude Include="__source__\DataStructures\Screen\FrameBuffer\FrameBuffer.test.cuh" />
+    <ClInclude Include="__source__\DataStructures\Screen\Window\Window.cuh" />
+    <ClInclude Include="__source__\DataStructures\Screen\Window\WindowsWindow.cuh" />
+    <ClInclude Include="__source__\Namespaces\Device\Device.cuh" />
+    <ClInclude Include="__source__\Namespaces\Images\Images.cuh" />
+    <ClInclude Include="__source__\Namespaces\Images\Images.test.cuh" />
+    <ClInclude Include="__source__\Namespaces\MemManip\MemManip.cuh" />
+    <ClInclude Include="__source__\Namespaces\MemManip\MemManip.impl.cuh" />
+    <ClInclude Include="__source__\Namespaces\Primitives\Primitives.cuh" />
+    <ClInclude Include="__source__\Namespaces\Primitives\Primitives.impl.cuh" />
+    <ClInclude Include="__source__\Namespaces\Shapes\Shapes.cuh" />
+    <ClInclude Include="__source__\Namespaces\Shapes\Shapes.impl.cuh" />
+    <ClInclude Include="__source__\Playground\Checkerboard\Checkerboard.cuh" />
+    <ClInclude Include="__source__\TestingModule.cuh" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="__qt_source__\RenderViewport.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="DumbRayQ.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="__source__\DataStructures\DumbRenderContext\DumbRenderContext.cu" />
+    <CudaCompile Include="__source__\DataStructures\DumbRenderContext\DumbRenderContextConnector.cu" />
+    <CudaCompile Include="__source__\DataStructures\DumbRenderContext\DumbRenderContextRegistry.cu" />
+    <CudaCompile Include="__source__\DataStructures\GeneralPurpose\Cutex\Cutex.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\GeneralPurpose\DumbRand\DumbRand.cu" />
+    <CudaCompile Include="__source__\DataStructures\GeneralPurpose\DumbRand\DumbRand.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\GeneralPurpose\Generic\Generic.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\GeneralPurpose\Handler\Handler.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\GeneralPurpose\IntMap\IntMap.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\GeneralPurpose\Semaphore\Semaphore.cu" />
+    <CudaCompile Include="__source__\DataStructures\GeneralPurpose\Stacktor\Stacktor.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\GeneralPurpose\TypeTools\TypeTools.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\Objects\Components\DumbStructs.cu" />
+    <CudaCompile Include="__source__\DataStructures\Objects\Scene\Raycasters\Octree\Octree.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\Renderers\BlockRenderer\BlockRenderer.cu" />
+    <CudaCompile Include="__source__\DataStructures\Renderers\BufferedRenderer\BufferedRenderer.cu" />
+    <CudaCompile Include="__source__\DataStructures\Renderers\BufferedRenderProcess\BufferedRenderProcess.cu" />
+    <CudaCompile Include="__source__\DataStructures\Renderers\BufferedRenderProcess\BufferedRenderProcess.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\Renderers\DumbRenderer\DumbRenderer.cu" />
+    <CudaCompile Include="__source__\DataStructures\Renderers\DumbRenderer\DumbRenderer.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\Renderers\Renderer\Renderer.cu" />
+    <CudaCompile Include="__source__\DataStructures\Renderers\Renderer\Renderer.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\Screen\BufferedWindow\BufferedWindow.cu" />
+    <CudaCompile Include="__source__\DataStructures\Screen\FrameBuffer\BlockBasedFrameBuffer\BlockBasedFrameBuffer.impl.cu" />
+    <CudaCompile Include="__source__\DataStructures\Screen\FrameBuffer\BlockBasedFrameBuffer\BlockBasedFrameBuffer.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\Screen\FrameBuffer\MemoryMappedFrameBuffer\MemoryMappedFrameBuffer.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\Screen\FrameBuffer\FrameBuffer.test.cu" />
+    <CudaCompile Include="__source__\DataStructures\Screen\Window\WindowsWindow.cu" />
+    <CudaCompile Include="__source__\Namespaces\Device\Device.cu" />
+    <CudaCompile Include="__source__\Namespaces\Dson\Dson.cu" />
+    <CudaCompile Include="__source__\Namespaces\Dson\Dson.test.cu" />
+    <CudaCompile Include="__source__\Namespaces\Images\Images.cu" />
+    <CudaCompile Include="__source__\Namespaces\Images\Images.test.cu" />
+    <CudaCompile Include="__source__\Namespaces\Images\lodepng.cu" />
+    <CudaCompile Include="__source__\Namespaces\TextParser\ByteSet.cu" />
+    <CudaCompile Include="__source__\Namespaces\TextParser\Error.cu" />
+    <CudaCompile Include="__source__\Namespaces\TextParser\ParserNetwork.cu" />
+    <CudaCompile Include="__source__\Namespaces\TextParser\RecursiveParser.cu" />
+    <CudaCompile Include="__source__\Namespaces\Windows\Windows.cu" />
+    <CudaCompile Include="__source__\Playground\Checkerboard\Checkerboard.cu" />
+    <CudaCompile Include="__source__\TestingModule.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="DumbRayQ.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="__qt_source__\RenderViewport.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DumbRay.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="dumb_ray.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
+    <None Include="LICENSE" />
+    <None Include="README.md" />
+  </ItemGroup>
+</Project>

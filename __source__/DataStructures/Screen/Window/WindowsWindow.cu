@@ -2,7 +2,7 @@
 
 
 
-WindowsWindow::WindowsWindow(const char *windowName) {
+WindowsWindow::WindowsWindow(const wchar_t *windowName) {
 	state = 0;
 	new (&window()) Windows::Window(windowName);
 }
@@ -10,7 +10,7 @@ WindowsWindow::~WindowsWindow() {
 	close();
 }
 
-void WindowsWindow::setName(const char *name) { }
+void WindowsWindow::setName(const wchar_t *name) { }
 
 bool WindowsWindow::getResolution(int &width, int &height)const {
 	return window().getDimensions(width, height);

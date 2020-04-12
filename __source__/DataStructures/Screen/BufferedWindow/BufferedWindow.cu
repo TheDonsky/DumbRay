@@ -3,7 +3,7 @@
 #include <new>
 
 
-BufferedWindow::BufferedWindow(OptionFlags optionFlags, Window *target, const char *windowName, FrameBufferManager *frameBufferManager, int renderingDeviceId, int refreshIntervalMilliseconds) {
+BufferedWindow::BufferedWindow(OptionFlags optionFlags, Window *target, const wchar_t *windowName, FrameBufferManager *frameBufferManager, int renderingDeviceId, int refreshIntervalMilliseconds) {
 	options = optionFlags;
 	bufferManager = frameBufferManager;
 	deviceId = renderingDeviceId;

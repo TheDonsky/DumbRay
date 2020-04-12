@@ -433,7 +433,7 @@ namespace OctreeTest {
 			// ############# RENDER TEST: #############
 			// ########################################
 			inline void runTest() {
-				new(&window()) Windows::Window("OCTREE TEST WINDOW");
+				new(&window()) Windows::Window(L"OCTREE TEST WINDOW");
 				std::thread refreshThread(windowUpdateThread, this);
 				int frame = 0; long time = clock();
 				while (true) {

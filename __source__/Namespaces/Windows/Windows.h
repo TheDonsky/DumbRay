@@ -33,7 +33,7 @@ namespace Windows{
 		/** ########################################################################## **/
 		/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 		/** ########################################################################## **/
-		Window(const char *windowName = "WindowName", const char *className = "Window Class");
+		Window(const wchar_t *windowName = L"WindowName", const char *className = "Window Class");
 		~Window();
 
 
@@ -105,7 +105,7 @@ namespace Windows{
 		/** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 		/** ########################################################################## **/
 		static LRESULT CALLBACK windowProcedure(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-		static void createWindow(Window *thisWindow, const char *windowName, const char *className, volatile bool *status, std::condition_variable *statusCondition);
+		static void createWindow(Window *thisWindow, const wchar_t *windowName, const char *className, volatile bool *status, std::condition_variable *statusCondition);
 		void display();
 #else
 		int width, height;
