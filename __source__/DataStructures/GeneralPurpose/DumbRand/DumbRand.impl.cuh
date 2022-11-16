@@ -69,9 +69,9 @@ __device__ __host__ inline bool DumbRand::getBool(float chance) {
 // Generates a point on a sphere of given radius:
 __device__ __host__ inline void DumbRand::pointOnSphere(float &x, float &y, float &z, float radius) {
 	float theta = (2.0f * 3.14159265359f * getFloat());
-	float phi = (1.0f - (2.0f * getFloat()));
-	float sinPhi = sin(phi);
+	float cosPhi = (1.0f - (2.0f * getFloat()));
+	float sinPhi = sqrt(1.0f - (cosPhi * cosPhi));
 	x = ((sinPhi * cos(theta)) * radius);
 	y = ((sinPhi * sin(theta)) * radius);
-	z = (cos(phi) * radius);
+	z = (cosPhi * radius);
 }
