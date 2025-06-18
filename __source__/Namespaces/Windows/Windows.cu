@@ -82,7 +82,7 @@ namespace Windows{
 /** ########################################################################## **/
 /** //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// **/
 /** ########################################################################## **/
-Windows::Window::Window(const wchar_t *windowName, const char *className){
+Windows::Window::Window(const wchar_t *windowName, const wchar_t*className){
 	windowDead = false;
 	hwndInFocus = false;
 	volatile bool status = false;
@@ -214,21 +214,21 @@ LRESULT CALLBACK Windows::Window::windowProcedure(HWND hwnd, UINT msg, WPARAM wP
 	return 0;
 }
 
-void Windows::Window::createWindow(Window *thisWindow, const wchar_t *windowName, const char *className, volatile bool *status, std::condition_variable *statusCondition){
+void Windows::Window::createWindow(Window *thisWindow, const wchar_t *windowName, const wchar_t*className, volatile bool *status, std::condition_variable *statusCondition){
 	thisWindow->hInstance = GetModuleHandle(NULL);
 
-	WNDCLASS wc = {};
+	WNDCLASSW wc = {};
 
 	wc.lpfnWndProc = windowProcedure;
 	wc.hInstance = thisWindow->hInstance;
-	wc.lpszClassName = (LPCWSTR)className;
+	wc.lpszClassName = className;
 
-	RegisterClass(&wc);
+	RegisterClassW(&wc);
 
-	thisWindow->hwnd = CreateWindowEx(
+	thisWindow->hwnd = CreateWindowExW(
 		0,							// Optional window styles.
-		(LPCWSTR) className,		// Window class
-		(LPCWSTR) windowName,		// Window text
+		className,					// Window class
+		windowName,					// Window text
 		WS_OVERLAPPEDWINDOW,		// Window style
 
 		// Size and position

@@ -58,7 +58,7 @@ RenderViewport::RenderViewport(QWidget *parent, const char *filename) : QWidget(
 
 	// RESOURCE SETTINGS:
 	for (int i = 0; i <= std::thread::hardware_concurrency(); i++)
-		ui.cpuThreadCount->addItem(((std::stringstream*)(&(std::stringstream() << i)))->str().c_str());
+		ui.cpuThreadCount->addItem((std::stringstream() << i).str().c_str());
 	ui.cpuThreadCount->setCurrentIndex(std::thread::hardware_concurrency());
 	connect(ui.cpuThreadCount, SIGNAL(currentIndexChanged(int)), this, SLOT(cpuThreadCountChanged(int)));
 
